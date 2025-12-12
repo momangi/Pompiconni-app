@@ -20,7 +20,7 @@ const Footer = () => {
               Dolce, simpatico e leggermente impacciato!
             </p>
             <div className="flex gap-4">
-              <a href="mailto:info@pompiconni.it" className="text-gray-400 hover:text-pink-500 transition-colors">
+              <a href="mailto:pompiconni@gmail.com" className="text-gray-400 hover:text-pink-500 transition-colors">
                 <Mail className="w-5 h-5" />
               </a>
               <a href="#" className="text-gray-400 hover:text-pink-500 transition-colors">
@@ -52,8 +52,18 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Legal Links */}
+        <div className="mt-8 pt-8 border-t border-pink-100">
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <Link to="/privacy" className="text-gray-500 hover:text-pink-500 transition-colors">Privacy Policy</Link>
+            <Link to="/cookie-policy" className="text-gray-500 hover:text-pink-500 transition-colors">Cookie Policy</Link>
+            <Link to="/termini-condizioni" className="text-gray-500 hover:text-pink-500 transition-colors">Termini e Condizioni</Link>
+            <Link to="/contatti-legali" className="text-gray-500 hover:text-pink-500 transition-colors">Contatti Legali</Link>
+          </div>
+        </div>
+
         {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-pink-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-8 pt-8 border-t border-pink-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-sm">
             © {new Date().getFullYear()} Pompiconni. Tutti i diritti riservati.
           </p>
