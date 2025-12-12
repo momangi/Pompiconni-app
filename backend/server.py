@@ -426,6 +426,8 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
         {"$inc": {"illustrationCount": 1}}
     )
     
+    # Remove MongoDB _id field to avoid serialization issues
+    illust_dict.pop('_id', None)
     return illust_dict
 
 @admin_router.put("/illustrations/{illustration_id}")
