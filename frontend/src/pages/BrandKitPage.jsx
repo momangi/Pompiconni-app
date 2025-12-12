@@ -1,16 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Palette, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { brandKit } from '../data/mock';
+import { getBrandKit } from '../services/api';
 import { toast } from 'sonner';
 
 const BrandKitPage = () => {
+  const [brandKit, setBrandKit] = useState(null);
   const [copiedColor, setCopiedColor] = useState(null);
   const [showDetails, setShowDetails] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBrandKit = async () => {
+      try {
+        const data = await getBrandKit();
+        setBrandKit(data);
+      } catch (error) {
+        console.error('Error fetching brand kit:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBrandKit();
+  }, []);
 
   const copyToClipboard = (text, colorName) => {
     navigator.clipboard.writeText(text);
@@ -18,6 +34,18 @@ const BrandKitPage = () => {
     toast.success(`Colore ${colorName} copiato!`);
     setTimeout(() => setCopiedColor(null), 2000);
   };
+
+  if (loading || !brandKit) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
