@@ -7,11 +7,16 @@ import GalleryPage from "./pages/GalleryPage";
 import ThemePage from "./pages/ThemePage";
 import BrandKitPage from "./pages/BrandKitPage";
 import DownloadPage from "./pages/DownloadPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import CookiePolicyPage from "./pages/CookiePolicyPage";
+import TerminiCondizioniPage from "./pages/TerminiCondizioniPage";
+import ContattiLegaliPage from "./pages/ContattiLegaliPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminIllustrations from "./pages/admin/AdminIllustrations";
 import AdminGenerator from "./pages/admin/AdminGenerator";
 import AdminLogin from "./pages/admin/AdminLogin";
+import CookieBanner from "./components/CookieBanner";
 
 function App() {
   return (
@@ -25,6 +30,12 @@ function App() {
           <Route path="/brand-kit" element={<BrandKitPage />} />
           <Route path="/download" element={<DownloadPage />} />
           
+          {/* Legal Pages */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+          <Route path="/termini-condizioni" element={<TerminiCondizioniPage />} />
+          <Route path="/contatti-legali" element={<ContattiLegaliPage />} />
+          
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
@@ -35,6 +46,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" />
+      <CookieBanner />
     </div>
   );
 }
