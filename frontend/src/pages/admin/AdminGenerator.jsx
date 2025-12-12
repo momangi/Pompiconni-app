@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Wand2, Download, RefreshCw, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wand2, Download, RefreshCw, Sparkles, Image as ImageIcon, Save } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { themes } from '../../data/mock';
+import { getThemes, generateIllustration } from '../../services/api';
 import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminGenerator = () => {
   const [prompt, setPrompt] = useState('');
@@ -16,6 +16,19 @@ const AdminGenerator = () => {
   const [style, setStyle] = useState('lineart');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
+  const [themes, setThemes] = useState([]);
+
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        const data = await getThemes();
+        setThemes(data);
+      } catch (error) {
+        console.error('Error fetching themes:', error);
+      }
+    };
+    fetchThemes();
+  }, []);
 
   const styleOptions = [
     { value: 'lineart', label: 'Line Art (da colorare)' },
@@ -39,27 +52,50 @@ const AdminGenerator = () => {
     }
 
     setIsGenerating(true);
-    toast.info('Generazione in corso...');
+    toast.info('Generazione in corso... può richiedere fino a 1 minuto');
 
-    // Mock generation - in futuro sarà collegato all'API
-    setTimeout(() => {
-      const mockImage = {
+    try {
+      const result = await generateIllustration(
+        prompt,
+        selectedTheme !== 'none' ? selectedTheme : null,
+        style
+      );
+
+      const newImage = {
         id: Date.now(),
         prompt: prompt,
         theme: selectedTheme,
         style: style,
         timestamp: new Date().toISOString(),
-        // Placeholder per immagine generata
-        imageUrl: null
+        imageUrl: result.imageUrl,
+        imageBase64: result.imageBase64,
+        illustration: result.illustration
       };
-      setGeneratedImages(prev => [mockImage, ...prev]);
+
+      setGeneratedImages(prev => [newImage, ...prev]);
+      toast.success('Immagine generata con successo!');
+      
+      if (result.illustration) {
+        toast.success('Illustrazione salvata in galleria!');
+      }
+    } catch (error) {
+      console.error('Generation error:', error);
+      toast.error('Errore nella generazione: ' + (error.response?.data?.detail || error.message));
+    } finally {
       setIsGenerating(false);
-      toast.success('Immagine generata! (mock)');
-    }, 2000);
+    }
   };
 
   const handleDownload = (image) => {
-    toast.success('Download avviato!');
+    if (image.imageBase64) {
+      const link = document.createElement('a');
+      link.href = `data:image/png;base64,${image.imageBase64}`;
+      link.download = `pompiconni_${Date.now()}.png`;
+      link.click();
+      toast.success('Download avviato!');
+    } else if (image.imageUrl) {
+      window.open(`${BACKEND_URL}${image.imageUrl}`, '_blank');
+    }
   };
 
   return (
@@ -86,14 +122,6 @@ const AdminGenerator = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertCircle className="w-4 h-4 text-blue-500" />
-                <AlertDescription className="text-sm text-blue-700">
-                  La generazione AI sarà attivata dopo l'integrazione backend.
-                  Per ora vengono create immagini placeholder.
-                </AlertDescription>
-              </Alert>
-
               <div className="space-y-2">
                 <Label>Descrizione Scena</Label>
                 <Textarea
@@ -120,13 +148,13 @@ const AdminGenerator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Tema (opzionale)</Label>
+                <Label>Tema (opzionale - salva automaticamente)</Label>
                 <Select value={selectedTheme} onValueChange={setSelectedTheme}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleziona un tema" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nessun tema specifico</SelectItem>
+                    <SelectItem value="none">Nessun tema (non salvare)</SelectItem>
                     {themes.map(theme => (
                       <SelectItem key={theme.id} value={theme.id}>{theme.name}</SelectItem>
                     ))}
@@ -154,11 +182,18 @@ const AdminGenerator = () => {
                 disabled={isGenerating}
               >
                 {isGenerating ? (
-                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Generazione...</>
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Generazione in corso...</>
                 ) : (
                   <><Wand2 className="w-4 h-4 mr-2" />Genera Immagine</>
                 )}
               </Button>
+              
+              {selectedTheme && selectedTheme !== 'none' && (
+                <p className="text-xs text-green-600 text-center">
+                  <Save className="w-3 h-3 inline mr-1" />
+                  L'immagine verrà salvata automaticamente nel tema selezionato
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -180,10 +215,24 @@ const AdminGenerator = () => {
               {generatedImages.map((image) => (
                 <Card key={image.id} className="border-0 shadow-lg overflow-hidden">
                   <div className="h-48 bg-gradient-to-br from-pink-50 to-blue-50 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-6xl mb-2">🦄</div>
-                      <p className="text-xs text-gray-400">Immagine Placeholder</p>
-                    </div>
+                    {image.imageBase64 ? (
+                      <img 
+                        src={`data:image/png;base64,${image.imageBase64}`} 
+                        alt="Generated" 
+                        className="w-full h-full object-contain"
+                      />
+                    ) : image.imageUrl ? (
+                      <img 
+                        src={`${BACKEND_URL}${image.imageUrl}`} 
+                        alt="Generated" 
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-6xl mb-2">🦄</div>
+                        <p className="text-xs text-gray-400">Immagine Placeholder</p>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-4">
                     <p className="text-sm text-gray-700 mb-2 line-clamp-2">{image.prompt}</p>
@@ -191,12 +240,15 @@ const AdminGenerator = () => {
                       <span>{styleOptions.find(s => s.value === image.style)?.label}</span>
                       <span>{new Date(image.timestamp).toLocaleTimeString()}</span>
                     </div>
+                    {image.illustration && (
+                      <p className="text-xs text-green-600 mb-3">
+                        <Save className="w-3 h-3 inline mr-1" />
+                        Salvato in: {themes.find(t => t.id === image.theme)?.name}
+                      </p>
+                    )}
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => handleDownload(image)}>
                         <Download className="w-4 h-4 mr-1" />Scarica
-                      </Button>
-                      <Button size="sm" className="flex-1 bg-pink-500 hover:bg-pink-600">
-                        Salva in Galleria
                       </Button>
                     </div>
                   </CardContent>
