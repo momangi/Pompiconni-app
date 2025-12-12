@@ -1,13 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen } from 'lucide-react';
+import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { themes, testimonials, bundles } from '../data/mock';
+import { getThemes, getBundles, getReviews } from '../services/api';
 
 const LandingPage = () => {
+  const [themes, setThemes] = useState([]);
+  const [bundles, setBundles] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [themesData, bundlesData, reviewsData] = await Promise.all([
+          getThemes(),
+          getBundles(),
+          getReviews()
+        ]);
+        setThemes(themesData);
+        setBundles(bundlesData);
+        setReviews(reviewsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Auto-rotate reviews every 15 seconds
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+    }, 15000);
+    
+    return () => clearInterval(interval);
+  }, [reviews.length]);
+
+  const nextReview = () => {
+    setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+  };
+
+  const prevReview = () => {
+    setCurrentReviewIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
+  };
+
+  const currentReview = reviews[currentReviewIndex];
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -58,7 +105,7 @@ const LandingPage = () => {
                   <p className="text-gray-500">Tavole da colorare</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-blue-400">6</p>
+                  <p className="text-3xl font-bold text-blue-400">{themes.length}</p>
                   <p className="text-gray-500">Temi diversi</p>
                 </div>
                 <div>
@@ -202,31 +249,64 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Single Review with rotation */}
       <section className="py-20 bg-gradient-to-b from-pink-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Cosa dicono di <span className="gradient-text">Pompiconni</span></h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.id} className="border-0 shadow-lg hover-lift">
-                <CardContent className="p-8">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+          {currentReview && (
+            <div className="max-w-2xl mx-auto">
+              <Card className="border-0 shadow-xl hover-lift">
+                <CardContent className="p-8 sm:p-12 text-center">
+                  <div className="flex justify-center gap-1 mb-6">
+                    {[...Array(currentReview.rating)].map((_, i) => (
+                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-6 italic">"{testimonial.text}"</p>
+                  <p className="text-xl text-gray-600 mb-8 italic leading-relaxed">"{currentReview.text}"</p>
                   <div>
-                    <p className="font-semibold text-gray-800">{testimonial.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    <p className="font-bold text-gray-800 text-lg">{currentReview.name}</p>
+                    <p className="text-gray-500">{currentReview.role}</p>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              
+              {/* Navigation controls */}
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button 
+                  onClick={prevReview}
+                  className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                
+                <div className="flex gap-2">
+                  {reviews.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentReviewIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentReviewIndex ? 'bg-pink-500 w-6' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={nextReview}
+                  className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+              
+              <p className="text-center text-sm text-gray-400 mt-4">
+                {currentReviewIndex + 1} di {reviews.length} recensioni
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
