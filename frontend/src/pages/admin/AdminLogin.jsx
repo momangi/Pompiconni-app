@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
+import { adminLogin } from '../../services/api';
 import { toast } from 'sonner';
 
 const AdminLogin = () => {
@@ -18,17 +19,15 @@ const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock login - in futuro sarà collegato al backend
-    setTimeout(() => {
-      if (email === 'admin@pompiconni.it' && password === 'admin123') {
-        localStorage.setItem('pompiconni_admin', 'true');
-        toast.success('Accesso effettuato!');
-        navigate('/admin');
-      } else {
-        toast.error('Credenziali non valide');
-      }
+    try {
+      await adminLogin(email, password);
+      toast.success('Accesso effettuato!');
+      navigate('/admin');
+    } catch (error) {
+      toast.error('Credenziali non valide');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
