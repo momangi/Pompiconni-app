@@ -1,19 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Images, Download, Users, TrendingUp, ArrowRight, Wand2, Package } from 'lucide-react';
+import { Images, Download, TrendingUp, ArrowRight, Wand2, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { themes, illustrations, bundles } from '../../data/mock';
+import { getDashboard, getThemes } from '../../services/api';
 
 const AdminDashboard = () => {
-  const totalDownloads = illustrations.reduce((acc, i) => acc + i.downloadCount, 0);
-  const freeCount = illustrations.filter(i => i.isFree).length;
+  const [dashboard, setDashboard] = useState(null);
+  const [themes, setThemes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [dashboardData, themesData] = await Promise.all([
+          getDashboard(),
+          getThemes()
+        ]);
+        setDashboard(dashboardData);
+        setThemes(themesData);
+      } catch (error) {
+        console.error('Error fetching dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   const stats = [
-    { label: 'Illustrazioni', value: illustrations.length, icon: Images, color: 'pink' },
-    { label: 'Temi', value: themes.length, icon: Package, color: 'blue' },
-    { label: 'Download Totali', value: totalDownloads.toLocaleString(), icon: Download, color: 'green' },
-    { label: 'Gratuite', value: freeCount, icon: TrendingUp, color: 'yellow' },
+    { label: 'Illustrazioni', value: dashboard?.totalIllustrations || 0, icon: Images, color: 'pink' },
+    { label: 'Temi', value: dashboard?.totalThemes || 0, icon: Package, color: 'blue' },
+    { label: 'Download Totali', value: (dashboard?.totalDownloads || 0).toLocaleString(), icon: Download, color: 'green' },
+    { label: 'Gratuite', value: dashboard?.freeCount || 0, icon: TrendingUp, color: 'yellow' },
   ];
 
   return (
@@ -88,26 +115,23 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {illustrations
-              .sort((a, b) => b.downloadCount - a.downloadCount)
-              .slice(0, 5)
-              .map((illustration, idx) => (
-                <div key={illustration.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <span className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-sm font-bold text-pink-500">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <p className="font-medium text-gray-800">{illustration.title}</p>
-                      <p className="text-sm text-gray-500">{themes.find(t => t.id === illustration.themeId)?.name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Download className="w-4 h-4" />
-                    <span>{illustration.downloadCount}</span>
+            {(dashboard?.popularIllustrations || []).map((illustration, idx) => (
+              <div key={illustration.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <span className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-sm font-bold text-pink-500">
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-gray-800">{illustration.title}</p>
+                    <p className="text-sm text-gray-500">{themes.find(t => t.id === illustration.themeId)?.name}</p>
                   </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Download className="w-4 h-4" />
+                  <span>{illustration.downloadCount}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
