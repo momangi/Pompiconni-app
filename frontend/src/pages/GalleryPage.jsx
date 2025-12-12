@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { themes } from '../data/mock';
+import { getThemes } from '../services/api';
 
 const GalleryPage = () => {
+  const [themes, setThemes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        const data = await getThemes();
+        setThemes(data);
+      } catch (error) {
+        console.error('Error fetching themes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchThemes();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -26,31 +43,46 @@ const GalleryPage = () => {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {themes.map((theme) => (
-              <Link key={theme.id} to={`/galleria/${theme.id}`}>
-                <Card className="border-0 shadow-xl hover-lift overflow-hidden group cursor-pointer h-full">
-                  <div className="h-48 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
-                    <div className="absolute inset-0 opacity-30 transition-opacity group-hover:opacity-40" style={{ backgroundColor: theme.color }} />
-                    <div className="relative z-10 text-center">
-                      <BookOpen className="w-20 h-20 mx-auto text-gray-700 group-hover:scale-110 transition-transform duration-300" />
-                      <span className="mt-2 inline-block px-3 py-1 bg-white/80 rounded-full text-sm font-medium text-gray-700">
-                        {theme.illustrationCount} tavole
-                      </span>
-                    </div>
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, idx) => (
+                <div key={idx} className="animate-pulse">
+                  <div className="h-48 bg-gray-200 rounded-t-xl" />
+                  <div className="p-6 bg-white rounded-b-xl shadow-xl">
+                    <div className="h-6 bg-gray-200 rounded mb-3" />
+                    <div className="h-4 bg-gray-200 rounded mb-4" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
                   </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3">{theme.name}</h3>
-                    <p className="text-gray-600 mb-4">{theme.description}</p>
-                    <div className="flex items-center text-pink-500 font-medium group-hover:text-pink-600">
-                      <span>Scopri le tavole</span>
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {themes.map((theme) => (
+                <Link key={theme.id} to={`/galleria/${theme.id}`}>
+                  <Card className="border-0 shadow-xl hover-lift overflow-hidden group cursor-pointer h-full">
+                    <div className="h-48 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
+                      <div className="absolute inset-0 opacity-30 transition-opacity group-hover:opacity-40" style={{ backgroundColor: theme.color }} />
+                      <div className="relative z-10 text-center">
+                        <BookOpen className="w-20 h-20 mx-auto text-gray-700 group-hover:scale-110 transition-transform duration-300" />
+                        <span className="mt-2 inline-block px-3 py-1 bg-white/80 rounded-full text-sm font-medium text-gray-700">
+                          {theme.illustrationCount} tavole
+                        </span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                    <CardContent className="p-6">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-3">{theme.name}</h3>
+                      <p className="text-gray-600 mb-4">{theme.description}</p>
+                      <div className="flex items-center text-pink-500 font-medium group-hover:text-pink-600">
+                        <span>Scopri le tavole</span>
+                        <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
