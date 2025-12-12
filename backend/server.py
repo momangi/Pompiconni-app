@@ -204,37 +204,45 @@ SEED_BUNDLES = [
 
 async def init_database():
     """Initialize database with seed data if empty"""
-    # Check if themes exist
+    # Check if themes exist - use insert_many for batch performance
     themes_count = await db.themes.count_documents({})
     if themes_count == 0:
+        now = datetime.utcnow()
+        themes_to_insert = []
         for theme in SEED_THEMES:
-            theme['createdAt'] = datetime.utcnow()
-            theme['updatedAt'] = datetime.utcnow()
-            await db.themes.insert_one(theme)
+            theme['createdAt'] = now
+            theme['updatedAt'] = now
+            themes_to_insert.append(theme)
+        await db.themes.insert_many(themes_to_insert)
         logger.info("Seed themes inserted")
     
-    # Check if illustrations exist
+    # Check if illustrations exist - use insert_many for batch performance
     illustrations_count = await db.illustrations.count_documents({})
     if illustrations_count == 0:
+        now = datetime.utcnow()
+        illustrations_to_insert = []
         for illust in SEED_ILLUSTRATIONS:
-            illust['createdAt'] = datetime.utcnow()
-            illust['updatedAt'] = datetime.utcnow()
-            await db.illustrations.insert_one(illust)
+            illust['createdAt'] = now
+            illust['updatedAt'] = now
+            illustrations_to_insert.append(illust)
+        await db.illustrations.insert_many(illustrations_to_insert)
         logger.info("Seed illustrations inserted")
     
-    # Check if bundles exist
+    # Check if bundles exist - use insert_many for batch performance
     bundles_count = await db.bundles.count_documents({})
     if bundles_count == 0:
+        now = datetime.utcnow()
+        bundles_to_insert = []
         for bundle in SEED_BUNDLES:
-            bundle['createdAt'] = datetime.utcnow()
-            await db.bundles.insert_one(bundle)
+            bundle['createdAt'] = now
+            bundles_to_insert.append(bundle)
+        await db.bundles.insert_many(bundles_to_insert)
         logger.info("Seed bundles inserted")
     
-    # Check if reviews exist
+    # Check if reviews exist - use insert_many for batch performance
     reviews_count = await db.reviews.count_documents({})
     if reviews_count == 0:
-        for review in SEED_REVIEWS:
-            await db.reviews.insert_one(review)
+        await db.reviews.insert_many(SEED_REVIEWS)
         logger.info("Seed reviews inserted")
 
 @app.on_event("startup")
