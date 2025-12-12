@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Upload, X, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Edit2, Trash2, Upload, Filter } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -9,22 +9,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
-import { themes, illustrations as mockIllustrations } from '../../data/mock';
+import { getThemes, getIllustrations, createIllustration, updateIllustration, deleteIllustration, uploadFile } from '../../services/api';
 import { toast } from 'sonner';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 const AdminIllustrations = () => {
-  const [illustrations, setIllustrations] = useState(mockIllustrations);
+  const [illustrations, setIllustrations] = useState([]);
+  const [themes, setThemes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTheme, setFilterTheme] = useState('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingIllustration, setEditingIllustration] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     themeId: '',
-    isFree: true
+    isFree: true,
+    price: 0.99,
+    imageUrl: null,
+    pdfUrl: null
   });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [illustrationsData, themesData] = await Promise.all([
+        getIllustrations(),
+        getThemes()
+      ]);
+      setIllustrations(illustrationsData);
+      setThemes(themesData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Errore nel caricamento dei dati');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredIllustrations = illustrations.filter(i => {
     const matchesSearch = i.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -32,28 +60,50 @@ const AdminIllustrations = () => {
     return matchesSearch && matchesTheme;
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingIllustration) {
-      setIllustrations(prev => prev.map(i => 
-        i.id === editingIllustration.id ? { ...i, ...formData } : i
-      ));
-      toast.success('Illustrazione aggiornata!');
-    } else {
-      const newIllustration = {
-        id: Date.now(),
-        ...formData,
-        downloadCount: 0
-      };
-      setIllustrations(prev => [...prev, newIllustration]);
-      toast.success('Illustrazione aggiunta!');
+  const handleFileUpload = async (file, type) => {
+    setUploading(true);
+    try {
+      const result = await uploadFile(file, type);
+      if (type === 'image') {
+        setFormData(prev => ({ ...prev, imageUrl: result.url }));
+      } else {
+        setFormData(prev => ({ ...prev, pdfUrl: result.url }));
+      }
+      toast.success('File caricato con successo!');
+    } catch (error) {
+      toast.error('Errore nel caricamento del file');
+    } finally {
+      setUploading(false);
     }
-    resetForm();
   };
 
-  const handleDelete = (id) => {
-    setIllustrations(prev => prev.filter(i => i.id !== id));
-    toast.success('Illustrazione eliminata!');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingIllustration) {
+        await updateIllustration(editingIllustration.id, formData);
+        toast.success('Illustrazione aggiornata!');
+      } else {
+        await createIllustration(formData);
+        toast.success('Illustrazione aggiunta!');
+      }
+      resetForm();
+      fetchData();
+    } catch (error) {
+      toast.error('Errore nel salvataggio');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Sei sicuro di voler eliminare questa illustrazione?')) {
+      try {
+        await deleteIllustration(id);
+        toast.success('Illustrazione eliminata!');
+        fetchData();
+      } catch (error) {
+        toast.error('Errore nell\'eliminazione');
+      }
+    }
   };
 
   const handleEdit = (illustration) => {
@@ -62,16 +112,27 @@ const AdminIllustrations = () => {
       title: illustration.title,
       description: illustration.description,
       themeId: illustration.themeId,
-      isFree: illustration.isFree
+      isFree: illustration.isFree,
+      price: illustration.price || 0.99,
+      imageUrl: illustration.imageUrl,
+      pdfUrl: illustration.pdfUrl
     });
     setIsAddOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', themeId: '', isFree: true });
+    setFormData({ title: '', description: '', themeId: '', isFree: true, price: 0.99, imageUrl: null, pdfUrl: null });
     setEditingIllustration(null);
     setIsAddOpen(false);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -127,10 +188,70 @@ const AdminIllustrations = () => {
                   onCheckedChange={(checked) => setFormData({ ...formData, isFree: checked })}
                 />
               </div>
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">Carica file (PNG, PDF)</p>
-                <p className="text-xs text-gray-400 mt-1">Funzionalità in arrivo</p>
+              {!formData.isFree && (
+                <div className="space-y-2">
+                  <Label>Prezzo (€)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Immagine</Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                  {formData.imageUrl ? (
+                    <div className="mb-2">
+                      <img src={`${BACKEND_URL}${formData.imageUrl}`} alt="Preview" className="h-20 mx-auto rounded" />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, imageUrl: null }))}>
+                        Rimuovi
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], 'image')}
+                        className="hidden"
+                        id="image-upload"
+                      />
+                      <label htmlFor="image-upload" className="cursor-pointer text-sm text-pink-500 hover:text-pink-600">
+                        {uploading ? 'Caricamento...' : 'Carica immagine'}
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>PDF</Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                  {formData.pdfUrl ? (
+                    <div>
+                      <p className="text-sm text-green-600 mb-2">PDF caricato ✓</p>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, pdfUrl: null }))}>
+                        Rimuovi
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], 'pdf')}
+                        className="hidden"
+                        id="pdf-upload"
+                      />
+                      <label htmlFor="pdf-upload" className="cursor-pointer text-sm text-pink-500 hover:text-pink-600">
+                        {uploading ? 'Caricamento...' : 'Carica PDF'}
+                      </label>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Annulla</Button>
@@ -173,8 +294,12 @@ const AdminIllustrations = () => {
         {filteredIllustrations.map((illustration) => (
           <Card key={illustration.id} className="border shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-4xl opacity-30">🦄</span>
+              <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
+                {illustration.imageUrl ? (
+                  <img src={`${BACKEND_URL}${illustration.imageUrl}`} alt={illustration.title} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl opacity-30">🦄</span>
+                )}
               </div>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
@@ -182,7 +307,7 @@ const AdminIllustrations = () => {
                   <p className="text-xs text-gray-500">{themes.find(t => t.id === illustration.themeId)?.name}</p>
                 </div>
                 <Badge className={illustration.isFree ? 'bg-green-100 text-green-700' : 'bg-pink-100 text-pink-700'}>
-                  {illustration.isFree ? 'Gratis' : 'Premium'}
+                  {illustration.isFree ? 'Gratis' : `€${illustration.price}`}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600 truncate mb-3">{illustration.description}</p>
