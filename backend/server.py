@@ -464,6 +464,8 @@ async def create_bundle(bundle: BundleCreate, email: str = Depends(verify_token)
     bundle_dict['illustrationCount'] = len(bundle.illustrationIds)
     bundle_dict['createdAt'] = datetime.utcnow()
     await db.bundles.insert_one(bundle_dict)
+    # Remove MongoDB _id field to avoid serialization issues
+    bundle_dict.pop('_id', None)
     return bundle_dict
 
 @admin_router.put("/bundles/{bundle_id}")
