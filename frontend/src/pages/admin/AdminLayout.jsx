@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Images, Wand2, LogOut, Home, Settings } from 'lucide-react';
+import { LayoutDashboard, Images, Wand2, LogOut, Home } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { isAuthenticated, adminLogout } from '../../services/api';
 import { toast } from 'sonner';
 
 const AdminLayout = () => {
@@ -9,14 +10,13 @@ const AdminLayout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem('pompiconni_admin');
-    if (!isAdmin) {
+    if (!isAuthenticated()) {
       navigate('/admin/login');
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('pompiconni_admin');
+    adminLogout();
     toast.success('Logout effettuato');
     navigate('/admin/login');
   };
