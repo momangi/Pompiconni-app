@@ -321,9 +321,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend API testing completed successfully"
+    - "Homepage Hero Section"
+    - "Homepage Themes Section"
+    - "Homepage Bundles Section"
+    - "Homepage Reviews Section"
+    - "Gallery Page Navigation"
+    - "Theme Page Functionality"
+    - "Admin Login"
+    - "Admin Dashboard"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
 
 agent_communication:
