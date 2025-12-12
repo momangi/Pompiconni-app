@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, FileText, Package, Star, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -6,14 +6,42 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { bundles, illustrations } from '../data/mock';
+import { getBundles, getIllustrations, incrementDownload } from '../services/api';
 import { toast } from 'sonner';
 
 const DownloadPage = () => {
-  const freeIllustrations = illustrations.filter(i => i.isFree);
+  const [bundles, setBundles] = useState([]);
+  const [freeIllustrations, setFreeIllustrations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDownload = (item) => {
-    toast.success(`Download di "${item.name || item.title}" avviato!`);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [bundlesData, illustrationsData] = await Promise.all([
+          getBundles(),
+          getIllustrations(null, true) // Only free illustrations
+        ]);
+        setBundles(bundlesData);
+        setFreeIllustrations(illustrationsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleDownload = async (item) => {
+    try {
+      if (item.id && !item.illustrationIds) {
+        // Single illustration
+        await incrementDownload(item.id);
+      }
+      toast.success(`Download di "${item.name || item.title}" avviato!`);
+    } catch (error) {
+      toast.error('Errore durante il download');
+    }
   };
 
   return (
@@ -49,22 +77,34 @@ const DownloadPage = () => {
             </Badge>
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {freeIllustrations.slice(0, 8).map((illustration) => (
-              <Card key={illustration.id} className="border-2 border-green-100 hover-lift">
-                <CardContent className="p-4">
-                  <div className="h-32 bg-green-50 rounded-lg flex items-center justify-center mb-4">
-                    <FileText className="w-12 h-12 text-green-300" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800 mb-1 truncate">{illustration.title}</h3>
-                  <p className="text-sm text-gray-500 mb-4 truncate">{illustration.description}</p>
-                  <Button className="w-full bg-green-500 hover:bg-green-600" onClick={() => handleDownload(illustration)}>
-                    <Download className="w-4 h-4 mr-2" />Scarica PDF
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, idx) => (
+                <div key={idx} className="animate-pulse">
+                  <div className="h-32 bg-gray-200 rounded-lg mb-4" />
+                  <div className="h-4 bg-gray-200 rounded mb-2" />
+                  <div className="h-10 bg-gray-200 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {freeIllustrations.slice(0, 8).map((illustration) => (
+                <Card key={illustration.id} className="border-2 border-green-100 hover-lift">
+                  <CardContent className="p-4">
+                    <div className="h-32 bg-green-50 rounded-lg flex items-center justify-center mb-4">
+                      <FileText className="w-12 h-12 text-green-300" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-1 truncate">{illustration.title}</h3>
+                    <p className="text-sm text-gray-500 mb-4 truncate">{illustration.description}</p>
+                    <Button className="w-full bg-green-500 hover:bg-green-600" onClick={() => handleDownload(illustration)}>
+                      <Download className="w-4 h-4 mr-2" />Scarica PDF
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           
           {freeIllustrations.length > 8 && (
             <div className="text-center mt-8">
