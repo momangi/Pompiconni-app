@@ -391,6 +391,8 @@ async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
     theme_dict['createdAt'] = datetime.utcnow()
     theme_dict['updatedAt'] = datetime.utcnow()
     await db.themes.insert_one(theme_dict)
+    # Remove MongoDB _id field to avoid serialization issues
+    theme_dict.pop('_id', None)
     return theme_dict
 
 @admin_router.put("/themes/{theme_id}")
