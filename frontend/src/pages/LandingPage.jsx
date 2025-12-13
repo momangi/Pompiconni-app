@@ -1,30 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { getThemes, getBundles, getReviews } from '../services/api';
+import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings } from '../services/api';
 
 const LandingPage = () => {
   const [themes, setThemes] = useState([]);
   const [bundles, setBundles] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [illustrations, setIllustrations] = useState([]);
+  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [themesData, bundlesData, reviewsData] = await Promise.all([
+        const [themesData, bundlesData, reviewsData, illustrationsData, settingsData] = await Promise.all([
           getThemes(),
           getBundles(),
-          getReviews()
+          getReviews(),
+          getIllustrations(),
+          getSiteSettings()
         ]);
         setThemes(themesData);
         setBundles(bundlesData);
         setReviews(reviewsData);
+        setIllustrations(illustrationsData);
+        setSiteSettings(settingsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
