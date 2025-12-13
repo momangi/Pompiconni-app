@@ -585,21 +585,32 @@ async def admin_dashboard(email: str = Depends(verify_token)):
     total_themes = await db.themes.count_documents({})
     free_count = await db.illustrations.count_documents({"isFree": True})
     
-    # Calculate total downloads from real download_events
-    total_download_events = await db.download_events.count_documents({})
+    # Calculate total downloads ONLY from real download_events (source of truth)
+    total_downloads = await db.download_events.count_documents({})
     
-    # Also sum from illustration counters (for compatibility)
-    pipeline = [{"$group": {"_id": None, "total": {"$sum": "$downloadCount"}}}]
-    result = await db.illustrations.aggregate(pipeline).to_list(1)
-    total_from_counters = result[0]["total"] if result else 0
+    # Get popular illustrations by REAL download events count
+    pipeline = [
+        {"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]
+    popular_ids = await db.download_events.aggregate(pipeline).to_list(5)
     
-    # Use the higher of the two (events are the source of truth)
-    total_downloads = max(total_download_events, total_from_counters)
+    # Fetch illustration details for popular ones
+    popular = []
+    for item in popular_ids:
+        illust = await db.illustrations.find_one({"id": item["_id"]})
+        if illust:
+            illust['_id'] = str(illust.get('_id', ''))
+            illust['downloadCount'] = item['count']  # Real count from events
+            popular.append(illust)
     
-    # Get popular illustrations
-    popular = await db.illustrations.find().sort("downloadCount", -1).limit(5).to_list(5)
-    for p in popular:
-        p['_id'] = str(p.get('_id', ''))
+    # If no downloads yet, return top 5 illustrations with 0 downloads
+    if not popular:
+        popular = await db.illustrations.find().limit(5).to_list(5)
+        for p in popular:
+            p['_id'] = str(p.get('_id', ''))
+            p['downloadCount'] = 0
     
     # Get download stats for last 7 days
     seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
