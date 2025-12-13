@@ -207,9 +207,19 @@ const DownloadPage = () => {
                     <li className="flex items-center justify-center gap-2"><Check className="w-4 h-4 text-green-500" />Formato PDF A4</li>
                     <li className="flex items-center justify-center gap-2"><Check className="w-4 h-4 text-green-500" />Pronto per stampa</li>
                   </ul>
-                  <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`} onClick={() => handleDownload(bundle)}>
-                    <Download className="w-4 h-4 mr-2" />{bundle.isFree ? 'Scarica Gratis' : 'Acquista Ora'}
-                  </Button>
+                  {!bundle.isFree && !siteSettings.stripe_enabled ? (
+                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+                      <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
+                    </div>
+                  ) : (
+                    <Button 
+                      className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`} 
+                      onClick={() => handleBundleAction(bundle)}
+                    >
+                      <Download className="w-4 h-4 mr-2" />{bundle.isFree ? 'Scarica Gratis' : 'Acquista Ora'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
