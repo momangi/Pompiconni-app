@@ -515,12 +515,16 @@ async def get_reviews():
 
 @api_router.get("/site-settings")
 async def get_public_site_settings():
-    """Get public site settings (stripe status, etc)"""
+    """Get public site settings (stripe status, hero image, etc)"""
     settings = await db.site_settings.find_one({"id": "global"})
     stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
+    has_hero = bool(settings and settings.get('heroImageFileId')) if settings else False
+    
     return {
         "stripe_enabled": stripe_enabled,
-        "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None
+        "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None,
+        "hasHeroImage": has_hero,
+        "heroImageUrl": "/api/site/hero-image" if has_hero else None
     }
 
 @api_router.get("/brand-kit")
