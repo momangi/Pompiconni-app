@@ -637,6 +637,9 @@ async def upload_file(
     file_type: str = Form("image"),
     email: str = Depends(verify_token)
 ):
+    """Upload file to GridFS for persistent storage"""
+    from bson import ObjectId
+    
     # Validate file type
     allowed_extensions = {
         "image": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
@@ -647,19 +650,116 @@ async def upload_file(
     if ext not in allowed_extensions.get(file_type, []):
         raise HTTPException(status_code=400, detail=f"Tipo file non permesso: {ext}")
     
-    # Generate unique filename
-    unique_filename = f"{uuid.uuid4()}{ext}"
-    file_path = UPLOAD_DIR / unique_filename
-    
-    # Save file
-    async with aiofiles.open(file_path, 'wb') as out_file:
+    try:
+        # Read file content
         content = await file.read()
-        await out_file.write(content)
+        
+        # Generate unique filename
+        unique_filename = f"{uuid.uuid4()}{ext}"
+        
+        # Upload to GridFS
+        file_id = await gridfs_bucket.upload_from_stream(
+            unique_filename,
+            io.BytesIO(content),
+            metadata={
+                "original_filename": file.filename,
+                "file_type": file_type,
+                "content_type": file.content_type,
+                "uploaded_by": email,
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        # Also save to local uploads folder for image preview (images only)
+        if file_type == "image":
+            file_path = UPLOAD_DIR / unique_filename
+            async with aiofiles.open(file_path, 'wb') as out_file:
+                await out_file.write(content)
+        
+        # Return GridFS file ID and URL
+        file_url = f"/uploads/{unique_filename}" if file_type == "image" else None
+        
+        return {
+            "url": file_url,
+            "filename": unique_filename,
+            "fileId": str(file_id),
+            "fileType": file_type
+        }
+        
+    except Exception as e:
+        logger.error(f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento del file")
+
+@admin_router.post("/illustrations/{illustration_id}/attach-pdf")
+async def attach_pdf_to_illustration(
+    illustration_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload and attach a PDF file directly to an illustration"""
+    from bson import ObjectId
     
-    # Return URL (relative path)
-    file_url = f"/uploads/{unique_filename}"
+    # Verify illustration exists
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
-    return {"url": file_url, "filename": unique_filename}
+    # Validate file type
+    ext = Path(file.filename).suffix.lower()
+    if ext != ".pdf":
+        raise HTTPException(status_code=400, detail="Solo file PDF sono permessi")
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Generate filename based on illustration title
+        safe_title = illust.get('title', illustration_id).replace(' ', '_').replace('"', '').replace("'", "")
+        unique_filename = f"pompiconni_{safe_title}.pdf"
+        
+        # Delete old PDF if exists
+        old_file_id = illust.get('pdfFileId')
+        if old_file_id:
+            try:
+                await gridfs_bucket.delete(ObjectId(old_file_id))
+            except Exception:
+                pass  # Old file might not exist
+        
+        # Upload to GridFS
+        file_id = await gridfs_bucket.upload_from_stream(
+            unique_filename,
+            io.BytesIO(content),
+            metadata={
+                "illustration_id": illustration_id,
+                "original_filename": file.filename,
+                "file_type": "pdf",
+                "content_type": "application/pdf",
+                "uploaded_by": email,
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        # Update illustration with file ID
+        await db.illustrations.update_one(
+            {"id": illustration_id},
+            {
+                "$set": {
+                    "pdfFileId": str(file_id),
+                    "pdfUrl": f"/api/illustrations/{illustration_id}/download",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "fileId": str(file_id),
+            "message": "PDF caricato e collegato all'illustrazione"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error attaching PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento del PDF")
 
 @admin_router.post("/generate-illustration")
 async def generate_illustration(request: GenerateRequest, email: str = Depends(verify_token)):
