@@ -211,59 +211,9 @@ const AdminIllustrations = () => {
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label>Immagine</Label>
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                  {formData.imageUrl ? (
-                    <div className="mb-2">
-                      <img src={`${BACKEND_URL}${formData.imageUrl}`} alt="Preview" className="h-20 mx-auto rounded" />
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, imageUrl: null }))}>
-                        Rimuovi
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], 'image')}
-                        className="hidden"
-                        id="image-upload"
-                      />
-                      <label htmlFor="image-upload" className="cursor-pointer text-sm text-pink-500 hover:text-pink-600">
-                        {uploading ? 'Caricamento...' : 'Carica immagine'}
-                      </label>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>PDF</Label>
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                  {formData.pdfUrl ? (
-                    <div>
-                      <p className="text-sm text-green-600 mb-2">PDF caricato ✓</p>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, pdfUrl: null }))}>
-                        Rimuovi
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], 'pdf')}
-                        className="hidden"
-                        id="pdf-upload"
-                      />
-                      <label htmlFor="pdf-upload" className="cursor-pointer text-sm text-pink-500 hover:text-pink-600">
-                        {uploading ? 'Caricamento...' : 'Carica PDF'}
-                      </label>
-                    </>
-                  )}
-                </div>
+              <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-gray-700 mb-1">Nota:</p>
+                <p>Dopo aver creato l'illustrazione, potrai caricare immagine e PDF cliccando sul pulsante upload nella card.</p>
               </div>
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Annulla</Button>
