@@ -843,6 +843,105 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
         logger.error(f"Error generating image: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Errore generazione: {str(e)}")
 
+# ============== ADMIN REVIEWS & SETTINGS ==============
+
+@admin_router.get("/reviews")
+async def admin_get_reviews(email: str = Depends(verify_token)):
+    """Get all reviews for admin (including non-approved)"""
+    reviews = await db.reviews.find().to_list(100)
+    for r in reviews:
+        r['_id'] = str(r.get('_id', ''))
+    return reviews
+
+@admin_router.put("/reviews/{review_id}")
+async def admin_update_review(review_id: str, update: ReviewUpdate, email: str = Depends(verify_token)):
+    """Approve or disapprove a review"""
+    result = await db.reviews.update_one(
+        {"id": review_id},
+        {"$set": {"is_approved": update.is_approved}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Recensione non trovata")
+    return {"success": True}
+
+@admin_router.delete("/reviews/{review_id}")
+async def admin_delete_review(review_id: str, email: str = Depends(verify_token)):
+    """Delete a review"""
+    result = await db.reviews.delete_one({"id": review_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Recensione non trovata")
+    return {"success": True}
+
+@admin_router.get("/settings")
+async def admin_get_settings(email: str = Depends(verify_token)):
+    """Get site settings"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    if not settings:
+        settings = {
+            "id": "global",
+            "show_reviews": True,
+            "stripe_enabled": bool(STRIPE_SECRET_KEY)
+        }
+    settings['_id'] = str(settings.get('_id', ''))
+    settings['stripe_configured'] = bool(STRIPE_SECRET_KEY)
+    return settings
+
+@admin_router.put("/settings")
+async def admin_update_settings(settings: SiteSettings, email: str = Depends(verify_token)):
+    """Update site settings"""
+    await db.site_settings.update_one(
+        {"id": "global"},
+        {
+            "$set": {
+                "show_reviews": settings.show_reviews,
+                "updatedAt": datetime.now(timezone.utc)
+            }
+        },
+        upsert=True
+    )
+    return {"success": True}
+
+@admin_router.get("/download-stats")
+async def admin_get_download_stats(email: str = Depends(verify_token)):
+    """Get detailed download statistics"""
+    # Total downloads
+    total = await db.download_events.count_documents({})
+    
+    # Downloads by day (last 30 days)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    pipeline = [
+        {"$match": {"downloadedAt": {"$gte": thirty_days_ago}}},
+        {
+            "$group": {
+                "_id": {
+                    "$dateToString": {"format": "%Y-%m-%d", "date": "$downloadedAt"}
+                },
+                "count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"_id": 1}}
+    ]
+    daily_stats = await db.download_events.aggregate(pipeline).to_list(30)
+    
+    # Downloads by illustration
+    illustration_pipeline = [
+        {
+            "$group": {
+                "_id": "$illustrationId",
+                "count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    top_illustrations = await db.download_events.aggregate(illustration_pipeline).to_list(10)
+    
+    return {
+        "total": total,
+        "dailyStats": daily_stats,
+        "topIllustrations": top_illustrations
+    }
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
