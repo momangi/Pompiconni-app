@@ -611,7 +611,7 @@ async def create_bundle(bundle: BundleCreate, email: str = Depends(verify_token)
     bundle_dict = bundle.dict()
     bundle_dict['id'] = str(uuid.uuid4())
     bundle_dict['illustrationCount'] = len(bundle.illustrationIds)
-    bundle_dict['createdAt'] = datetime.utcnow()
+    bundle_dict['createdAt'] = datetime.now(timezone.utc)
     await db.bundles.insert_one(bundle_dict)
     # Remove MongoDB _id field to avoid serialization issues
     bundle_dict.pop('_id', None)
