@@ -241,4 +241,52 @@ export const getDownloadStats = async () => {
   return response.data;
 };
 
+// ============== HERO IMAGE ==============
+
+export const getHeroStatus = async () => {
+  const response = await api.get('/site/hero-status');
+  return response.data;
+};
+
+export const uploadHeroImage = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post('/admin/site/hero-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const deleteHeroImage = async () => {
+  const response = await api.delete('/admin/site/hero-image');
+  return response.data;
+};
+
+// ============== THEME COLORS ==============
+
+export const getThemeColorPalette = async () => {
+  const response = await api.get('/theme-colors');
+  return response.data;
+};
+
+// ============== ENHANCED THEME CRUD ==============
+
+export const checkThemeDelete = async (themeId) => {
+  const response = await api.get(`/admin/themes/check-delete/${themeId}`);
+  return response.data;
+};
+
+export const deleteTheme = async (themeId, force = false) => {
+  const response = await api.delete(`/admin/themes/${themeId}?force=${force}`);
+  return response.data;
+};
+
+export const changeIllustrationTheme = async (illustrationId, themeId) => {
+  const response = await api.put(`/admin/illustrations/${illustrationId}/theme`, null, {
+    params: { theme_id: themeId }
+  });
+  return response.data;
+};
+
 export default api;
