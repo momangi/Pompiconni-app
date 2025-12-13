@@ -414,10 +414,27 @@ async def get_bundles():
 
 @api_router.get("/reviews", response_model=List[dict])
 async def get_reviews():
-    reviews = await db.reviews.find().to_list(100)
+    """Get public reviews - only approved ones if show_reviews is enabled"""
+    # Check site settings
+    settings = await db.site_settings.find_one({"id": "global"})
+    if settings and not settings.get("show_reviews", True):
+        return []  # Reviews disabled globally
+    
+    # Only return approved reviews
+    reviews = await db.reviews.find({"is_approved": True}).to_list(100)
     for r in reviews:
         r['_id'] = str(r.get('_id', ''))
     return reviews
+
+@api_router.get("/site-settings")
+async def get_public_site_settings():
+    """Get public site settings (stripe status, etc)"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
+    return {
+        "stripe_enabled": stripe_enabled,
+        "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None
+    }
 
 @api_router.get("/brand-kit")
 async def get_brand_kit():
