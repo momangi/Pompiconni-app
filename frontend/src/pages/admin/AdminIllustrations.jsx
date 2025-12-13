@@ -22,7 +22,9 @@ const AdminIllustrations = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingIllustration, setEditingIllustration] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState({ image: false, pdf: false });
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState(null);
   
   const [formData, setFormData] = useState({
     title: '',
