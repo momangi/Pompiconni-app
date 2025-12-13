@@ -319,7 +319,8 @@ const ThemePage = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
           {filteredIllustrations.length === 0 && (
             <div className="text-center py-16"><p className="text-gray-500 text-lg">Nessuna tavola trovata con questo filtro.</p></div>
