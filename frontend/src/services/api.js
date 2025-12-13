@@ -114,11 +114,6 @@ export const updateTheme = async (themeId, theme) => {
   return response.data;
 };
 
-export const deleteTheme = async (themeId) => {
-  const response = await api.delete(`/admin/themes/${themeId}`);
-  return response.data;
-};
-
 // Illustration CRUD
 export const createIllustration = async (illustration) => {
   const response = await api.post('/admin/illustrations', illustration);
