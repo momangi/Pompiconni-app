@@ -306,13 +306,42 @@ const AdminIllustrations = () => {
         {filteredIllustrations.map((illustration) => (
           <Card key={illustration.id} className="border shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
-                {illustration.imageUrl ? (
-                  <img src={`${BACKEND_URL}${illustration.imageUrl}`} alt={illustration.title} className="w-full h-full object-cover" />
+              <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden relative">
+                {illustration.imageFileId ? (
+                  <img 
+                    src={`${BACKEND_URL}/api/illustrations/${illustration.id}/image`} 
+                    alt={illustration.title} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : illustration.imageUrl ? (
+                  <img 
+                    src={`${BACKEND_URL}${illustration.imageUrl}`} 
+                    alt={illustration.title} 
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
                   <span className="text-4xl opacity-30">🦄</span>
                 )}
               </div>
+              
+              {/* File status badges */}
+              <div className="flex gap-2 mb-2">
+                <Badge 
+                  variant="outline" 
+                  className={illustration.imageFileId ? 'border-green-300 text-green-600' : 'border-gray-300 text-gray-400'}
+                >
+                  <Image className="w-3 h-3 mr-1" />
+                  {illustration.imageFileId ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                </Badge>
+                <Badge 
+                  variant="outline" 
+                  className={illustration.pdfFileId ? 'border-green-300 text-green-600' : 'border-gray-300 text-gray-400'}
+                >
+                  <FileText className="w-3 h-3 mr-1" />
+                  {illustration.pdfFileId ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                </Badge>
+              </div>
+              
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-800 truncate">{illustration.title}</h3>
@@ -326,6 +355,9 @@ const AdminIllustrations = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">{illustration.downloadCount} download</span>
                 <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => openUploadDialog(illustration)} title="Carica file">
+                    <Upload className="w-4 h-4" />
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(illustration)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
@@ -344,6 +376,94 @@ const AdminIllustrations = () => {
           <p className="text-gray-500">Nessuna illustrazione trovata</p>
         </div>
       )}
+      
+      {/* Upload Dialog for existing illustration */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Carica file per: {uploadTarget?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Image className="w-4 h-4" />
+                Immagine (JPG, JPEG, PNG)
+                {uploadTarget?.imageFileId && <CheckCircle className="w-4 h-4 text-green-500" />}
+              </Label>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                {uploadTarget?.imageFileId ? (
+                  <div>
+                    <p className="text-sm text-green-600 mb-2">Immagine presente</p>
+                    <p className="text-xs text-gray-400">Carica una nuova immagine per sostituire</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-2">Nessuna immagine caricata</p>
+                )}
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={(e) => e.target.files[0] && handleAttachFile(uploadTarget?.id, e.target.files[0], 'image')}
+                  className="hidden"
+                  id="attach-image"
+                  disabled={uploading.image}
+                />
+                <label 
+                  htmlFor="attach-image" 
+                  className={`inline-flex items-center px-4 py-2 rounded-lg cursor-pointer ${uploading.image ? 'bg-gray-100 text-gray-400' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}
+                >
+                  {uploading.image ? (
+                    <><div className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full mr-2" />Caricamento...</>
+                  ) : (
+                    <><Upload className="w-4 h-4 mr-2" />Carica immagine</>
+                  )}
+                </label>
+              </div>
+            </div>
+            
+            {/* PDF Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                PDF (per download)
+                {uploadTarget?.pdfFileId && <CheckCircle className="w-4 h-4 text-green-500" />}
+              </Label>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                {uploadTarget?.pdfFileId ? (
+                  <div>
+                    <p className="text-sm text-green-600 mb-2">PDF presente</p>
+                    <p className="text-xs text-gray-400">Carica un nuovo PDF per sostituire</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-2">Nessun PDF caricato</p>
+                )}
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => e.target.files[0] && handleAttachFile(uploadTarget?.id, e.target.files[0], 'pdf')}
+                  className="hidden"
+                  id="attach-pdf"
+                  disabled={uploading.pdf}
+                />
+                <label 
+                  htmlFor="attach-pdf" 
+                  className={`inline-flex items-center px-4 py-2 rounded-lg cursor-pointer ${uploading.pdf ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                >
+                  {uploading.pdf ? (
+                    <><div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full mr-2" />Caricamento...</>
+                  ) : (
+                    <><Upload className="w-4 h-4 mr-2" />Carica PDF</>
+                  )}
+                </label>
+              </div>
+            </div>
+            
+            <Button variant="outline" className="w-full" onClick={() => setUploadDialogOpen(false)}>
+              Chiudi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
