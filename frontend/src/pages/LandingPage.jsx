@@ -261,66 +261,68 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Single Review with rotation */}
-      <section className="py-20 bg-gradient-to-b from-pink-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Cosa dicono di <span className="gradient-text">Pompiconni</span></h2>
-          </div>
-          
-          {currentReview && (
-            <div className="max-w-2xl mx-auto">
-              <Card className="border-0 shadow-xl hover-lift">
-                <CardContent className="p-8 sm:p-12 text-center">
-                  <div className="flex justify-center gap-1 mb-6">
-                    {[...Array(currentReview.rating)].map((_, i) => (
-                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+      {/* Single Review with rotation - only show if there are reviews */}
+      {reviews.length > 0 && (
+        <section className="py-20 bg-gradient-to-b from-pink-50 to-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Cosa dicono di <span className="gradient-text">Pompiconni</span></h2>
+            </div>
+            
+            {currentReview && (
+              <div className="max-w-2xl mx-auto">
+                <Card className="border-0 shadow-xl hover-lift">
+                  <CardContent className="p-8 sm:p-12 text-center">
+                    <div className="flex justify-center gap-1 mb-6">
+                      {[...Array(currentReview.rating)].map((_, i) => (
+                        <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-xl text-gray-600 mb-8 italic leading-relaxed">"{currentReview.text}"</p>
+                    <div>
+                      <p className="font-bold text-gray-800 text-lg">{currentReview.name}</p>
+                      <p className="text-gray-500">{currentReview.role}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Navigation controls */}
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <button 
+                    onClick={prevReview}
+                    className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  
+                  <div className="flex gap-2">
+                    {reviews.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentReviewIndex(idx)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          idx === currentReviewIndex ? 'bg-pink-500 w-6' : 'bg-gray-300'
+                        }`}
+                      />
                     ))}
                   </div>
-                  <p className="text-xl text-gray-600 mb-8 italic leading-relaxed">"{currentReview.text}"</p>
-                  <div>
-                    <p className="font-bold text-gray-800 text-lg">{currentReview.name}</p>
-                    <p className="text-gray-500">{currentReview.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Navigation controls */}
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <button 
-                  onClick={prevReview}
-                  className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                
-                <div className="flex gap-2">
-                  {reviews.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentReviewIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        idx === currentReviewIndex ? 'bg-pink-500 w-6' : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
+                  
+                  <button 
+                    onClick={nextReview}
+                    className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
                 </div>
                 
-                <button 
-                  onClick={nextReview}
-                  className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-pink-50 transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                </button>
+                <p className="text-center text-sm text-gray-400 mt-4">
+                  {currentReviewIndex + 1} di {reviews.length} recensioni
+                </p>
               </div>
-              
-              <p className="text-center text-sm text-gray-400 mt-4">
-                {currentReviewIndex + 1} di {reviews.length} recensioni
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-20 bg-gradient-to-r from-pink-100 via-blue-50 to-green-50">
