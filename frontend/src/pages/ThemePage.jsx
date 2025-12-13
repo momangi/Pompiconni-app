@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Eye, Heart, Filter } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Heart, Filter, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -8,10 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { getTheme, getIllustrations, incrementDownload } from '../services/api';
+import { getTheme, getIllustrations, downloadIllustration, checkDownloadStatus, getSiteSettings } from '../services/api';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+const ThemePage = () => {
+  const { themeId } = useParams();
+  const [theme, setTheme] = useState(null);
+  const [illustrations, setIllustrations] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState({});
+  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
 
 const ThemePage = () => {
   const { themeId } = useParams();
