@@ -15,6 +15,8 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminIllustrations from "./pages/admin/AdminIllustrations";
 import AdminGenerator from "./pages/admin/AdminGenerator";
+import AdminThemes from "./pages/admin/AdminThemes";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogin from "./pages/admin/AdminLogin";
 import CookieBanner from "./components/CookieBanner";
 
@@ -40,8 +42,10 @@ function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="illustrazioni" element={<AdminIllustrations />} />
-            <Route path="generatore" element={<AdminGenerator />} />
+            <Route path="illustrations" element={<AdminIllustrations />} />
+            <Route path="themes" element={<AdminThemes />} />
+            <Route path="generator" element={<AdminGenerator />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
       </BrowserRouter>
