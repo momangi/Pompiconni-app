@@ -23,11 +23,7 @@ const ThemePage = () => {
   const [downloading, setDownloading] = useState({});
   const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
 
-const ThemePage = () => {
-  const { themeId } = useParams();
-  const [theme, setTheme] = useState(null);
-  const [illustrations, setIllustrations] = useState([]);
-  const [filter, setFilter] = useState('all');
+  useEffect(() => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState({});
