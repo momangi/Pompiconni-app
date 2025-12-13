@@ -946,6 +946,19 @@ async def admin_get_download_stats(email: str = Depends(verify_token)):
         "topIllustrations": top_illustrations
     }
 
+@admin_router.post("/reset-fake-counters")
+async def admin_reset_fake_counters(email: str = Depends(verify_token)):
+    """Reset all download counters to 0 (removes fake demo data)"""
+    result = await db.illustrations.update_many(
+        {},
+        {"$set": {"downloadCount": 0}}
+    )
+    return {
+        "success": True,
+        "message": f"Reset contatori per {result.modified_count} illustrazioni",
+        "modified_count": result.modified_count
+    }
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
