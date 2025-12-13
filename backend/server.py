@@ -130,6 +130,20 @@ class GenerateRequest(BaseModel):
     themeId: Optional[str] = None
     style: str = "lineart"
 
+class DownloadEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    illustrationId: str
+    bundleId: Optional[str] = None
+    downloadedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ipHash: Optional[str] = None  # Privacy-friendly tracking
+
+class SiteSettings(BaseModel):
+    show_reviews: bool = True
+    stripe_enabled: bool = False
+
+class ReviewUpdate(BaseModel):
+    is_approved: bool
+
 # ============== AUTH HELPERS ==============
 
 def create_token(email: str) -> str:
