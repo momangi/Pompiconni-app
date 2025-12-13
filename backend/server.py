@@ -563,8 +563,10 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
     illust_dict = illustration.dict()
     illust_dict['id'] = str(uuid.uuid4())
     illust_dict['downloadCount'] = 0
-    illust_dict['createdAt'] = datetime.utcnow()
-    illust_dict['updatedAt'] = datetime.utcnow()
+    illust_dict['pdfFileId'] = None
+    illust_dict['imageFileId'] = None
+    illust_dict['createdAt'] = datetime.now(timezone.utc)
+    illust_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.illustrations.insert_one(illust_dict)
     
     # Update theme illustration count
@@ -580,7 +582,7 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
 @admin_router.put("/illustrations/{illustration_id}")
 async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
     illust_dict = illustration.dict()
-    illust_dict['updatedAt'] = datetime.utcnow()
+    illust_dict['updatedAt'] = datetime.now(timezone.utc)
     result = await db.illustrations.update_one({"id": illustration_id}, {"$set": illust_dict})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
