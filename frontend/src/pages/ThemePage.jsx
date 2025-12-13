@@ -310,11 +310,10 @@ const ThemePage = () => {
                   <h3 className="font-bold text-gray-800 mb-1">{illustration.title}</h3>
                   <p className="text-sm text-gray-500 mb-3">{illustration.description}</p>
                   <div className="flex items-center justify-between text-sm">
-                    {illustration.downloadCount > 0 ? (
+                    {illustration.downloadCount > 0 && (
                       <span className="text-gray-400"><Download className="w-4 h-4 inline mr-1" />{illustration.downloadCount}</span>
-                    ) : (
-                      <span className="text-gray-300 text-xs">Nuovo</span>
                     )}
+                    {illustration.downloadCount === 0 && <span></span>}
                     {!illustration.isFree && <span className="text-pink-500 font-semibold">€{illustration.price}</span>}
                   </div>
                 </CardContent>
