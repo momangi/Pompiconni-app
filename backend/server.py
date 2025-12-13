@@ -1148,6 +1148,218 @@ async def admin_reset_fake_counters(email: str = Depends(verify_token)):
         "modified_count": result.modified_count
     }
 
+# ============== HERO IMAGE & SITE SETTINGS ==============
+
+@api_router.get("/site/hero-image")
+async def get_hero_image():
+    """Serve hero image from GridFS"""
+    from bson import ObjectId
+    
+    settings = await db.site_settings.find_one({"id": "global"})
+    if not settings or not settings.get('heroImageFileId'):
+        raise HTTPException(status_code=404, detail="Hero image non configurata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(settings['heroImageFileId']))
+        content = await grid_out.read()
+        content_type = settings.get('heroImageContentType', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving hero image: {str(e)}")
+        raise HTTPException(status_code=404, detail="Hero image non trovata")
+
+@api_router.get("/site/hero-status")
+async def get_hero_status():
+    """Check if hero image is configured"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    has_hero = bool(settings and settings.get('heroImageFileId'))
+    return {
+        "hasHeroImage": has_hero,
+        "heroImageUrl": "/api/site/hero-image" if has_hero else None,
+        "updatedAt": settings.get('heroImageUpdatedAt') if settings else None
+    }
+
+@admin_router.post("/site/hero-image")
+async def upload_hero_image(
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload or replace hero image"""
+    from bson import ObjectId
+    
+    # Validate file type
+    ext = Path(file.filename).suffix.lower()
+    allowed_extensions = [".jpg", ".jpeg", ".png"]
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Solo file immagine sono permessi: {', '.join(allowed_extensions)}")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        unique_filename = f"hero_pompiconni_{uuid.uuid4()}{ext}"
+        
+        # Delete old hero image if exists
+        settings = await db.site_settings.find_one({"id": "global"})
+        if settings and settings.get('heroImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(settings['heroImageFileId']))
+            except Exception:
+                pass
+        
+        # Upload to GridFS
+        file_id = await gridfs_bucket.upload_from_stream(
+            unique_filename,
+            io.BytesIO(content),
+            metadata={
+                "type": "hero_image",
+                "original_filename": file.filename,
+                "content_type": content_type,
+                "uploaded_by": email,
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        # Update site settings
+        await db.site_settings.update_one(
+            {"id": "global"},
+            {
+                "$set": {
+                    "heroImageFileId": str(file_id),
+                    "heroImageContentType": content_type,
+                    "heroImageFileName": file.filename,
+                    "heroImageUpdatedAt": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "heroImageUrl": "/api/site/hero-image",
+            "message": "Hero image aggiornata con successo"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error uploading hero image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento dell'immagine")
+
+@admin_router.delete("/site/hero-image")
+async def delete_hero_image(email: str = Depends(verify_token)):
+    """Delete hero image (restore to default)"""
+    from bson import ObjectId
+    
+    settings = await db.site_settings.find_one({"id": "global"})
+    if settings and settings.get('heroImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(settings['heroImageFileId']))
+        except Exception:
+            pass
+        
+        await db.site_settings.update_one(
+            {"id": "global"},
+            {
+                "$unset": {
+                    "heroImageFileId": "",
+                    "heroImageContentType": "",
+                    "heroImageFileName": "",
+                    "heroImageUpdatedAt": ""
+                }
+            }
+        )
+    
+    return {"success": True, "message": "Hero image rimossa, ripristinato default"}
+
+@api_router.get("/theme-colors")
+async def get_theme_color_palette():
+    """Get available theme colors"""
+    return THEME_COLOR_PALETTE
+
+# ============== ENHANCED THEME CRUD ==============
+
+@admin_router.get("/themes/check-delete/{theme_id}")
+async def check_theme_delete(theme_id: str, email: str = Depends(verify_token)):
+    """Check if theme can be deleted and how many illustrations it has"""
+    theme = await db.themes.find_one({"id": theme_id})
+    if not theme:
+        raise HTTPException(status_code=404, detail="Tema non trovato")
+    
+    illustration_count = await db.illustrations.count_documents({"themeId": theme_id})
+    
+    return {
+        "canDelete": illustration_count == 0,
+        "illustrationCount": illustration_count,
+        "message": f"Questo tema ha {illustration_count} illustrazioni associate" if illustration_count > 0 else "Tema eliminabile"
+    }
+
+@admin_router.delete("/themes/{theme_id}")
+async def delete_theme(theme_id: str, force: bool = False, email: str = Depends(verify_token)):
+    """Delete theme. If force=true, unassign illustrations first."""
+    theme = await db.themes.find_one({"id": theme_id})
+    if not theme:
+        raise HTTPException(status_code=404, detail="Tema non trovato")
+    
+    illustration_count = await db.illustrations.count_documents({"themeId": theme_id})
+    
+    if illustration_count > 0 and not force:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Tema ha {illustration_count} illustrazioni. Usa force=true per rimuovere comunque."
+        )
+    
+    # Unassign illustrations if force delete
+    if force and illustration_count > 0:
+        await db.illustrations.update_many(
+            {"themeId": theme_id},
+            {"$set": {"themeId": None, "updatedAt": datetime.now(timezone.utc)}}
+        )
+    
+    await db.themes.delete_one({"id": theme_id})
+    
+    return {
+        "success": True,
+        "message": f"Tema eliminato. {illustration_count} illustrazioni riassegnate." if illustration_count > 0 else "Tema eliminato."
+    }
+
+@admin_router.put("/illustrations/{illustration_id}/theme")
+async def change_illustration_theme(
+    illustration_id: str, 
+    theme_id: Optional[str] = None,
+    email: str = Depends(verify_token)
+):
+    """Change or remove theme assignment for an illustration"""
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    old_theme_id = illust.get('themeId')
+    
+    # Validate new theme exists if provided
+    if theme_id:
+        theme = await db.themes.find_one({"id": theme_id})
+        if not theme:
+            raise HTTPException(status_code=404, detail="Nuovo tema non trovato")
+    
+    # Update illustration
+    await db.illustrations.update_one(
+        {"id": illustration_id},
+        {"$set": {"themeId": theme_id, "updatedAt": datetime.now(timezone.utc)}}
+    )
+    
+    # Update theme counters
+    if old_theme_id:
+        await db.themes.update_one({"id": old_theme_id}, {"$inc": {"illustrationCount": -1}})
+    if theme_id:
+        await db.themes.update_one({"id": theme_id}, {"$inc": {"illustrationCount": 1}})
+    
+    return {"success": True, "message": "Tema aggiornato"}
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
