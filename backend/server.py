@@ -763,6 +763,87 @@ async def attach_pdf_to_illustration(
         logger.error(f"Error attaching PDF: {str(e)}")
         raise HTTPException(status_code=500, detail="Errore durante il caricamento del PDF")
 
+@admin_router.post("/illustrations/{illustration_id}/attach-image")
+async def attach_image_to_illustration(
+    illustration_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload and attach an image file (jpg, jpeg, png) to an illustration"""
+    from bson import ObjectId
+    
+    # Verify illustration exists
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    # Validate file type
+    ext = Path(file.filename).suffix.lower()
+    allowed_extensions = [".jpg", ".jpeg", ".png"]
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Solo file immagine sono permessi: {', '.join(allowed_extensions)}")
+    
+    # Determine content type
+    content_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png"
+    }
+    content_type = content_types.get(ext, "image/jpeg")
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Generate filename based on illustration title
+        safe_title = illust.get('title', illustration_id).replace(' ', '_').replace('"', '').replace("'", "")
+        unique_filename = f"pompiconni_{safe_title}{ext}"
+        
+        # Delete old image if exists
+        old_file_id = illust.get('imageFileId')
+        if old_file_id:
+            try:
+                await gridfs_bucket.delete(ObjectId(old_file_id))
+            except Exception:
+                pass  # Old file might not exist
+        
+        # Upload to GridFS
+        file_id = await gridfs_bucket.upload_from_stream(
+            unique_filename,
+            io.BytesIO(content),
+            metadata={
+                "illustration_id": illustration_id,
+                "original_filename": file.filename,
+                "file_type": "image",
+                "content_type": content_type,
+                "uploaded_by": email,
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        # Update illustration with image file ID and URL
+        await db.illustrations.update_one(
+            {"id": illustration_id},
+            {
+                "$set": {
+                    "imageFileId": str(file_id),
+                    "imageUrl": f"/api/illustrations/{illustration_id}/image",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "fileId": str(file_id),
+            "imageUrl": f"/api/illustrations/{illustration_id}/image",
+            "message": "Immagine caricata e collegata all'illustrazione"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error attaching image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento dell'immagine")
+
 @admin_router.post("/generate-illustration")
 async def generate_illustration(request: GenerateRequest, email: str = Depends(verify_token)):
     try:
