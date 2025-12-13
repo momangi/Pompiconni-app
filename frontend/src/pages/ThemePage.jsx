@@ -255,15 +255,57 @@ const ThemePage = () => {
                             )}
                           </div>
                           <p className="text-gray-600 mb-4">{illustration.description}</p>
-                          <Button className="w-full bg-pink-500 hover:bg-pink-600" onClick={() => handleDownload(illustration)}>
-                            <Download className="w-4 h-4 mr-2" />{illustration.isFree ? 'Scarica Gratis' : 'Acquista PDF'}
-                          </Button>
+                          {!illustration.isFree && !siteSettings.stripe_enabled ? (
+                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                              <AlertCircle className="w-5 h-5 text-yellow-500 mx-auto mb-2" />
+                              <p className="text-sm text-yellow-700">Pagamenti non ancora attivi</p>
+                            </div>
+                          ) : (
+                            <Button 
+                              className="w-full bg-pink-500 hover:bg-pink-600" 
+                              onClick={() => handleDownload(illustration)}
+                              disabled={downloading[illustration.id]}
+                            >
+                              {downloading[illustration.id] ? (
+                                <>
+                                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                  Downloading...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  {illustration.isFree ? 'Scarica Gratis' : `Acquista €${illustration.price}`}
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <Button size="sm" className="bg-pink-500 hover:bg-pink-600" onClick={() => handleDownload(illustration)}>
-                      <Download className="w-4 h-4 mr-1" />{illustration.isFree ? 'Scarica' : 'Acquista'}
-                    </Button>
+                    {illustration.isFree ? (
+                      <Button 
+                        size="sm" 
+                        className="bg-pink-500 hover:bg-pink-600" 
+                        onClick={() => handleDownload(illustration)}
+                        disabled={downloading[illustration.id]}
+                      >
+                        {downloading[illustration.id] ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        ) : (
+                          <><Download className="w-4 h-4 mr-1" />Scarica</>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        className={siteSettings.stripe_enabled ? "bg-pink-500 hover:bg-pink-600" : "bg-gray-400 cursor-not-allowed"}
+                        onClick={() => siteSettings.stripe_enabled && handleDownload(illustration)}
+                        disabled={!siteSettings.stripe_enabled}
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        {siteSettings.stripe_enabled ? 'Acquista' : 'Non disponibile'}
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <CardContent className="p-4">
