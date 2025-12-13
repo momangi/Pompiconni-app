@@ -343,8 +343,19 @@ async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool
     if isFree is not None:
         query["isFree"] = isFree
     illustrations = await db.illustrations.find(query).to_list(1000)
+    
+    # Get real download counts from download_events
+    download_counts = {}
+    pipeline = [{"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}}]
+    events = await db.download_events.aggregate(pipeline).to_list(1000)
+    for e in events:
+        download_counts[e["_id"]] = e["count"]
+    
+    # Override downloadCount with real counts
     for i in illustrations:
         i['_id'] = str(i.get('_id', ''))
+        i['downloadCount'] = download_counts.get(i['id'], 0)
+    
     return illustrations
 
 @api_router.get("/illustrations/{illustration_id}")
@@ -353,6 +364,11 @@ async def get_illustration(illustration_id: str):
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     illust['_id'] = str(illust.get('_id', ''))
+    
+    # Get real download count from download_events
+    real_count = await db.download_events.count_documents({"illustrationId": illustration_id})
+    illust['downloadCount'] = real_count
+    
     return illust
 
 @api_router.post("/illustrations/{illustration_id}/download")
