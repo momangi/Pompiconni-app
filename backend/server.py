@@ -494,22 +494,40 @@ async def admin_dashboard(email: str = Depends(verify_token)):
     total_themes = await db.themes.count_documents({})
     free_count = await db.illustrations.count_documents({"isFree": True})
     
-    # Calculate total downloads
+    # Calculate total downloads from real download_events
+    total_download_events = await db.download_events.count_documents({})
+    
+    # Also sum from illustration counters (for compatibility)
     pipeline = [{"$group": {"_id": None, "total": {"$sum": "$downloadCount"}}}]
     result = await db.illustrations.aggregate(pipeline).to_list(1)
-    total_downloads = result[0]["total"] if result else 0
+    total_from_counters = result[0]["total"] if result else 0
+    
+    # Use the higher of the two (events are the source of truth)
+    total_downloads = max(total_download_events, total_from_counters)
     
     # Get popular illustrations
     popular = await db.illustrations.find().sort("downloadCount", -1).limit(5).to_list(5)
     for p in popular:
         p['_id'] = str(p.get('_id', ''))
     
+    # Get download stats for last 7 days
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    recent_downloads = await db.download_events.count_documents({
+        "downloadedAt": {"$gte": seven_days_ago}
+    })
+    
+    # Get site settings
+    settings = await db.site_settings.find_one({"id": "global"})
+    
     return {
         "totalIllustrations": total_illustrations,
         "totalThemes": total_themes,
         "totalDownloads": total_downloads,
         "freeCount": free_count,
-        "popularIllustrations": popular
+        "popularIllustrations": popular,
+        "recentDownloads": recent_downloads,
+        "stripeEnabled": bool(STRIPE_SECRET_KEY),
+        "showReviews": settings.get("show_reviews", True) if settings else True
     }
 
 @admin_router.post("/themes")
