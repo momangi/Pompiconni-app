@@ -73,15 +73,72 @@ const ThemePage = () => {
   };
 
   const handleDownload = async (illustration) => {
+    // For premium content, check if Stripe is enabled
+    if (!illustration.isFree) {
+      if (!siteSettings.stripe_enabled) {
+        toast.error('Pagamenti non ancora attivi');
+        return;
+      }
+      // TODO: Implement Stripe checkout
+      toast.info('Funzionalità di acquisto in arrivo');
+      return;
+    }
+    
+    // Check if file is available
     try {
-      await incrementDownload(illustration.id);
-      toast.success(`Download di "${illustration.title}" avviato!`);
-      // In production, this would trigger actual file download
-      if (illustration.pdfUrl) {
-        window.open(`${BACKEND_URL}${illustration.pdfUrl}`, '_blank');
+      const status = await checkDownloadStatus(illustration.id);
+      if (!status.available) {
+        toast.error('File non ancora disponibile. Il PDF deve essere caricato dall\'amministratore.');
+        return;
       }
     } catch (error) {
-      toast.error('Errore durante il download');
+      toast.error('Errore nel verificare la disponibilità del file');
+      return;
+    }
+    
+    // Proceed with download
+    setDownloading(prev => ({ ...prev, [illustration.id]: true }));
+    
+    try {
+      const response = await downloadIllustration(illustration.id);
+      
+      // Create blob and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from response header or generate one
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `pompiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Download di "${illustration.title}" completato!`);
+      
+      // Refresh illustrations to update download count
+      const updatedIllustrations = await getIllustrations(themeId);
+      setIllustrations(updatedIllustrations);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      if (error.response?.status === 404) {
+        toast.error('File non ancora disponibile');
+      } else {
+        toast.error('Errore durante il download');
+      }
+    } finally {
+      setDownloading(prev => ({ ...prev, [illustration.id]: false }));
     }
   };
 
