@@ -7,12 +7,14 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings } from '../services/api';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 const LandingPage = () => {
   const [themes, setThemes] = useState([]);
   const [bundles, setBundles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [illustrations, setIllustrations] = useState([]);
-  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
+  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false, hasHeroImage: false });
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
