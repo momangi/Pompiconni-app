@@ -231,7 +231,7 @@ async def init_database():
     # Check if themes exist - use insert_many for batch performance
     themes_count = await db.themes.count_documents({})
     if themes_count == 0:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         themes_to_insert = []
         for theme in SEED_THEMES:
             theme['createdAt'] = now
@@ -243,19 +243,24 @@ async def init_database():
     # Check if illustrations exist - use insert_many for batch performance
     illustrations_count = await db.illustrations.count_documents({})
     if illustrations_count == 0:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         illustrations_to_insert = []
         for illust in SEED_ILLUSTRATIONS:
+            # Reset download count to 0 - no fake numbers
+            illust['downloadCount'] = 0
             illust['createdAt'] = now
             illust['updatedAt'] = now
+            # Set pdfFileId and imageFileId to None initially (files not uploaded yet)
+            illust['pdfFileId'] = None
+            illust['imageFileId'] = None
             illustrations_to_insert.append(illust)
         await db.illustrations.insert_many(illustrations_to_insert)
-        logger.info("Seed illustrations inserted")
+        logger.info("Seed illustrations inserted with zero download counts")
     
     # Check if bundles exist - use insert_many for batch performance
     bundles_count = await db.bundles.count_documents({})
     if bundles_count == 0:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         bundles_to_insert = []
         for bundle in SEED_BUNDLES:
             bundle['createdAt'] = now
@@ -267,7 +272,18 @@ async def init_database():
     reviews_count = await db.reviews.count_documents({})
     if reviews_count == 0:
         await db.reviews.insert_many(SEED_REVIEWS)
-        logger.info("Seed reviews inserted")
+        logger.info("Seed reviews inserted with is_approved field")
+    
+    # Initialize site_settings if not exists
+    settings = await db.site_settings.find_one({"id": "global"})
+    if not settings:
+        await db.site_settings.insert_one({
+            "id": "global",
+            "show_reviews": True,
+            "stripe_enabled": bool(STRIPE_SECRET_KEY),
+            "createdAt": datetime.now(timezone.utc)
+        })
+        logger.info("Site settings initialized")
 
 @app.on_event("startup")
 async def startup_event():
