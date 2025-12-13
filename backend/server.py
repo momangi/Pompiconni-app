@@ -400,9 +400,72 @@ async def get_download_status(illustration_id: str):
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
     has_pdf = bool(illust.get('pdfFileId'))
+    has_image = bool(illust.get('imageFileId'))
     return {
         "available": has_pdf,
+        "hasImage": has_image,
         "message": "File disponibile" if has_pdf else "File non ancora disponibile"
+    }
+
+@api_router.get("/illustrations/{illustration_id}/image")
+async def get_illustration_image(illustration_id: str):
+    """
+    Serve the illustration image from GridFS.
+    Returns the image for preview/display purposes.
+    """
+    from bson import ObjectId
+    
+    # Find the illustration
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    # Check if image exists in GridFS
+    image_file_id = illust.get('imageFileId')
+    if not image_file_id:
+        raise HTTPException(
+            status_code=404, 
+            detail="Immagine non ancora disponibile"
+        )
+    
+    try:
+        # Get file from GridFS
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(image_file_id))
+        
+        # Read file content
+        content = await grid_out.read()
+        
+        # Get content type from metadata
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/jpeg')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={
+                "Cache-Control": "public, max-age=31536000"  # Cache for 1 year
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error serving image: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Errore durante il caricamento dell'immagine"
+        )
+
+@api_router.get("/illustrations/{illustration_id}/image-status")
+async def get_image_status(illustration_id: str):
+    """Check if an image is available"""
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    has_image = bool(illust.get('imageFileId'))
+    return {
+        "available": has_image,
+        "imageUrl": f"/api/illustrations/{illustration_id}/image" if has_image else None,
+        "message": "Immagine disponibile" if has_image else "Immagine non ancora disponibile"
     }
 
 @api_router.get("/bundles", response_model=List[dict])
