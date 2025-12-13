@@ -24,12 +24,6 @@ const ThemePage = () => {
   const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
 
   useEffect(() => {
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState({});
-  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const [themeData, illustrationsData, settingsData] = await Promise.all([
