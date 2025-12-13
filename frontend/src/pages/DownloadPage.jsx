@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, FileText, Package, Star, Check } from 'lucide-react';
+import { Download, FileText, Package, Star, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { getBundles, getIllustrations, incrementDownload } from '../services/api';
+import { getBundles, getIllustrations, downloadIllustration, checkDownloadStatus, getSiteSettings } from '../services/api';
 import { toast } from 'sonner';
 
 const DownloadPage = () => {
   const [bundles, setBundles] = useState([]);
   const [freeIllustrations, setFreeIllustrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState({});
+  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bundlesData, illustrationsData] = await Promise.all([
+        const [bundlesData, illustrationsData, settingsData] = await Promise.all([
           getBundles(),
-          getIllustrations(null, true) // Only free illustrations
+          getIllustrations(null, true), // Only free illustrations
+          getSiteSettings()
         ]);
         setBundles(bundlesData);
         setFreeIllustrations(illustrationsData);
+        setSiteSettings(settingsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -32,15 +36,62 @@ const DownloadPage = () => {
     fetchData();
   }, []);
 
-  const handleDownload = async (item) => {
+  const handleDownloadIllustration = async (illustration) => {
+    // Check if file is available
     try {
-      if (item.id && !item.illustrationIds) {
-        // Single illustration
-        await incrementDownload(item.id);
+      const status = await checkDownloadStatus(illustration.id);
+      if (!status.available) {
+        toast.error('File non ancora disponibile. Il PDF deve essere caricato dall\'amministratore.');
+        return;
       }
-      toast.success(`Download di "${item.name || item.title}" avviato!`);
     } catch (error) {
-      toast.error('Errore durante il download');
+      toast.error('Errore nel verificare la disponibilità del file');
+      return;
+    }
+    
+    setDownloading(prev => ({ ...prev, [illustration.id]: true }));
+    
+    try {
+      const response = await downloadIllustration(illustration.id);
+      
+      // Create blob and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `pompiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Download di "${illustration.title}" completato!`);
+      
+      // Refresh to update counts
+      const updatedIllustrations = await getIllustrations(null, true);
+      setFreeIllustrations(updatedIllustrations);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      if (error.response?.status === 404) {
+        toast.error('File non ancora disponibile');
+      } else {
+        toast.error('Errore durante il download');
+      }
+    } finally {
+      setDownloading(prev => ({ ...prev, [illustration.id]: false }));
+    }
+  };
+
+  const handleBundleAction = (bundle) => {
+    if (bundle.isFree) {
+      toast.info('Bundle gratuito - funzionalità in arrivo');
+    } else {
+      if (!siteSettings.stripe_enabled) {
+        toast.error('Pagamenti non ancora attivi');
+      } else {
+        toast.info('Funzionalità di acquisto in arrivo');
+      }
     }
   };
 
