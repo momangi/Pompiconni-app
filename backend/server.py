@@ -642,13 +642,6 @@ async def update_theme(theme_id: str, theme: ThemeCreate, email: str = Depends(v
         raise HTTPException(status_code=404, detail="Tema non trovato")
     return {"success": True}
 
-@admin_router.delete("/themes/{theme_id}")
-async def delete_theme(theme_id: str, email: str = Depends(verify_token)):
-    result = await db.themes.delete_one({"id": theme_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Tema non trovato")
-    return {"success": True}
-
 @admin_router.post("/illustrations")
 async def create_illustration(illustration: IllustrationCreate, email: str = Depends(verify_token)):
     illust_dict = illustration.dict()
