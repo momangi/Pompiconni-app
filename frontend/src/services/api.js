@@ -45,8 +45,16 @@ export const getIllustration = async (illustrationId) => {
   return response.data;
 };
 
-export const incrementDownload = async (illustrationId) => {
-  const response = await api.post(`/illustrations/${illustrationId}/download`);
+export const downloadIllustration = async (illustrationId) => {
+  // This triggers a real file download
+  const response = await api.post(`/illustrations/${illustrationId}/download`, {}, {
+    responseType: 'blob'
+  });
+  return response;
+};
+
+export const checkDownloadStatus = async (illustrationId) => {
+  const response = await api.get(`/illustrations/${illustrationId}/download-status`);
   return response.data;
 };
 
@@ -62,6 +70,11 @@ export const getReviews = async () => {
 
 export const getBrandKit = async () => {
   const response = await api.get('/brand-kit');
+  return response.data;
+};
+
+export const getSiteSettings = async () => {
+  const response = await api.get('/site-settings');
   return response.data;
 };
 
