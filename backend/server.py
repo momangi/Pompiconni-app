@@ -933,6 +933,9 @@ async def attach_image_to_illustration(
 
 @admin_router.post("/generate-illustration")
 async def generate_illustration(request: GenerateRequest, email: str = Depends(verify_token)):
+    """Generate AI illustration and save to GridFS"""
+    from bson import ObjectId
+    
     try:
         from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
         
@@ -961,52 +964,70 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
         if not images or len(images) == 0:
             raise HTTPException(status_code=500, detail="Nessuna immagine generata")
         
-        # Save the generated image
-        unique_filename = f"generated_{uuid.uuid4()}.png"
-        file_path = UPLOAD_DIR / unique_filename
+        # Create illustration record first to get ID
+        illustration_id = str(uuid.uuid4())
+        safe_prompt = request.prompt[:30].replace(' ', '_').replace('"', '').replace("'", "")
+        unique_filename = f"ai_pompiconni_{safe_prompt}_{illustration_id[:8]}.png"
         
-        async with aiofiles.open(file_path, 'wb') as f:
-            await f.write(images[0])
+        # Save to GridFS for persistent storage
+        file_id = await gridfs_bucket.upload_from_stream(
+            unique_filename,
+            io.BytesIO(images[0]),
+            metadata={
+                "illustration_id": illustration_id,
+                "original_filename": unique_filename,
+                "file_type": "image",
+                "content_type": "image/png",
+                "generated_by": "ai",
+                "prompt": request.prompt,
+                "style": request.style,
+                "uploaded_by": email,
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+        )
         
-        image_url = f"/uploads/{unique_filename}"
-        
-        # Convert to base64 for preview
+        # Convert to base64 for immediate preview
         image_base64 = base64.b64encode(images[0]).decode('utf-8')
         
-        # Optionally create illustration record
+        # Create illustration record with GridFS reference
+        illust_dict = {
+            'id': illustration_id,
+            'themeId': request.themeId if request.themeId else None,
+            'title': f"Pompiconni - {request.prompt[:30]}",
+            'description': request.prompt,
+            'imageUrl': f"/api/illustrations/{illustration_id}/image",
+            'imageFileId': str(file_id),
+            'imageContentType': "image/png",
+            'imageOriginalFilename': unique_filename,
+            'pdfUrl': None,
+            'pdfFileId': None,
+            'isFree': True,
+            'price': 0,
+            'downloadCount': 0,
+            'generatedByAI': True,
+            'aiPrompt': request.prompt,
+            'aiStyle': request.style,
+            'createdAt': datetime.now(timezone.utc),
+            'updatedAt': datetime.now(timezone.utc)
+        }
+        await db.illustrations.insert_one(illust_dict)
+        
+        # Update theme illustration count if theme provided
         if request.themeId:
-            illust_dict = {
-                'id': str(uuid.uuid4()),
-                'themeId': request.themeId,
-                'title': f"Pompiconni - {request.prompt[:30]}",
-                'description': request.prompt,
-                'imageUrl': image_url,
-                'pdfUrl': None,
-                'pdfFileId': None,
-                'imageFileId': None,
-                'isFree': True,
-                'price': 0,
-                'downloadCount': 0,
-                'createdAt': datetime.now(timezone.utc),
-                'updatedAt': datetime.now(timezone.utc)
-            }
-            await db.illustrations.insert_one(illust_dict)
             await db.themes.update_one(
                 {"id": request.themeId},
                 {"$inc": {"illustrationCount": 1}}
             )
-            
-            return {
-                "success": True,
-                "imageUrl": image_url,
-                "imageBase64": image_base64,
-                "illustration": illust_dict
-            }
+        
+        # Remove _id for response
+        illust_dict.pop('_id', None)
         
         return {
             "success": True,
-            "imageUrl": image_url,
-            "imageBase64": image_base64
+            "imageUrl": f"/api/illustrations/{illustration_id}/image",
+            "imageBase64": image_base64,
+            "illustration": illust_dict,
+            "message": "Illustrazione generata e salvata con successo"
         }
         
     except ImportError:
