@@ -213,7 +213,7 @@ const AdminIllustrations = () => {
               )}
               <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
                 <p className="font-medium text-gray-700 mb-1">Nota:</p>
-                <p>Dopo aver creato l'illustrazione, potrai caricare immagine e PDF cliccando sul pulsante upload nella card.</p>
+                <p>Dopo aver creato l&apos;illustrazione, potrai caricare immagine e PDF cliccando sul pulsante upload nella card.</p>
               </div>
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Annulla</Button>
