@@ -30,16 +30,20 @@ const ThemePage = () => {
   const [filter, setFilter] = useState('all');
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState({});
+  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [themeData, illustrationsData] = await Promise.all([
+        const [themeData, illustrationsData, settingsData] = await Promise.all([
           getTheme(themeId),
-          getIllustrations(themeId)
+          getIllustrations(themeId),
+          getSiteSettings()
         ]);
         setTheme(themeData);
         setIllustrations(illustrationsData);
+        setSiteSettings(settingsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
