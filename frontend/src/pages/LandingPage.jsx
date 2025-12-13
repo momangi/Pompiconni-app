@@ -244,10 +244,16 @@ const LandingPage = () => {
                   <p className="text-sm text-gray-600 mb-4">{bundle.description}</p>
                   <p className="text-3xl font-bold text-pink-500 mb-4">{bundle.isFree ? 'Gratis' : `€${bundle.price}`}</p>
                   <p className="text-xs text-gray-500 mb-4">{bundle.illustrationCount} illustrazioni</p>
-                  <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`}>
-                    <Download className="w-4 h-4 mr-2" />
-                    {bundle.isFree ? 'Scarica Ora' : 'Acquista'}
-                  </Button>
+                  {!bundle.isFree && !siteSettings.stripe_enabled ? (
+                    <div className="p-2 bg-yellow-50 rounded-lg">
+                      <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
+                    </div>
+                  ) : (
+                    <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`}>
+                      <Download className="w-4 h-4 mr-2" />
+                      {bundle.isFree ? 'Scarica Ora' : 'Acquista'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
