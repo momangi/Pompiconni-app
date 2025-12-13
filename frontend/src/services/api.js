@@ -178,6 +178,25 @@ export const attachPdfToIllustration = async (illustrationId, file) => {
   return response.data;
 };
 
+// Attach Image to illustration
+export const attachImageToIllustration = async (illustrationId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post(`/admin/illustrations/${illustrationId}/attach-image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+// Get image status
+export const getImageStatus = async (illustrationId) => {
+  const response = await api.get(`/illustrations/${illustrationId}/image-status`);
+  return response.data;
+};
+
 // AI Generation
 export const generateIllustration = async (prompt, themeId = null, style = 'lineart') => {
   const response = await api.post('/admin/generate-illustration', {
