@@ -157,8 +157,16 @@ class SiteSettings(BaseModel):
     show_reviews: bool = True
     stripe_enabled: bool = False
 
+class SiteSettingsUpdate(BaseModel):
+    show_reviews: Optional[bool] = None
+
 class ReviewUpdate(BaseModel):
     is_approved: bool
+
+class HeroImageResponse(BaseModel):
+    hasHeroImage: bool
+    heroImageUrl: Optional[str] = None
+    updatedAt: Optional[str] = None
 
 # ============== AUTH HELPERS ==============
 
