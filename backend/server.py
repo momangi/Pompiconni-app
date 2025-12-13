@@ -814,11 +814,13 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
                 'description': request.prompt,
                 'imageUrl': image_url,
                 'pdfUrl': None,
+                'pdfFileId': None,
+                'imageFileId': None,
                 'isFree': True,
                 'price': 0,
                 'downloadCount': 0,
-                'createdAt': datetime.utcnow(),
-                'updatedAt': datetime.utcnow()
+                'createdAt': datetime.now(timezone.utc),
+                'updatedAt': datetime.now(timezone.utc)
             }
             await db.illustrations.insert_one(illust_dict)
             await db.themes.update_one(
