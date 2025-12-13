@@ -332,14 +332,78 @@ async def get_illustration(illustration_id: str):
     return illust
 
 @api_router.post("/illustrations/{illustration_id}/download")
-async def increment_download(illustration_id: str):
-    result = await db.illustrations.update_one(
-        {"id": illustration_id},
-        {"$inc": {"downloadCount": 1}}
-    )
-    if result.modified_count == 0:
+async def download_illustration(illustration_id: str):
+    """
+    Real file download endpoint using GridFS.
+    Returns the PDF file as a downloadable attachment.
+    """
+    # Find the illustration
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    return {"success": True}
+    
+    # Check if file exists in GridFS
+    pdf_file_id = illust.get('pdfFileId')
+    if not pdf_file_id:
+        raise HTTPException(
+            status_code=404, 
+            detail="File non ancora disponibile. L'amministratore deve prima caricare il PDF."
+        )
+    
+    try:
+        from bson import ObjectId
+        # Get file from GridFS
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(pdf_file_id))
+        
+        # Read file content
+        content = await grid_out.read()
+        
+        # Log download event
+        await db.download_events.insert_one({
+            "id": str(uuid.uuid4()),
+            "illustrationId": illustration_id,
+            "bundleId": None,
+            "downloadedAt": datetime.now(timezone.utc)
+        })
+        
+        # Increment download counter
+        await db.illustrations.update_one(
+            {"id": illustration_id},
+            {"$inc": {"downloadCount": 1}}
+        )
+        
+        # Get filename from GridFS metadata or generate one
+        filename = grid_out.filename or f"pompiconni_{illust.get('title', illustration_id)}.pdf"
+        # Sanitize filename
+        filename = filename.replace(' ', '_').replace('"', '').replace("'", "")
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading file: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Errore durante il download del file"
+        )
+
+@api_router.get("/illustrations/{illustration_id}/download-status")
+async def get_download_status(illustration_id: str):
+    """Check if a file is available for download"""
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    has_pdf = bool(illust.get('pdfFileId'))
+    return {
+        "available": has_pdf,
+        "message": "File disponibile" if has_pdf else "File non ancora disponibile"
+    }
 
 @api_router.get("/bundles", response_model=List[dict])
 async def get_bundles():
