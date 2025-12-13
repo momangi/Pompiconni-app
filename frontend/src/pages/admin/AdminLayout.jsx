@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Images, Wand2, LogOut, Home } from 'lucide-react';
+import { LayoutDashboard, Images, Wand2, LogOut, Home, Palette, Settings } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { isAuthenticated, adminLogout } from '../../services/api';
 import { toast } from 'sonner';
@@ -23,8 +23,10 @@ const AdminLayout = () => {
 
   const navItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/illustrazioni', label: 'Illustrazioni', icon: Images },
-    { path: '/admin/generatore', label: 'Generatore AI', icon: Wand2 },
+    { path: '/admin/illustrations', label: 'Illustrazioni', icon: Images },
+    { path: '/admin/themes', label: 'Temi', icon: Palette },
+    { path: '/admin/generator', label: 'Generatore AI', icon: Wand2 },
+    { path: '/admin/settings', label: 'Impostazioni', icon: Settings },
   ];
 
   const isActive = (path) => location.pathname === path;
