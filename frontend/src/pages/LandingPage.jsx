@@ -107,7 +107,7 @@ const LandingPage = () => {
               
               <div className="flex gap-8 mt-12">
                 <div>
-                  <p className="text-3xl font-bold text-pink-500">70+</p>
+                  <p className="text-3xl font-bold text-pink-500">{illustrations.length}+</p>
                   <p className="text-gray-500">Tavole da colorare</p>
                 </div>
                 <div>
