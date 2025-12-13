@@ -535,8 +535,8 @@ async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
     theme_dict = theme.dict()
     theme_dict['id'] = str(uuid.uuid4())
     theme_dict['illustrationCount'] = 0
-    theme_dict['createdAt'] = datetime.utcnow()
-    theme_dict['updatedAt'] = datetime.utcnow()
+    theme_dict['createdAt'] = datetime.now(timezone.utc)
+    theme_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.themes.insert_one(theme_dict)
     # Remove MongoDB _id field to avoid serialization issues
     theme_dict.pop('_id', None)
@@ -545,7 +545,7 @@ async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
 @admin_router.put("/themes/{theme_id}")
 async def update_theme(theme_id: str, theme: ThemeCreate, email: str = Depends(verify_token)):
     theme_dict = theme.dict()
-    theme_dict['updatedAt'] = datetime.utcnow()
+    theme_dict['updatedAt'] = datetime.now(timezone.utc)
     result = await db.themes.update_one({"id": theme_id}, {"$set": theme_dict})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Tema non trovato")
