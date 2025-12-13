@@ -165,6 +165,19 @@ export const uploadFile = async (file, fileType = 'image') => {
   return response.data;
 };
 
+// Attach PDF to illustration
+export const attachPdfToIllustration = async (illustrationId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post(`/admin/illustrations/${illustrationId}/attach-pdf`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 // AI Generation
 export const generateIllustration = async (prompt, themeId = null, style = 'lineart') => {
   const response = await api.post('/admin/generate-illustration', {
@@ -172,6 +185,40 @@ export const generateIllustration = async (prompt, themeId = null, style = 'line
     themeId,
     style,
   });
+  return response.data;
+};
+
+// ============== ADMIN REVIEWS ==============
+
+export const getAdminReviews = async () => {
+  const response = await api.get('/admin/reviews');
+  return response.data;
+};
+
+export const updateReview = async (reviewId, isApproved) => {
+  const response = await api.put(`/admin/reviews/${reviewId}`, { is_approved: isApproved });
+  return response.data;
+};
+
+export const deleteReview = async (reviewId) => {
+  const response = await api.delete(`/admin/reviews/${reviewId}`);
+  return response.data;
+};
+
+// ============== ADMIN SETTINGS ==============
+
+export const getAdminSettings = async () => {
+  const response = await api.get('/admin/settings');
+  return response.data;
+};
+
+export const updateAdminSettings = async (settings) => {
+  const response = await api.put('/admin/settings', settings);
+  return response.data;
+};
+
+export const getDownloadStats = async () => {
+  const response = await api.get('/admin/download-stats');
   return response.data;
 };
 
