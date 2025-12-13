@@ -24,6 +24,14 @@ mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'pompiconni_db')]
 
+# GridFS bucket for file storage
+gridfs_bucket = AsyncIOMotorGridFSBucket(db)
+
+# Stripe configuration
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
 # JWT Config
 JWT_SECRET = os.environ.get('JWT_SECRET', 'pompiconni_secret_key_2024')
 JWT_ALGORITHM = "HS256"
