@@ -62,21 +62,31 @@ const AdminIllustrations = () => {
     return matchesSearch && matchesTheme;
   });
 
-  const handleFileUpload = async (file, type) => {
-    setUploading(true);
+  // Upload file directly to an existing illustration via GridFS
+  const handleAttachFile = async (illustrationId, file, type) => {
+    setUploading(prev => ({ ...prev, [type]: true }));
     try {
-      const result = await uploadFile(file, type);
       if (type === 'image') {
-        setFormData(prev => ({ ...prev, imageUrl: result.url }));
+        await attachImageToIllustration(illustrationId, file);
+        toast.success('Immagine caricata con successo!');
       } else {
-        setFormData(prev => ({ ...prev, pdfUrl: result.url }));
+        await attachPdfToIllustration(illustrationId, file);
+        toast.success('PDF caricato con successo!');
       }
-      toast.success('File caricato con successo!');
+      fetchData(); // Refresh data
     } catch (error) {
-      toast.error('Errore nel caricamento del file');
+      console.error('Upload error:', error);
+      toast.error(`Errore nel caricamento del ${type === 'image' ? 'immagine' : 'PDF'}`);
     } finally {
-      setUploading(false);
+      setUploading(prev => ({ ...prev, [type]: false }));
+      setUploadDialogOpen(false);
+      setUploadTarget(null);
     }
+  };
+
+  const openUploadDialog = (illustration) => {
+    setUploadTarget(illustration);
+    setUploadDialogOpen(true);
   };
 
   const handleSubmit = async (e) => {
