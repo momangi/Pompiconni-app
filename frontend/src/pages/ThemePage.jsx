@@ -242,9 +242,9 @@ const ThemePage = () => {
                         <DialogHeader><DialogTitle>{illustration.title}</DialogTitle></DialogHeader>
                         <div className="mt-4">
                           <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                            {illustration.imageUrl ? (
+                            {imageUrl ? (
                               <img 
-                                src={`${BACKEND_URL}${illustration.imageUrl}`} 
+                                src={imageUrl} 
                                 alt={illustration.title}
                                 className="max-h-full max-w-full object-contain"
                               />
