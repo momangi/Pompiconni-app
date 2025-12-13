@@ -207,12 +207,20 @@ const ThemePage = () => {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredIllustrations.map((illustration) => (
+            {filteredIllustrations.map((illustration) => {
+              // Use GridFS image if available, otherwise fall back to local uploads
+              const imageUrl = illustration.imageFileId 
+                ? `${BACKEND_URL}/api/illustrations/${illustration.id}/image`
+                : illustration.imageUrl 
+                  ? `${BACKEND_URL}${illustration.imageUrl}`
+                  : null;
+              
+              return (
               <Card key={illustration.id} className="border-0 shadow-lg hover-lift overflow-hidden group">
                 <div className="relative h-48 bg-gray-50 flex items-center justify-center">
-                  {illustration.imageUrl ? (
+                  {imageUrl ? (
                     <img 
-                      src={`${BACKEND_URL}${illustration.imageUrl}`} 
+                      src={imageUrl} 
                       alt={illustration.title}
                       className="w-full h-full object-cover"
                     />
