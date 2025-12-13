@@ -1,65 +1,55 @@
-# Test Results - Pompiconni Production Ready Implementation
+# Test Results - Pompiconni P0 Complete
 
-## Current Testing Phase
-Testing P0-P2 features implementation for production readiness
+## P0 Implementation Complete
 
-## Features Implemented
+### GridFS File Storage
+- [x] PDF upload via `/api/admin/illustrations/{id}/attach-pdf`
+- [x] Image upload via `/api/admin/illustrations/{id}/attach-image` (JPG, JPEG, PNG)
+- [x] Separate database fields: `pdfFileId` and `imageFileId`
+- [x] Image serving endpoint `/api/illustrations/{id}/image`
+- [x] PDF download endpoint `/api/illustrations/{id}/download`
 
-### P0 - Real File Downloads (GridFS)
-- [x] GridFS integration for persistent file storage
-- [x] Download endpoint `/api/illustrations/{id}/download` that streams files
-- [x] Download status check endpoint `/api/illustrations/{id}/download-status`
-- [x] Clear error message when file not uploaded: "File non ancora disponibile"
-- [x] Admin endpoint to attach PDF to illustration
+### File Status Checks
+- [x] `/api/illustrations/{id}/download-status` - shows PDF availability
+- [x] `/api/illustrations/{id}/image-status` - shows image availability
 
-### P1 - Real Download Counters
-- [x] `download_events` collection for tracking downloads
-- [x] Counter increments only on successful file download
-- [x] Admin dashboard shows real counts (not fake)
-- [x] Reset fake counters endpoint for migration
-- [x] Public site hides counter when 0 (shows "Nuovo")
+### Admin UI Updates
+- [x] New upload dialog accessible from each illustration card
+- [x] Separate upload areas for Image and PDF
+- [x] Status badges on each card (Image ✓/✗, PDF ✓/✗)
+- [x] Real download counters (all at 0)
 
-### P1 - Stripe Safe Mode
-- [x] Stripe configuration via env variables (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY)
-- [x] Site settings endpoint returns stripe_enabled status
-- [x] "Pagamenti non ancora attivi" message on premium content when Stripe not configured
-- [x] Purchase buttons disabled when Stripe not active
+### Frontend Updates
+- [x] ThemePage uses GridFS images when available
+- [x] AdminIllustrations shows upload dialog
+- [x] Download buttons check file availability first
+- [x] "File non ancora disponibile" message when PDF missing
+- [x] "Pagamenti non ancora attivi" for premium content (Stripe disabled)
 
-### P2 - Review Management System
-- [x] `is_approved` field added to reviews
-- [x] `site_settings` collection with `show_reviews` toggle
-- [x] Public API only returns approved reviews
-- [x] Admin endpoints for managing reviews and settings
+## API Endpoints Summary
 
-### Backend API Endpoints
-- GET /api/site-settings - Public site configuration
-- GET /api/illustrations/{id}/download-status - Check file availability
-- POST /api/illustrations/{id}/download - Real file download
-- GET /api/admin/reviews - All reviews (admin)
-- PUT /api/admin/reviews/{id} - Approve/disapprove review
-- DELETE /api/admin/reviews/{id} - Delete review
-- GET /api/admin/settings - Site settings
-- PUT /api/admin/settings - Update settings
-- GET /api/admin/download-stats - Download statistics
-- POST /api/admin/reset-fake-counters - Reset demo counters
-- POST /api/admin/illustrations/{id}/attach-pdf - Upload PDF to illustration
+### Public
+- GET /api/illustrations/{id}/image - Serve image from GridFS
+- GET /api/illustrations/{id}/image-status - Check image availability
+- GET /api/illustrations/{id}/download-status - Check PDF availability
+- POST /api/illustrations/{id}/download - Download PDF (with real counter)
+- GET /api/site-settings - Get Stripe status
+
+### Admin
+- POST /api/admin/illustrations/{id}/attach-pdf - Upload PDF
+- POST /api/admin/illustrations/{id}/attach-image - Upload image (JPG, JPEG, PNG)
+- POST /api/admin/reset-fake-counters - Reset all counters to 0
+
+## Stripe Configuration (Pending)
+Required ENV variables in /app/backend/.env:
+- STRIPE_SECRET_KEY=sk_test_xxxxx
+- STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 
 ## Test Credentials
 - Admin: admin@pompiconni.it / admin123
 
-## Stripe Integration
-Required ENV variables:
-- STRIPE_SECRET_KEY
-- STRIPE_PUBLISHABLE_KEY
-- STRIPE_WEBHOOK_SECRET (optional)
-
-## Testing Pending
-- [ ] Full frontend testing agent
-- [ ] File upload and download flow end-to-end
-- [ ] Review management UI
-
-## Incorporate User Feedback
-- User requires NO fake data visible
-- Counters reset to 0 ✓
-- File download shows clear error when unavailable ✓
-- Premium content shows "Pagamenti non ancora attivi" ✓
+## Notes
+- All files stored persistently in MongoDB GridFS
+- Old files automatically deleted when new ones uploaded
+- Images cached for 1 year in browser
+- No fake data visible anywhere
