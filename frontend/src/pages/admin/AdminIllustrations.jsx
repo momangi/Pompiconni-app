@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Upload, Filter } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Upload, Filter, Image, FileText, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
-import { getThemes, getIllustrations, createIllustration, updateIllustration, deleteIllustration, uploadFile } from '../../services/api';
+import { getThemes, getIllustrations, createIllustration, updateIllustration, deleteIllustration, attachPdfToIllustration, attachImageToIllustration } from '../../services/api';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
