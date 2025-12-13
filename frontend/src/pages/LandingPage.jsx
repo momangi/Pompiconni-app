@@ -126,12 +126,20 @@ const LandingPage = () => {
             <div className="relative flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-blue-100 to-green-100 rounded-full blur-3xl opacity-60 scale-110" />
-                <div className="relative w-80 h-80 sm:w-96 sm:h-96 bg-gradient-to-br from-pink-100 to-blue-100 rounded-3xl flex items-center justify-center animate-float soft-shadow">
-                  <div className="text-center">
-                    <div className="text-8xl mb-4">🦄</div>
-                    <p className="text-gray-500 font-medium">Pompiconni</p>
-                    <p className="text-sm text-gray-400">Il tuo amico unicorno</p>
-                  </div>
+                <div className="relative w-80 h-80 sm:w-96 sm:h-96 bg-gradient-to-br from-pink-100 to-blue-100 rounded-3xl flex items-center justify-center animate-float soft-shadow overflow-hidden">
+                  {siteSettings.hasHeroImage ? (
+                    <img 
+                      src={`${BACKEND_URL}/api/site/hero-image`}
+                      alt="Pompiconni"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-8xl mb-4">🦄</div>
+                      <p className="text-gray-500 font-medium">Pompiconni</p>
+                      <p className="text-sm text-gray-400">Il tuo amico unicorno</p>
+                    </div>
+                  )}
                 </div>
                 <div className="absolute -top-4 -right-4 w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center animate-wiggle shadow-lg">
                   <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
