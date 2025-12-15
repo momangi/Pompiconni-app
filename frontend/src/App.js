@@ -46,6 +46,7 @@ function App() {
             <Route path="illustrations" element={<AdminIllustrations />} />
             <Route path="themes" element={<AdminThemes />} />
             <Route path="generator" element={<AdminGenerator />} />
+            <Route path="books" element={<AdminBooks />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
