@@ -130,17 +130,18 @@ const BookReaderPage = () => {
   }
 
   const currentSceneData = scenes.find(s => s.sceneNumber === currentScene);
-  const fontSize = {
-    'S': 'text-sm',
-    'M': 'text-base',
-    'L': 'text-lg'
-  }[currentSceneData?.text?.fontSize || 'M'];
   
-  const textAlign = {
-    'left': 'text-left',
-    'center': 'text-center',
-    'right': 'text-right'
-  }[currentSceneData?.text?.alignment || 'left'];
+  // Font size styles for TipTap HTML rendering
+  const fontSizeStyles = `
+    .scene-text .font-size-s { font-size: 0.875rem; line-height: 1.4; }
+    .scene-text .font-size-m { font-size: 1rem; line-height: 1.5; }
+    .scene-text .font-size-l { font-size: 1.25rem; line-height: 1.6; }
+    .scene-text p { margin-bottom: 0.75rem; }
+    .scene-text ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .scene-text li { margin-bottom: 0.25rem; }
+    .scene-text p[style*="text-align: center"], .scene-text .text-center { text-align: center; }
+    .scene-text p[style*="text-align: right"], .scene-text .text-right { text-align: right; }
+  `;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
