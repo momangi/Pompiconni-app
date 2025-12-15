@@ -9,7 +9,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm, cm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
-from reportlab.lib.colors import Color, white, black, lightgrey
+from reportlab.lib.colors import Color, white, black, lightgrey, gray
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem, Image as RLImage, PageBreak
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -23,6 +23,14 @@ PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 2 * cm
 CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN
 CONTENT_HEIGHT = PAGE_HEIGHT - 2 * MARGIN
+
+# Copyright texts
+COPYRIGHT_SHORT = "© Poppiconni®"
+COPYRIGHT_FULL = """© Poppiconni® – Tutti i diritti riservati.
+Testi, illustrazioni e contenuti sono protetti da copyright.
+È vietata la riproduzione, distribuzione o utilizzo non autorizzato,
+totale o parziale, senza consenso scritto del titolare del marchio.
+Poppiconni® è un marchio tutelato."""
 
 # Font size mapping (TipTap classes to points)
 FONT_SIZE_MAP = {
