@@ -11,6 +11,8 @@ import PrivacyPage from "./pages/PrivacyPage";
 import CookiePolicyPage from "./pages/CookiePolicyPage";
 import TerminiCondizioniPage from "./pages/TerminiCondizioniPage";
 import ContattiLegaliPage from "./pages/ContattiLegaliPage";
+import BooksPage from "./pages/BooksPage";
+import BookReaderPage from "./pages/BookReaderPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminIllustrations from "./pages/admin/AdminIllustrations";
