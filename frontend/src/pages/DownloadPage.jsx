@@ -59,7 +59,7 @@ const DownloadPage = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `pompiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`);
+      link.setAttribute('download', `poppiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
