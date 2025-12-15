@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Book, Eye, EyeOff, Upload, Image, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit2, Trash2, Book, Eye, EyeOff, Upload, Image, CheckCircle, XCircle, Search } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
