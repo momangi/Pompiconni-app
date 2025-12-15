@@ -145,6 +145,7 @@ const BookReaderPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+      <style>{fontSizeStyles}</style>
       <Navbar />
       
       {/* Resume Modal */}
