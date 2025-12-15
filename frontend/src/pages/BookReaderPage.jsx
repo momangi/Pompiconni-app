@@ -217,9 +217,12 @@ const BookReaderPage = () => {
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-pink-100">
                 <div className="p-6 min-h-[500px] flex flex-col">
                   {/* Text */}
-                  <div className={`flex-1 ${fontSize} ${textAlign} ${currentSceneData?.text?.isBold ? 'font-bold' : ''} ${currentSceneData?.text?.isItalic ? 'italic' : ''} text-gray-700 leading-relaxed whitespace-pre-wrap mb-4`}>
-                    {currentSceneData?.text?.content || 'Testo della storia...'}
-                  </div>
+                  <div 
+                    className="scene-text flex-1 text-gray-700 leading-relaxed mb-4"
+                    dangerouslySetInnerHTML={{ 
+                      __html: currentSceneData?.text?.html || '<p class="text-gray-400 italic">Testo della storia...</p>' 
+                    }}
+                  />
                   
                   {/* Colored Image (soft, faded) */}
                   <div className="h-64 bg-gradient-to-b from-pink-50 to-blue-50 rounded-xl flex items-center justify-center overflow-hidden">
