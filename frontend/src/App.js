@@ -36,6 +36,7 @@ function App() {
           <Route path="/galleria/:themeId" element={<ThemePage />} />
           <Route path="/libri" element={<BooksPage />} />
           <Route path="/libri/:bookId" element={<BookReaderPage />} />
+          <Route path="/cerca" element={<SearchPage />} />
           <Route path="/download" element={<DownloadPage />} />
           
           {/* Redirect old brand-kit URL to home */}
