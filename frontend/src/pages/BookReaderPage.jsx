@@ -103,6 +103,41 @@ const BookReaderPage = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentScene, scenes.length]);
 
+  const handleDownloadPdf = async () => {
+    // Check if book is free or if payments are enabled
+    if (!book.isFree && !siteSettings.stripe_enabled) {
+      toast.error('Pagamenti non ancora attivi');
+      return;
+    }
+
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/books/${bookId}/pdf`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Errore nel download');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `poppiconni_${bookId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF scaricato con successo!');
+    } catch (error) {
+      console.error('PDF download error:', error);
+      toast.error(error.message || 'Errore nel download del PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
