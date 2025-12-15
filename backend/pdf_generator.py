@@ -294,18 +294,22 @@ class BookPDFGenerator:
         """Generate the complete PDF and return as BytesIO"""
         buffer = io.BytesIO()
         
-        # Create PDF with custom page drawing
+        # Create PDF with custom page drawing (includes footer on each page)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             leftMargin=MARGIN,
             rightMargin=MARGIN,
             topMargin=MARGIN,
-            bottomMargin=MARGIN,
+            bottomMargin=MARGIN + 0.8 * cm,  # Extra space for footer
         )
         
         # Build content
         story = []
+        
+        # FIRST PAGE: Title + Copyright notice at bottom
+        story.extend(self._create_title_page())
+        story.append(PageBreak())
         
         for scene in self.scenes:
             # LEFT PAGE: Text + Faded Background
@@ -318,15 +322,92 @@ class BookPDFGenerator:
             story.extend(right_page_content)
             story.append(PageBreak())
         
-        # Remove last PageBreak
-        if story and isinstance(story[-1], PageBreak):
-            story.pop()
+        # LAST PAGE: Full copyright notice
+        story.extend(self._create_copyright_page())
         
-        # Build PDF
-        doc.build(story)
+        # Build PDF with footer on each page
+        doc.build(story, onFirstPage=draw_page_footer, onLaterPages=draw_page_footer)
         
         buffer.seek(0)
         return buffer
+    
+    def _create_title_page(self) -> list:
+        """Create title page with book title and copyright notice"""
+        flowables = []
+        
+        # Spacer at top
+        flowables.append(Spacer(1, CONTENT_HEIGHT * 0.25))
+        
+        # Book title
+        title_style = ParagraphStyle(
+            'BookTitle',
+            fontSize=24,
+            leading=30,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold',
+            spaceAfter=20,
+        )
+        flowables.append(Paragraph(self.book.get('title', 'Libro Poppiconni'), title_style))
+        
+        # Book description
+        if self.book.get('description'):
+            desc_style = ParagraphStyle(
+                'BookDesc',
+                fontSize=12,
+                leading=16,
+                alignment=TA_CENTER,
+                textColor=gray,
+                spaceAfter=40,
+            )
+            flowables.append(Paragraph(self.book.get('description', ''), desc_style))
+        
+        # Spacer
+        flowables.append(Spacer(1, CONTENT_HEIGHT * 0.3))
+        
+        # Copyright notice at bottom of title page
+        flowables.append(Paragraph(
+            COPYRIGHT_FULL.replace('\n', '<br/>'),
+            self.styles['copyright']
+        ))
+        
+        return flowables
+    
+    def _create_copyright_page(self) -> list:
+        """Create final page with full copyright notice"""
+        flowables = []
+        
+        # Center the content vertically
+        flowables.append(Spacer(1, CONTENT_HEIGHT * 0.35))
+        
+        # Thank you message
+        thanks_style = ParagraphStyle(
+            'Thanks',
+            fontSize=16,
+            leading=22,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold',
+            spaceAfter=30,
+        )
+        flowables.append(Paragraph("Grazie per aver letto!", thanks_style))
+        
+        # Poppiconni brand
+        brand_style = ParagraphStyle(
+            'Brand',
+            fontSize=20,
+            leading=26,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold',
+            spaceAfter=40,
+        )
+        flowables.append(Paragraph("Poppiconni®", brand_style))
+        
+        # Full copyright notice
+        flowables.append(Paragraph(
+            COPYRIGHT_FULL.replace('\n', '<br/>'),
+            self.styles['copyright_full']
+        ))
+        
+        return flowables
     
     async def _create_left_page(self, scene: dict) -> list:
         """Create left page content: text + faded background image"""
