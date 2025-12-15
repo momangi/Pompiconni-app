@@ -213,8 +213,6 @@ const BrandKitPage = () => {
           </Tabs>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };
