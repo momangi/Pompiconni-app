@@ -11,6 +11,7 @@ const Navbar = () => {
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/galleria', label: 'Galleria', icon: Images },
+    { href: '/libri', label: 'Libri', icon: BookOpen },
     { href: '/download', label: 'Download', icon: Download },
     { href: '/brand-kit', label: 'Brand Kit', icon: Palette },
   ];
