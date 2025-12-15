@@ -13,10 +13,10 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-200 to-blue-200 flex items-center justify-center">
                 <span className="text-xl">🦄</span>
               </div>
-              <span className="text-xl font-bold text-gray-800 font-['Quicksand']">Pompiconni</span>
+              <span className="text-xl font-bold text-gray-800 font-['Quicksand']">Poppiconni</span>
             </div>
             <p className="text-gray-600 mb-4 max-w-sm">
-              Libri da colorare per bambini con il nostro adorabile unicorno Pompiconni. 
+              Libri da colorare per bambini con il nostro adorabile unicorno Poppiconni. 
               Dolce, simpatico e leggermente impacciato!
             </p>
             <div className="flex gap-4">
@@ -65,7 +65,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-pink-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} Pompiconni. Tutti i diritti riservati.
+            © {new Date().getFullYear()} Poppiconni. Tutti i diritti riservati.
           </p>
           <p className="text-gray-500 text-sm flex items-center gap-1">
             Fatto con <Heart className="w-4 h-4 text-pink-500 fill-pink-500" /> per i piccoli artisti

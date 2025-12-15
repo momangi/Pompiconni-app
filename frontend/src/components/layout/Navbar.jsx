@@ -28,7 +28,7 @@ const Navbar = () => {
               <span className="text-xl">🦄</span>
             </div>
             <span className="text-xl font-bold text-gray-800 font-['Quicksand']">
-              Pompiconni
+              Poppiconni
             </span>
           </Link>
 
