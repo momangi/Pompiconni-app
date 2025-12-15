@@ -70,12 +70,19 @@ const AdminBooks = () => {
       resetForm();
       fetchBooks();
     } catch (error) {
-      toast.error('Errore nel salvataggio');
+      console.error('Error saving book:', error);
+      if (error.response?.status === 401) {
+        toast.error('Sessione scaduta. Effettua nuovamente il login.');
+      } else if (error.response?.status === 403) {
+        toast.error('Accesso non autorizzato.');
+      } else {
+        toast.error('Errore nel salvataggio del libro');
+      }
     }
   };
 
-  const handleDelete = async (bookId) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo libro e tutte le sue scene?')) {
+  const handleDelete = async (bookId, bookTitle) => {
+    if (!window.confirm(`Sei sicuro di voler eliminare "${bookTitle}"? Verranno eliminate anche tutte le scene associate.`)) {
       return;
     }
     try {
@@ -83,7 +90,14 @@ const AdminBooks = () => {
       toast.success('Libro eliminato');
       fetchBooks();
     } catch (error) {
-      toast.error('Errore nell\'eliminazione');
+      console.error('Error deleting book:', error);
+      if (error.response?.status === 401) {
+        toast.error('Sessione scaduta. Effettua nuovamente il login.');
+      } else if (error.response?.status === 403) {
+        toast.error('Accesso non autorizzato.');
+      } else {
+        toast.error('Errore nell\'eliminazione del libro');
+      }
     }
   };
 
@@ -94,7 +108,16 @@ const AdminBooks = () => {
       toast.success('Copertina caricata!');
       fetchBooks();
     } catch (error) {
-      toast.error('Errore nel caricamento della copertina');
+      console.error('Error uploading cover:', error);
+      if (error.response?.status === 401) {
+        toast.error('Sessione scaduta. Effettua nuovamente il login.');
+      } else if (error.response?.status === 403) {
+        toast.error('Accesso non autorizzato.');
+      } else if (error.response?.status === 400) {
+        toast.error('Formato file non valido. Usa JPG, JPEG o PNG.');
+      } else {
+        toast.error('Errore nel caricamento della copertina');
+      }
     } finally {
       setUploading(false);
     }
