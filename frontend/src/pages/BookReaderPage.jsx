@@ -30,6 +30,7 @@ const BookReaderPage = () => {
   const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false });
   const [showResume, setShowResume] = useState(false);
   const [savedProgress, setSavedProgress] = useState(1);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const visitorId = getVisitorId();
 
