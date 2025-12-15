@@ -3,8 +3,6 @@ import { Palette, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
 import { getBrandKit } from '../services/api';
 import { toast } from 'sonner';
 
@@ -37,23 +35,17 @@ const BrandKitPage = () => {
 
   if (loading || !brandKit) {
     return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full" />
-        </div>
-        <Footer />
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
-      <section className="bg-gradient-to-b from-purple-50 to-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+    <div>
+      <section className="py-8">
+        <div className="max-w-full">
+          <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full mb-6">
               <Palette className="w-4 h-4 text-purple-600" />
               <span className="text-sm font-medium text-purple-700">Brand Guidelines</span>
