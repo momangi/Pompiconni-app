@@ -218,6 +218,16 @@ def fit_image_to_area(image_data: bytes, max_width: float, max_height: float) ->
         return (max_width * 0.8, max_height * 0.8)
 
 
+def draw_page_footer(canvas_obj, doc):
+    """Draw copyright footer on every page"""
+    canvas_obj.saveState()
+    canvas_obj.setFont('Helvetica', 7)
+    canvas_obj.setFillColor(gray)
+    # Draw at bottom center of page
+    canvas_obj.drawCentredString(PAGE_WIDTH / 2, 1.2 * cm, COPYRIGHT_SHORT)
+    canvas_obj.restoreState()
+
+
 class BookPDFGenerator:
     """Generates PDF for a book with all scenes"""
     
@@ -259,6 +269,24 @@ class BookPDFGenerator:
                 fontSize=10,
                 textColor=lightgrey,
                 alignment=TA_CENTER,
+            ),
+            'copyright': ParagraphStyle(
+                'Copyright',
+                parent=base_styles['Normal'],
+                fontSize=8,
+                leading=11,
+                textColor=gray,
+                alignment=TA_CENTER,
+                spaceBefore=20,
+            ),
+            'copyright_full': ParagraphStyle(
+                'CopyrightFull',
+                parent=base_styles['Normal'],
+                fontSize=9,
+                leading=13,
+                textColor=gray,
+                alignment=TA_CENTER,
+                spaceBefore=30,
             ),
         }
     
