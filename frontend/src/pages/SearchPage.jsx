@@ -87,7 +87,7 @@ const SearchPage = () => {
           
           {query ? (
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
-              Risultati per: <span className="text-pink-600">"{query}"</span>
+              Risultati per: <span className="text-pink-600">&ldquo;{query}&rdquo;</span>
             </h1>
           ) : (
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
