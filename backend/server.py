@@ -1758,6 +1758,41 @@ async def admin_delete_book(book_id: str, email: str = Depends(verify_token)):
     
     return {"success": True, "message": "Libro eliminato con tutte le scene"}
 
+@admin_router.get("/books/{book_id}/pdf")
+async def admin_download_book_pdf(book_id: str, email: str = Depends(verify_token)):
+    """
+    Download PDF for ANY book (admin access).
+    Admin can download both free and premium books for preview/testing.
+    """
+    # Get book
+    book = await db.books.find_one({"id": book_id})
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    
+    # Get scenes
+    scenes = await db.book_scenes.find({"bookId": book_id}).sort("sceneNumber", 1).to_list(MAX_SCENES_PER_BOOK)
+    if not scenes:
+        raise HTTPException(status_code=404, detail="Questo libro non ha ancora scene")
+    
+    # Generate PDF
+    try:
+        pdf_buffer = await generate_book_pdf(book, scenes, get_gridfs_image)
+        
+        # Create filename
+        filename = f"poppiconni_{book_id}.pdf"
+        
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Cache-Control": "no-cache"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error generating PDF for book {book_id}: {e}")
+        raise HTTPException(status_code=500, detail="Errore nella generazione del PDF")
+
 @admin_router.post("/books/{book_id}/cover")
 async def admin_upload_book_cover(
     book_id: str,
