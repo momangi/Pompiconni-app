@@ -460,6 +460,87 @@ async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool
     
     return illustrations
 
+@api_router.get("/search/illustrations")
+async def search_illustrations(q: str = "", limit: int = 48):
+    """
+    Public search endpoint for illustrations.
+    Returns both free and premium illustrations sorted by relevance score.
+    """
+    # Validate and normalize query
+    if not q or not q.strip():
+        return {"q": "", "results": []}
+    
+    # Normalize: lowercase, trim, remove basic punctuation
+    query_normalized = q.lower().strip()
+    query_normalized = re.sub(r'[^\w\s]', '', query_normalized)
+    
+    if not query_normalized:
+        return {"q": q, "results": []}
+    
+    # Tokenize query
+    tokens = [t for t in query_normalized.split() if len(t) >= 2]
+    if not tokens:
+        return {"q": q, "results": []}
+    
+    # Get all illustrations (public endpoint shows all)
+    illustrations = await db.illustrations.find({}, {"_id": 0}).to_list(1000)
+    
+    # Get all themes for name lookup
+    themes = await db.themes.find({}, {"_id": 0}).to_list(100)
+    theme_map = {t['id']: t.get('name', '') for t in themes}
+    
+    # Calculate relevance score for each illustration
+    results = []
+    for illust in illustrations:
+        score = 0
+        title = (illust.get('title', '') or '').lower()
+        description = (illust.get('description', '') or '').lower()
+        theme_name = theme_map.get(illust.get('themeId', ''), '').lower()
+        keywords = (illust.get('keywords', '') or '').lower()
+        
+        # +20 if title contains entire query
+        if query_normalized in title:
+            score += 20
+        
+        # Per-token scoring
+        for token in tokens:
+            # +10 for token in title
+            if token in title:
+                score += 10
+            # +6 for token in description
+            if token in description:
+                score += 6
+            # +4 for token in theme name
+            if token in theme_name:
+                score += 4
+            # +3 for token in keywords
+            if token in keywords:
+                score += 3
+        
+        if score > 0:
+            results.append({
+                "id": illust.get('id'),
+                "title": illust.get('title', ''),
+                "description": illust.get('description', ''),
+                "isFree": illust.get('isFree', True),
+                "price": illust.get('price', 0),
+                "imageFileId": illust.get('imageFileId'),
+                "themeName": theme_map.get(illust.get('themeId', ''), ''),
+                "themeId": illust.get('themeId'),
+                "score": score
+            })
+    
+    # Sort by score (descending), then by title (alphabetical) for tie-break
+    results.sort(key=lambda x: (-x['score'], x['title'].lower()))
+    
+    # Apply limit
+    results = results[:limit]
+    
+    return {
+        "q": q,
+        "results": results
+    }
+
 @api_router.get("/illustrations/{illustration_id}")
 async def get_illustration(illustration_id: str):
     illust = await db.illustrations.find_one({"id": illustration_id})
