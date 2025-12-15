@@ -244,6 +244,49 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token non valido")
 
+def sanitize_scene_html(html: str) -> str:
+    """
+    Sanitize HTML from TipTap editor.
+    Only allows: p, br, ul, li, strong, em, span (with specific classes)
+    Removes: scripts, styles, links, images, colors, fonts, etc.
+    """
+    if not html:
+        return ""
+    
+    # Allowed tags
+    allowed_tags = {'p', 'br', 'ul', 'li', 'strong', 'em', 'span'}
+    # Allowed classes for alignment and font size
+    allowed_classes = {'text-left', 'text-center', 'text-right', 'font-size-s', 'font-size-m', 'font-size-l'}
+    
+    # Remove script/style tags completely
+    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Remove on* event handlers
+    html = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
+    
+    # Remove javascript: URLs
+    html = re.sub(r'href\s*=\s*["\']javascript:[^"\']*["\']', '', html, flags=re.IGNORECASE)
+    
+    # Remove style attributes (no inline colors/fonts)
+    html = re.sub(r'\s+style\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
+    
+    # Clean class attributes - only keep allowed classes
+    def clean_class(match):
+        classes = match.group(1).split()
+        kept = [c for c in classes if c in allowed_classes]
+        if kept:
+            return f' class="{" ".join(kept)}"'
+        return ''
+    
+    html = re.sub(r'\s+class\s*=\s*["\']([^"\']*)["\']', clean_class, html, flags=re.IGNORECASE)
+    
+    # Remove disallowed tags but keep their content
+    disallowed_pattern = r'</?(?!(?:' + '|'.join(allowed_tags) + r')\b)[a-z][^>]*>'
+    html = re.sub(disallowed_pattern, '', html, flags=re.IGNORECASE)
+    
+    return html.strip()
+
 # ============== SEED DATA ==============
 
 SEED_REVIEWS = [
