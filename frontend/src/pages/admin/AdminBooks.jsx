@@ -166,7 +166,7 @@ const AdminBooks = () => {
             <Book className="w-8 h-8 text-pink-500" />
             Gestione Libri
           </h1>
-          <p className="text-gray-600 mt-1">Crea e gestisci i libri illustrati di Pompiconni</p>
+          <p className="text-gray-600 mt-1">Crea e gestisci i libri illustrati di Poppiconni</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={(open) => { if (!open) resetForm(); else setIsAddOpen(true); }}>
           <DialogTrigger asChild>
@@ -184,7 +184,7 @@ const AdminBooks = () => {
                 <Input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="es. Le Avventure di Pompiconni"
+                  placeholder="es. Le Avventure di Poppiconni"
                   required
                 />
               </div>
@@ -275,7 +275,7 @@ const AdminBooks = () => {
           <p className="text-gray-500 text-lg">
             {searchTerm ? 'Nessun libro trovato' : 'Nessun libro creato'}
           </p>
-          {!searchTerm && <p className="text-gray-400">Crea il primo libro di Pompiconni!</p>}
+          {!searchTerm && <p className="text-gray-400">Crea il primo libro di Poppiconni!</p>}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -9,7 +9,7 @@ const CookiePolicyPage = () => {
       
       <section className="bg-gradient-to-b from-pink-50 to-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">Cookie Policy – Pompiconni</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-8">Cookie Policy – Poppiconni</h1>
           
           <div className="prose prose-lg max-w-none text-gray-700">
             <div className="space-y-8">

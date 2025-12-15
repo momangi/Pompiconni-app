@@ -38,7 +38,7 @@ const AdminLogin = () => {
             <span className="text-3xl">🦄</span>
           </div>
           <CardTitle className="text-2xl">Area Admin</CardTitle>
-          <CardDescription>Accedi per gestire Pompiconni</CardDescription>
+          <CardDescription>Accedi per gestire Poppiconni</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">

@@ -35,7 +35,7 @@ const GalleryPage = () => {
               <span className="gradient-text">Galleria</span> Tematica
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Esplora tutti i temi disponibili e scopri le avventure di Pompiconni!
+              Esplora tutti i temi disponibili e scopri le avventure di Poppiconni!
             </p>
           </div>
         </div>

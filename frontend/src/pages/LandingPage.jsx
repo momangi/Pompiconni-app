@@ -84,7 +84,7 @@ const LandingPage = () => {
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
                 Ciao, sono{' '}
-                <span className="gradient-text">Pompiconni!</span>
+                <span className="gradient-text">Poppiconni!</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl">
@@ -130,13 +130,13 @@ const LandingPage = () => {
                   {siteSettings.hasHeroImage ? (
                     <img 
                       src={`${BACKEND_URL}/api/site/hero-image`}
-                      alt="Pompiconni"
+                      alt="Poppiconni"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="text-center">
                       <div className="text-8xl mb-4">🦄</div>
-                      <p className="text-gray-500 font-medium">Pompiconni</p>
+                      <p className="text-gray-500 font-medium">Poppiconni</p>
                       <p className="text-sm text-gray-400">Il tuo amico unicorno</p>
                     </div>
                   )}
@@ -161,7 +161,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-              Chi è <span className="gradient-text">Pompiconni</span>?
+              Chi è <span className="gradient-text">Poppiconni</span>?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Un unicorno speciale creato per far sognare e divertire i bambini
@@ -175,7 +175,7 @@ const LandingPage = () => {
                   <Heart className="w-8 h-8 text-pink-500" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-3">Dolce</h3>
-                <p className="text-gray-600">Con i suoi occhi grandi e le guanciotte rosate, Pompiconni conquista tutti con la sua dolcezza</p>
+                <p className="text-gray-600">Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza</p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-lg hover-lift bg-gradient-to-b from-white to-gray-50">
@@ -208,7 +208,7 @@ const LandingPage = () => {
               Scopri i <span className="gradient-text">Temi</span>
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Pompiconni ti aspetta in tante avventure diverse. Scegli il tuo tema preferito!
+              Poppiconni ti aspetta in tante avventure diverse. Scegli il tuo tema preferito!
             </p>
           </div>
           
@@ -276,7 +276,7 @@ const LandingPage = () => {
         <section className="py-20 bg-gradient-to-b from-pink-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Cosa dicono di <span className="gradient-text">Pompiconni</span></h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Cosa dicono di <span className="gradient-text">Poppiconni</span></h2>
             </div>
             
             {currentReview && (
@@ -337,7 +337,7 @@ const LandingPage = () => {
       {/* CTA */}
       <section className="py-20 bg-gradient-to-r from-pink-100 via-blue-50 to-green-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">Pronto a colorare con Pompiconni?</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">Pronto a colorare con Poppiconni?</h2>
           <p className="text-lg text-gray-600 mb-8">Scarica subito le tavole gratuite e inizia la tua avventura!</p>
           <Link to="/download">
             <Button size="lg" className="bg-pink-500 hover:bg-pink-600 text-white px-12 py-6 text-lg rounded-xl hover-lift">

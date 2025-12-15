@@ -47,7 +47,7 @@ const AdminDashboard = () => {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">Benvenuto nel pannello di amministrazione di Pompiconni</p>
+        <p className="text-gray-600">Benvenuto nel pannello di amministrazione di Poppiconni</p>
       </div>
 
       {/* Stats Grid */}
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">Usa l'AI per creare nuove bozze di Pompiconni in diverse situazioni e temi.</p>
+            <p className="text-gray-600 mb-4">Usa l'AI per creare nuove bozze di Poppiconni in diverse situazioni e temi.</p>
             <Link to="/admin/generatore">
               <Button className="bg-pink-500 hover:bg-pink-600">
                 Vai al Generatore

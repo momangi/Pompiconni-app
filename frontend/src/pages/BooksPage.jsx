@@ -57,7 +57,7 @@ const BooksPage = () => {
               <BookOpen className="w-10 h-10 text-pink-500" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
-              Libri <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-blue-400">Pompiconni</span>
+              Libri <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-blue-400">Poppiconni</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Storie illustrate da leggere e colorare insieme al tuo unicorno preferito!
@@ -73,7 +73,7 @@ const BooksPage = () => {
             <div className="text-center py-20">
               <Book className="w-20 h-20 text-gray-200 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-400 mb-2">Prossimamente...</h2>
-              <p className="text-gray-400">I libri di Pompiconni stanno arrivando!</p>
+              <p className="text-gray-400">I libri di Poppiconni stanno arrivando!</p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -150,7 +150,7 @@ const BooksPage = () => {
             Ogni libro è un&apos;avventura!
           </h2>
           <p className="text-gray-600 mb-8">
-            Leggi le storie di Pompiconni e poi colora le scene: ogni pagina ha una versione 
+            Leggi le storie di Poppiconni e poi colora le scene: ogni pagina ha una versione 
             colorata per la lettura e una versione in bianco e nero da colorare!
           </p>
           <div className="flex flex-wrap justify-center gap-6">

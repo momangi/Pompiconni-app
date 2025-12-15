@@ -9,13 +9,13 @@ const PrivacyPage = () => {
       
       <section className="bg-gradient-to-b from-pink-50 to-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Privacy Policy – Pompiconni</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">Privacy Policy – Poppiconni</h1>
           <p className="text-gray-500 mb-8">Ultimo aggiornamento: 12 dicembre 2025</p>
           
           <div className="prose prose-lg max-w-none text-gray-700">
             <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Titolare del trattamento:</h2>
-              <p className="mb-2">Matteo Calipa – Pompiconni Project</p>
+              <p className="mb-2">Matteo Calipa – Poppiconni Project</p>
               <p className="mb-2">Ventimiglia (IM), Italia</p>
               <p>Email: <a href="mailto:pompiconni@gmail.com" className="text-pink-500 hover:text-pink-600">pompiconni@gmail.com</a></p>
             </div>

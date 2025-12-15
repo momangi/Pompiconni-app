@@ -42,7 +42,7 @@ const AdminLayout = () => {
               <span className="text-xl">🦄</span>
             </div>
             <div>
-              <span className="font-bold text-gray-800">Pompiconni</span>
+              <span className="font-bold text-gray-800">Poppiconni</span>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
           </Link>

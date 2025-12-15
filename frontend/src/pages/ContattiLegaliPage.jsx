@@ -16,7 +16,7 @@ const ContattiLegaliPage = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-6">Titolare:</h2>
             
             <div className="space-y-4">
-              <p className="text-lg font-semibold text-gray-700">Matteo Calipa – Pompiconni Project</p>
+              <p className="text-lg font-semibold text-gray-700">Matteo Calipa – Poppiconni Project</p>
               
               <div className="flex items-center gap-3 text-gray-600">
                 <MapPin className="w-5 h-5 text-pink-500" />
