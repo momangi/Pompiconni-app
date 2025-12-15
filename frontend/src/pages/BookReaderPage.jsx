@@ -229,10 +229,31 @@ const BookReaderPage = () => {
           </div>
           <div className="flex items-center gap-2">
             {book.allowDownload && (
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Download className="w-4 h-4 mr-1" />
-                PDF
-              </Button>
+              book.isFree || siteSettings.stripe_enabled ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden sm:flex"
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf || scenes.length === 0}
+                >
+                  {downloadingPdf ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full mr-1" />
+                      Scaricando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-1" />
+                      PDF
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded hidden sm:block">
+                  PDF Premium
+                </span>
+              )
             )}
           </div>
         </div>
