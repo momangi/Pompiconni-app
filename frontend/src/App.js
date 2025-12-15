@@ -17,6 +17,7 @@ import AdminIllustrations from "./pages/admin/AdminIllustrations";
 import AdminGenerator from "./pages/admin/AdminGenerator";
 import AdminThemes from "./pages/admin/AdminThemes";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminBooks from "./pages/admin/AdminBooks";
 import AdminLogin from "./pages/admin/AdminLogin";
 import CookieBanner from "./components/CookieBanner";
 
