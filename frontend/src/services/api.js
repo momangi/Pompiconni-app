@@ -58,6 +58,11 @@ export const checkDownloadStatus = async (illustrationId) => {
   return response.data;
 };
 
+export const searchIllustrations = async (q, limit = 48) => {
+  const response = await api.get(`/search/illustrations`, { params: { q, limit } });
+  return response.data;
+};
+
 export const getBundles = async () => {
   const response = await api.get('/bundles');
   return response.data;
