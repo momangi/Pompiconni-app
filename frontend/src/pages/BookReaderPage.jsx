@@ -433,6 +433,17 @@ const BookReaderPage = () => {
             </div>
           </div>
         )}
+
+        {/* Copyright Notice */}
+        <div className="mt-12 pt-6 border-t border-gray-100">
+          <div className="text-center text-xs text-gray-400 space-y-1">
+            <p className="font-medium">© Poppiconni® – Tutti i diritti riservati.</p>
+            <p>Testi, illustrazioni e contenuti sono protetti da copyright.</p>
+            <p>È vietata la riproduzione, distribuzione o utilizzo non autorizzato,</p>
+            <p>totale o parziale, senza consenso scritto del titolare del marchio.</p>
+            <p className="font-medium mt-2">Poppiconni® è un marchio tutelato.</p>
+          </div>
+        </div>
       </div>
 
       <Footer />
