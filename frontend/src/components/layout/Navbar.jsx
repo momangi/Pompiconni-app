@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Palette, Download, Images, Home, Lock } from 'lucide-react';
+import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 
