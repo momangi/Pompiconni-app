@@ -16,6 +16,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const AdminBooks = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -29,21 +30,32 @@ const AdminBooks = () => {
     allowDownload: true
   });
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
-
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       const data = await getAdminBooks();
       setBooks(data);
     } catch (error) {
       console.error('Error fetching books:', error);
-      toast.error('Errore nel caricamento dei libri');
+      if (error.response?.status === 401) {
+        toast.error('Sessione scaduta. Effettua nuovamente il login.');
+      } else if (error.response?.status === 403) {
+        toast.error('Accesso non autorizzato.');
+      } else {
+        toast.error('Errore nel caricamento dei libri');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
+
+  const filteredBooks = books.filter(book =>
+    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
