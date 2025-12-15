@@ -1808,14 +1808,17 @@ async def admin_update_scene(
     text: BookSceneText,
     email: str = Depends(verify_token)
 ):
-    """Update scene text"""
+    """Update scene text with HTML sanitization"""
     scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
     if not scene:
         raise HTTPException(status_code=404, detail="Scena non trovata")
     
+    # Sanitize HTML before saving
+    sanitized_text = {"html": sanitize_scene_html(text.html)}
+    
     await db.book_scenes.update_one(
         {"id": scene_id},
-        {"$set": {"text": text.dict(), "updatedAt": datetime.now(timezone.utc)}}
+        {"$set": {"text": sanitized_text, "updatedAt": datetime.now(timezone.utc)}}
     )
     return {"success": True}
 
