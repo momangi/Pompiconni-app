@@ -1288,7 +1288,7 @@ async def admin_fix_brand_name(email: str = Depends(verify_token)):
         "book_scenes_fixed": 0
     }
     
-    old_brand = "Poppiconni"
+    old_brand = "Pompiconni"
     new_brand = "Poppiconni"
     
     # Fix illustrations (title, description)
