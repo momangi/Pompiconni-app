@@ -351,9 +351,12 @@ const AdminBooks = () => {
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">{book.description}</p>
                 
                 <div className="flex items-center justify-between pt-3 border-t">
-                  <div className="text-xs text-gray-400">
-                    {book.viewCount || 0} visualizzazioni • {book.downloadCount || 0} download
-                  </div>
+                  <Link to={`/admin/books/${book.id}/scenes`}>
+                    <Button variant="outline" size="sm" className="text-pink-600 border-pink-200 hover:bg-pink-50">
+                      <FileEdit className="w-4 h-4 mr-1" />
+                      Scene
+                    </Button>
+                  </Link>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(book)} title="Modifica">
                       <Edit2 className="w-4 h-4" />
