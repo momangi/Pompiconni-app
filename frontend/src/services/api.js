@@ -284,4 +284,96 @@ export const changeIllustrationTheme = async (illustrationId, themeId) => {
   return response.data;
 };
 
+// ============== BOOKS API ==============
+
+// Public
+export const getBooks = async () => {
+  const response = await api.get('/books');
+  return response.data;
+};
+
+export const getBook = async (bookId) => {
+  const response = await api.get(`/books/${bookId}`);
+  return response.data;
+};
+
+export const getReadingProgress = async (bookId, visitorId) => {
+  const response = await api.get(`/books/${bookId}/progress/${visitorId}`);
+  return response.data;
+};
+
+export const saveReadingProgress = async (bookId, visitorId, scene) => {
+  const response = await api.post(`/books/${bookId}/progress/${visitorId}?scene=${scene}`);
+  return response.data;
+};
+
+// Admin Books
+export const getAdminBooks = async () => {
+  const response = await api.get('/admin/books');
+  return response.data;
+};
+
+export const createBook = async (book) => {
+  const response = await api.post('/admin/books', book);
+  return response.data;
+};
+
+export const updateBook = async (bookId, book) => {
+  const response = await api.put(`/admin/books/${bookId}`, book);
+  return response.data;
+};
+
+export const deleteBook = async (bookId) => {
+  const response = await api.delete(`/admin/books/${bookId}`);
+  return response.data;
+};
+
+export const uploadBookCover = async (bookId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/books/${bookId}/cover`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Admin Scenes
+export const getBookScenes = async (bookId) => {
+  const response = await api.get(`/admin/books/${bookId}/scenes`);
+  return response.data;
+};
+
+export const createScene = async (bookId, scene) => {
+  const response = await api.post(`/admin/books/${bookId}/scenes`, scene);
+  return response.data;
+};
+
+export const updateScene = async (bookId, sceneId, text) => {
+  const response = await api.put(`/admin/books/${bookId}/scenes/${sceneId}`, text);
+  return response.data;
+};
+
+export const deleteScene = async (bookId, sceneId) => {
+  const response = await api.delete(`/admin/books/${bookId}/scenes/${sceneId}`);
+  return response.data;
+};
+
+export const uploadSceneColoredImage = async (bookId, sceneId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/books/${bookId}/scenes/${sceneId}/colored-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const uploadSceneLineartImage = async (bookId, sceneId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/books/${bookId}/scenes/${sceneId}/lineart-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
 export default api;
