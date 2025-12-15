@@ -254,16 +254,31 @@ const AdminBooks = () => {
         </Dialog>
       </div>
 
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Cerca libri..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       {/* Books Grid */}
-      {books.length === 0 ? (
+      {filteredBooks.length === 0 ? (
         <div className="text-center py-20">
           <Book className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">Nessun libro creato</p>
-          <p className="text-gray-400">Crea il primo libro di Pompiconni!</p>
+          <p className="text-gray-500 text-lg">
+            {searchTerm ? 'Nessun libro trovato' : 'Nessun libro creato'}
+          </p>
+          {!searchTerm && <p className="text-gray-400">Crea il primo libro di Pompiconni!</p>}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map((book) => (
+          {filteredBooks.map((book) => (
             <Card key={book.id} className="border-2 border-pink-100 hover:shadow-lg transition-shadow overflow-hidden">
               {/* Cover */}
               <div className="relative h-48 bg-gradient-to-br from-pink-100 to-blue-100 flex items-center justify-center group">
