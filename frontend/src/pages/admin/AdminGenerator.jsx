@@ -90,7 +90,7 @@ const AdminGenerator = () => {
     if (image.imageBase64) {
       const link = document.createElement('a');
       link.href = `data:image/png;base64,${image.imageBase64}`;
-      link.download = `pompiconni_${Date.now()}.png`;
+      link.download = `poppiconni_${Date.now()}.png`;
       link.click();
       toast.success('Download avviato!');
     } else if (image.imageUrl) {

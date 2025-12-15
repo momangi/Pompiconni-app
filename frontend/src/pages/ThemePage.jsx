@@ -100,7 +100,7 @@ const ThemePage = () => {
       
       // Get filename from response header or generate one
       const contentDisposition = response.headers['content-disposition'];
-      let filename = `pompiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`;
+      let filename = `poppiconni_${illustration.title.replace(/\s+/g, '_')}.pdf`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
