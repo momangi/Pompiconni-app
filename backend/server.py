@@ -16,6 +16,7 @@ import jwt
 import base64
 import aiofiles
 import io
+from pdf_generator import generate_book_pdf
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
