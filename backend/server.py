@@ -173,12 +173,10 @@ class HeroImageResponse(BaseModel):
 MAX_SCENES_PER_BOOK = 15  # Limite fisso e non modificabile
 
 class BookSceneText(BaseModel):
-    """Text content for a scene with basic formatting"""
-    content: str = ""  # Plain text with basic formatting
-    fontSize: str = "M"  # S, M, L
-    alignment: str = "left"  # left, center, right
-    isBold: bool = False
-    isItalic: bool = False
+    """Text content for a scene with TipTap HTML formatting"""
+    html: str = ""  # Sanitized HTML from TipTap editor
+    # Allowed tags: p, br, ul, li, strong, em, span (for font-size class)
+    # Allowed classes: text-left, text-center, text-right, text-sm, text-base, text-lg
 
 class BookSceneCreate(BaseModel):
     """Create a new scene"""
