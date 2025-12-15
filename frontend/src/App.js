@@ -33,6 +33,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/galleria" element={<GalleryPage />} />
           <Route path="/galleria/:themeId" element={<ThemePage />} />
+          <Route path="/libri" element={<BooksPage />} />
+          <Route path="/libri/:bookId" element={<BookReaderPage />} />
           <Route path="/brand-kit" element={<BrandKitPage />} />
           <Route path="/download" element={<DownloadPage />} />
           
