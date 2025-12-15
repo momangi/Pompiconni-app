@@ -81,7 +81,6 @@ def parse_tiptap_html_to_flowables(html: str, styles: dict) -> list:
             classes = class_match.group(1).split() if class_match else []
             
             # Determine style
-            style_name = 'normal'
             font_size = DEFAULT_FONT_SIZE
             alignment = TA_LEFT
             
