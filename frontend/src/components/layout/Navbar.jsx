@@ -13,7 +13,6 @@ const Navbar = () => {
     { href: '/galleria', label: 'Galleria', icon: Images },
     { href: '/libri', label: 'Libri', icon: BookOpen },
     { href: '/download', label: 'Download', icon: Download },
-    { href: '/brand-kit', label: 'Brand Kit', icon: Palette },
   ];
 
   const isActive = (path) => location.pathname === path;
