@@ -48,6 +48,7 @@ function App() {
             <Route path="themes" element={<AdminThemes />} />
             <Route path="generator" element={<AdminGenerator />} />
             <Route path="books" element={<AdminBooks />} />
+            <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
