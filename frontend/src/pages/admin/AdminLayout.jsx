@@ -25,6 +25,7 @@ const AdminLayout = () => {
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/illustrations', label: 'Illustrazioni', icon: Images },
     { path: '/admin/themes', label: 'Temi', icon: Palette },
+    { path: '/admin/books', label: 'Libri', icon: BookOpen },
     { path: '/admin/generator', label: 'Generatore AI', icon: Wand2 },
     { path: '/admin/settings', label: 'Impostazioni', icon: Settings },
   ];
