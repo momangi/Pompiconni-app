@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen, Search } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
@@ -16,6 +19,15 @@ const Navbar = () => {
   ];
 
   const isActive = (path) => location.pathname === path;
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/cerca?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setIsOpen(false);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-pink-100">
@@ -32,7 +44,19 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Cerca illustrazioni..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 w-48 lg:w-64 h-9 text-sm border-pink-200 focus:border-pink-400 focus:ring-pink-200"
+              />
+            </form>
+
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -65,6 +89,18 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-72 bg-white">
                 <div className="flex flex-col gap-4 mt-8">
+                  {/* Mobile Search */}
+                  <form onSubmit={handleSearch} className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Cerca illustrazioni..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-4 w-full h-10 text-sm border-pink-200 focus:border-pink-400"
+                    />
+                  </form>
+
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}
