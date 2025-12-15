@@ -191,7 +191,7 @@ const SearchPage = () => {
               Nessuna illustrazione trovata
             </h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Non abbiamo trovato illustrazioni per "{query}". 
+              Non abbiamo trovato illustrazioni per &ldquo;{query}&rdquo;. 
               Prova con una di queste ricerche:
             </p>
             
