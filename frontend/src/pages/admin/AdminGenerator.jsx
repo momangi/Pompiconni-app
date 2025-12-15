@@ -37,12 +37,12 @@ const AdminGenerator = () => {
   ];
 
   const promptTemplates = [
-    'Pompiconni come pompiere che salva un gattino',
-    'Pompiconni in fattoria che accarezza una pecora',
-    'Pompiconni allo zoo che guarda le giraffe',
-    'Pompiconni che gioca a calcio nel parco',
-    'Pompiconni d\'inverno che costruisce un pupazzo di neve',
-    'Pompiconni a scuola che legge un libro'
+    'Poppiconni come pompiere che salva un gattino',
+    'Poppiconni in fattoria che accarezza una pecora',
+    'Poppiconni allo zoo che guarda le giraffe',
+    'Poppiconni che gioca a calcio nel parco',
+    'Poppiconni d\'inverno che costruisce un pupazzo di neve',
+    'Poppiconni a scuola che legge un libro'
   ];
 
   const handleGenerate = async () => {
@@ -105,7 +105,7 @@ const AdminGenerator = () => {
           <Wand2 className="w-8 h-8 text-pink-500" />
           Generatore AI
         </h1>
-        <p className="text-gray-600">Crea nuove bozze di Pompiconni usando l'intelligenza artificiale</p>
+        <p className="text-gray-600">Crea nuove bozze di Poppiconni usando l'intelligenza artificiale</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -118,7 +118,7 @@ const AdminGenerator = () => {
                 Nuova Generazione
               </CardTitle>
               <CardDescription>
-                Descrivi la scena che vuoi creare con Pompiconni
+                Descrivi la scena che vuoi creare con Poppiconni
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -127,7 +127,7 @@ const AdminGenerator = () => {
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Descrivi la scena che vuoi generare con Pompiconni..."
+                  placeholder="Descrivi la scena che vuoi generare con Poppiconni..."
                   rows={4}
                 />
               </div>
@@ -207,7 +207,7 @@ const AdminGenerator = () => {
               <CardContent className="py-16 text-center">
                 <ImageIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-500 mb-2">Nessuna immagine generata</p>
-                <p className="text-sm text-gray-400">Usa il form a sinistra per creare nuove bozze di Pompiconni</p>
+                <p className="text-sm text-gray-400">Usa il form a sinistra per creare nuove bozze di Poppiconni</p>
               </CardContent>
             </Card>
           ) : (

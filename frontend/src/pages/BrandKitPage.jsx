@@ -58,7 +58,7 @@ const BrandKitPage = () => {
               <Palette className="w-4 h-4 text-purple-600" />
               <span className="text-sm font-medium text-purple-700">Brand Guidelines</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">Brand Kit <span className="gradient-text">Pompiconni</span></h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">Brand Kit <span className="gradient-text">Poppiconni</span></h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">Linee guida per mantenere coerenza visiva in tutte le illustrazioni e materiali</p>
           </div>
         </div>

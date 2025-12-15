@@ -169,7 +169,7 @@ const AdminIllustrations = () => {
                 <Input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="es. Pompiconni Pompiere"
+                  placeholder="es. Poppiconni Pompiere"
                   required
                 />
               </div>

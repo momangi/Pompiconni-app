@@ -9,7 +9,7 @@ const TerminiCondizioniPage = () => {
       
       <section className="bg-gradient-to-b from-pink-50 to-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">Termini e Condizioni d'Uso – Pompiconni</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-8">Termini e Condizioni d'Uso – Poppiconni</h1>
           
           <div className="prose prose-lg max-w-none text-gray-700">
             <div className="space-y-8">
@@ -21,7 +21,7 @@ const TerminiCondizioniPage = () => {
               <section>
                 <h2 className="text-xl font-bold text-gray-800 mb-3">2. Diritti d'autore</h2>
                 <p className="mb-2">Tutti i contenuti sono di proprietà esclusiva di:</p>
-                <p className="font-semibold">Matteo Calipa – Pompiconni Project</p>
+                <p className="font-semibold">Matteo Calipa – Poppiconni Project</p>
                 <p className="mt-2">È vietata la distribuzione commerciale senza autorizzazione.</p>
               </section>
 
