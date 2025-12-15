@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import LandingPage from "./pages/LandingPage";
 import GalleryPage from "./pages/GalleryPage";
@@ -35,8 +35,10 @@ function App() {
           <Route path="/galleria/:themeId" element={<ThemePage />} />
           <Route path="/libri" element={<BooksPage />} />
           <Route path="/libri/:bookId" element={<BookReaderPage />} />
-          <Route path="/brand-kit" element={<BrandKitPage />} />
           <Route path="/download" element={<DownloadPage />} />
+          
+          {/* Redirect old brand-kit URL to home */}
+          <Route path="/brand-kit" element={<Navigate to="/" replace />} />
           
           {/* Legal Pages */}
           <Route path="/privacy" element={<PrivacyPage />} />
@@ -53,6 +55,7 @@ function App() {
             <Route path="generator" element={<AdminGenerator />} />
             <Route path="books" element={<AdminBooks />} />
             <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
+            <Route path="brand-kit" element={<BrandKitPage />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
