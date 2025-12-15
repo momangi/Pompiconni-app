@@ -1780,11 +1780,14 @@ async def admin_create_scene(book_id: str, scene: BookSceneCreate, email: str = 
     if scene.sceneNumber < 1 or scene.sceneNumber > MAX_SCENES_PER_BOOK:
         raise HTTPException(status_code=400, detail=f"Numero scena deve essere tra 1 e {MAX_SCENES_PER_BOOK}")
     
+    # Sanitize HTML before saving
+    sanitized_html = sanitize_scene_html(scene.text.html)
+    
     scene_dict = {
         "id": str(uuid.uuid4()),
         "bookId": book_id,
         "sceneNumber": scene.sceneNumber,
-        "text": scene.text.dict(),
+        "text": {"html": sanitized_html},
         "coloredImageFileId": None,
         "coloredImageUrl": None,
         "lineArtImageFileId": None,
