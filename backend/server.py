@@ -1272,6 +1272,103 @@ async def admin_delete_review(review_id: str, email: str = Depends(verify_token)
         raise HTTPException(status_code=404, detail="Recensione non trovata")
     return {"success": True}
 
+@admin_router.post("/maintenance/fix-brand-name")
+async def admin_fix_brand_name(email: str = Depends(verify_token)):
+    """
+    One-off maintenance endpoint to fix brand name from 'Pompiconni' to 'Poppiconni'
+    in all collections (illustrations, themes, reviews, bundles, books).
+    Does NOT change technical fields (endpoints, variables, credentials).
+    """
+    results = {
+        "illustrations_fixed": 0,
+        "themes_fixed": 0,
+        "reviews_fixed": 0,
+        "bundles_fixed": 0,
+        "books_fixed": 0,
+        "book_scenes_fixed": 0
+    }
+    
+    old_brand = "Pompiconni"
+    new_brand = "Poppiconni"
+    
+    # Fix illustrations (title, description)
+    illustrations = await db.illustrations.find({}).to_list(1000)
+    for illust in illustrations:
+        updates = {}
+        if old_brand in illust.get('title', ''):
+            updates['title'] = illust['title'].replace(old_brand, new_brand)
+        if old_brand in illust.get('description', ''):
+            updates['description'] = illust['description'].replace(old_brand, new_brand)
+        if updates:
+            await db.illustrations.update_one({"id": illust['id']}, {"$set": updates})
+            results["illustrations_fixed"] += 1
+    
+    # Fix themes (name, description)
+    themes = await db.themes.find({}).to_list(100)
+    for theme in themes:
+        updates = {}
+        if old_brand in theme.get('name', ''):
+            updates['name'] = theme['name'].replace(old_brand, new_brand)
+        if old_brand in theme.get('description', ''):
+            updates['description'] = theme['description'].replace(old_brand, new_brand)
+        if updates:
+            await db.themes.update_one({"id": theme['id']}, {"$set": updates})
+            results["themes_fixed"] += 1
+    
+    # Fix reviews (text)
+    reviews = await db.reviews.find({}).to_list(100)
+    for review in reviews:
+        if old_brand in review.get('text', ''):
+            await db.reviews.update_one(
+                {"id": review['id']}, 
+                {"$set": {"text": review['text'].replace(old_brand, new_brand)}}
+            )
+            results["reviews_fixed"] += 1
+    
+    # Fix bundles (name, description)
+    bundles = await db.bundles.find({}).to_list(100)
+    for bundle in bundles:
+        updates = {}
+        if old_brand in bundle.get('name', ''):
+            updates['name'] = bundle['name'].replace(old_brand, new_brand)
+        if old_brand in bundle.get('description', ''):
+            updates['description'] = bundle['description'].replace(old_brand, new_brand)
+        if updates:
+            await db.bundles.update_one({"id": bundle['id']}, {"$set": updates})
+            results["bundles_fixed"] += 1
+    
+    # Fix books (title, description)
+    books = await db.books.find({}).to_list(100)
+    for book in books:
+        updates = {}
+        if old_brand in book.get('title', ''):
+            updates['title'] = book['title'].replace(old_brand, new_brand)
+        if old_brand in book.get('description', ''):
+            updates['description'] = book['description'].replace(old_brand, new_brand)
+        if updates:
+            await db.books.update_one({"id": book['id']}, {"$set": updates})
+            results["books_fixed"] += 1
+    
+    # Fix book scenes (text.html)
+    scenes = await db.book_scenes.find({}).to_list(1000)
+    for scene in scenes:
+        html = scene.get('text', {}).get('html', '')
+        if old_brand in html:
+            await db.book_scenes.update_one(
+                {"id": scene['id']}, 
+                {"$set": {"text.html": html.replace(old_brand, new_brand)}}
+            )
+            results["book_scenes_fixed"] += 1
+    
+    return {
+        "success": True,
+        "message": f"Brand name fixed from '{old_brand}' to '{new_brand}'",
+        "results": results
+    }
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Recensione non trovata")
+    return {"success": True}
+
 @admin_router.get("/settings")
 async def admin_get_settings(email: str = Depends(verify_token)):
     """Get site settings"""
