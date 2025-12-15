@@ -1443,6 +1443,474 @@ async def change_illustration_theme(
     
     return {"success": True, "message": "Tema aggiornato"}
 
+# ============== BOOKS PUBLIC ENDPOINTS ==============
+
+@api_router.get("/books", response_model=List[dict])
+async def get_books():
+    """Get all visible books for public display"""
+    books = await db.books.find({"isVisible": True}).to_list(100)
+    for b in books:
+        b['_id'] = str(b.get('_id', ''))
+    return books
+
+@api_router.get("/books/{book_id}")
+async def get_book(book_id: str):
+    """Get a single book with its scenes"""
+    book = await db.books.find_one({"id": book_id})
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    if not book.get('isVisible', True):
+        raise HTTPException(status_code=404, detail="Libro non disponibile")
+    
+    book['_id'] = str(book.get('_id', ''))
+    
+    # Get scenes ordered by sceneNumber
+    scenes = await db.book_scenes.find({"bookId": book_id}).sort("sceneNumber", 1).to_list(MAX_SCENES_PER_BOOK)
+    for s in scenes:
+        s['_id'] = str(s.get('_id', ''))
+    
+    # Increment view count
+    await db.books.update_one({"id": book_id}, {"$inc": {"viewCount": 1}})
+    
+    return {"book": book, "scenes": scenes}
+
+@api_router.get("/books/{book_id}/scene/{scene_number}/colored-image")
+async def get_scene_colored_image(book_id: str, scene_number: int):
+    """Serve colored image for a scene"""
+    from bson import ObjectId
+    
+    scene = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene_number})
+    if not scene or not scene.get('coloredImageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non disponibile")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(scene['coloredImageFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=31536000"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving colored image: {str(e)}")
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+
+@api_router.get("/books/{book_id}/scene/{scene_number}/lineart-image")
+async def get_scene_lineart_image(book_id: str, scene_number: int):
+    """Serve line art image for a scene"""
+    from bson import ObjectId
+    
+    scene = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene_number})
+    if not scene or not scene.get('lineArtImageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non disponibile")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(scene['lineArtImageFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=31536000"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving lineart image: {str(e)}")
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+
+@api_router.get("/books/{book_id}/cover")
+async def get_book_cover(book_id: str):
+    """Serve book cover image"""
+    from bson import ObjectId
+    
+    book = await db.books.find_one({"id": book_id})
+    if not book or not book.get('coverImageFileId'):
+        raise HTTPException(status_code=404, detail="Copertina non disponibile")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(book['coverImageFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving book cover: {str(e)}")
+        raise HTTPException(status_code=404, detail="Copertina non trovata")
+
+# Reading Progress
+@api_router.get("/books/{book_id}/progress/{visitor_id}")
+async def get_reading_progress(book_id: str, visitor_id: str):
+    """Get reading progress for a visitor"""
+    progress = await db.reading_progress.find_one({"bookId": book_id, "visitorId": visitor_id})
+    if not progress:
+        return {"currentScene": 1, "hasProgress": False}
+    return {"currentScene": progress.get('currentScene', 1), "hasProgress": True}
+
+@api_router.post("/books/{book_id}/progress/{visitor_id}")
+async def save_reading_progress(book_id: str, visitor_id: str, scene: int):
+    """Save reading progress for a visitor"""
+    await db.reading_progress.update_one(
+        {"bookId": book_id, "visitorId": visitor_id},
+        {
+            "$set": {
+                "currentScene": scene,
+                "updatedAt": datetime.now(timezone.utc)
+            },
+            "$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "bookId": book_id,
+                "visitorId": visitor_id
+            }
+        },
+        upsert=True
+    )
+    return {"success": True}
+
+# ============== BOOKS ADMIN ENDPOINTS ==============
+
+@admin_router.get("/books")
+async def admin_get_books(email: str = Depends(verify_token)):
+    """Get all books for admin"""
+    books = await db.books.find().sort("createdAt", -1).to_list(100)
+    for b in books:
+        b['_id'] = str(b.get('_id', ''))
+    return books
+
+@admin_router.post("/books")
+async def admin_create_book(book: BookCreate, email: str = Depends(verify_token)):
+    """Create a new book"""
+    book_dict = book.dict()
+    book_dict['id'] = str(uuid.uuid4())
+    book_dict['sceneCount'] = 0
+    book_dict['viewCount'] = 0
+    book_dict['downloadCount'] = 0
+    book_dict['coverImageFileId'] = None
+    book_dict['coverImageUrl'] = None
+    book_dict['createdAt'] = datetime.now(timezone.utc)
+    book_dict['updatedAt'] = datetime.now(timezone.utc)
+    
+    await db.books.insert_one(book_dict)
+    book_dict.pop('_id', None)
+    return book_dict
+
+@admin_router.put("/books/{book_id}")
+async def admin_update_book(book_id: str, book: BookCreate, email: str = Depends(verify_token)):
+    """Update book details"""
+    existing = await db.books.find_one({"id": book_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    
+    update_data = book.dict()
+    update_data['updatedAt'] = datetime.now(timezone.utc)
+    
+    await db.books.update_one({"id": book_id}, {"$set": update_data})
+    return {"success": True}
+
+@admin_router.delete("/books/{book_id}")
+async def admin_delete_book(book_id: str, email: str = Depends(verify_token)):
+    """Delete a book and all its scenes"""
+    from bson import ObjectId
+    
+    book = await db.books.find_one({"id": book_id})
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    
+    # Delete cover image from GridFS
+    if book.get('coverImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(book['coverImageFileId']))
+        except Exception:
+            pass
+    
+    # Delete all scene images from GridFS
+    scenes = await db.book_scenes.find({"bookId": book_id}).to_list(MAX_SCENES_PER_BOOK)
+    for scene in scenes:
+        if scene.get('coloredImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
+            except Exception:
+                pass
+        if scene.get('lineArtImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
+            except Exception:
+                pass
+    
+    # Delete scenes
+    await db.book_scenes.delete_many({"bookId": book_id})
+    
+    # Delete reading progress
+    await db.reading_progress.delete_many({"bookId": book_id})
+    
+    # Delete book
+    await db.books.delete_one({"id": book_id})
+    
+    return {"success": True, "message": "Libro eliminato con tutte le scene"}
+
+@admin_router.post("/books/{book_id}/cover")
+async def admin_upload_book_cover(
+    book_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload book cover image"""
+    from bson import ObjectId
+    
+    book = await db.books.find_one({"id": book_id})
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, JPEG, PNG permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"book_cover_{book_id}{ext}"
+        
+        # Delete old cover if exists
+        if book.get('coverImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(book['coverImageFileId']))
+            except Exception:
+                pass
+        
+        # Upload to GridFS
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"book_id": book_id, "type": "cover", "content_type": content_type}
+        )
+        
+        # Update book
+        await db.books.update_one(
+            {"id": book_id},
+            {
+                "$set": {
+                    "coverImageFileId": str(file_id),
+                    "coverImageUrl": f"/api/books/{book_id}/cover",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {"success": True, "coverUrl": f"/api/books/{book_id}/cover"}
+    except Exception as e:
+        logger.error(f"Error uploading book cover: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+# ============== BOOK SCENES ADMIN ==============
+
+@admin_router.get("/books/{book_id}/scenes")
+async def admin_get_book_scenes(book_id: str, email: str = Depends(verify_token)):
+    """Get all scenes for a book"""
+    scenes = await db.book_scenes.find({"bookId": book_id}).sort("sceneNumber", 1).to_list(MAX_SCENES_PER_BOOK)
+    for s in scenes:
+        s['_id'] = str(s.get('_id', ''))
+    return scenes
+
+@admin_router.post("/books/{book_id}/scenes")
+async def admin_create_scene(book_id: str, scene: BookSceneCreate, email: str = Depends(verify_token)):
+    """Create a new scene for a book"""
+    book = await db.books.find_one({"id": book_id})
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro non trovato")
+    
+    # Check scene limit
+    current_count = await db.book_scenes.count_documents({"bookId": book_id})
+    if current_count >= MAX_SCENES_PER_BOOK:
+        raise HTTPException(status_code=400, detail=f"Limite massimo di {MAX_SCENES_PER_BOOK} scene raggiunto")
+    
+    # Check scene number not already used
+    existing = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene.sceneNumber})
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Scena {scene.sceneNumber} già esistente")
+    
+    if scene.sceneNumber < 1 or scene.sceneNumber > MAX_SCENES_PER_BOOK:
+        raise HTTPException(status_code=400, detail=f"Numero scena deve essere tra 1 e {MAX_SCENES_PER_BOOK}")
+    
+    scene_dict = {
+        "id": str(uuid.uuid4()),
+        "bookId": book_id,
+        "sceneNumber": scene.sceneNumber,
+        "text": scene.text.dict(),
+        "coloredImageFileId": None,
+        "coloredImageUrl": None,
+        "lineArtImageFileId": None,
+        "lineArtImageUrl": None,
+        "createdAt": datetime.now(timezone.utc),
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    await db.book_scenes.insert_one(scene_dict)
+    
+    # Update book scene count
+    await db.books.update_one({"id": book_id}, {"$inc": {"sceneCount": 1}})
+    
+    scene_dict.pop('_id', None)
+    return scene_dict
+
+@admin_router.put("/books/{book_id}/scenes/{scene_id}")
+async def admin_update_scene(
+    book_id: str, 
+    scene_id: str, 
+    text: BookSceneText,
+    email: str = Depends(verify_token)
+):
+    """Update scene text"""
+    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scena non trovata")
+    
+    await db.book_scenes.update_one(
+        {"id": scene_id},
+        {"$set": {"text": text.dict(), "updatedAt": datetime.now(timezone.utc)}}
+    )
+    return {"success": True}
+
+@admin_router.delete("/books/{book_id}/scenes/{scene_id}")
+async def admin_delete_scene(book_id: str, scene_id: str, email: str = Depends(verify_token)):
+    """Delete a scene"""
+    from bson import ObjectId
+    
+    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scena non trovata")
+    
+    # Delete images from GridFS
+    if scene.get('coloredImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
+        except Exception:
+            pass
+    if scene.get('lineArtImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
+        except Exception:
+            pass
+    
+    await db.book_scenes.delete_one({"id": scene_id})
+    await db.books.update_one({"id": book_id}, {"$inc": {"sceneCount": -1}})
+    
+    return {"success": True}
+
+@admin_router.post("/books/{book_id}/scenes/{scene_id}/colored-image")
+async def admin_upload_scene_colored_image(
+    book_id: str,
+    scene_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload colored image for a scene"""
+    from bson import ObjectId
+    
+    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scena non trovata")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, JPEG, PNG permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"scene_colored_{scene_id}{ext}"
+        
+        # Delete old image
+        if scene.get('coloredImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
+            except Exception:
+                pass
+        
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"scene_id": scene_id, "type": "colored", "content_type": content_type}
+        )
+        
+        await db.book_scenes.update_one(
+            {"id": scene_id},
+            {
+                "$set": {
+                    "coloredImageFileId": str(file_id),
+                    "coloredImageUrl": f"/api/books/{book_id}/scene/{scene['sceneNumber']}/colored-image",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {"success": True, "imageUrl": f"/api/books/{book_id}/scene/{scene['sceneNumber']}/colored-image"}
+    except Exception as e:
+        logger.error(f"Error uploading colored image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@admin_router.post("/books/{book_id}/scenes/{scene_id}/lineart-image")
+async def admin_upload_scene_lineart_image(
+    book_id: str,
+    scene_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload line art image for a scene"""
+    from bson import ObjectId
+    
+    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scena non trovata")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, JPEG, PNG permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"scene_lineart_{scene_id}{ext}"
+        
+        # Delete old image
+        if scene.get('lineArtImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
+            except Exception:
+                pass
+        
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"scene_id": scene_id, "type": "lineart", "content_type": content_type}
+        )
+        
+        await db.book_scenes.update_one(
+            {"id": scene_id},
+            {
+                "$set": {
+                    "lineArtImageFileId": str(file_id),
+                    "lineArtImageUrl": f"/api/books/{book_id}/scene/{scene['sceneNumber']}/lineart-image",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {"success": True, "imageUrl": f"/api/books/{book_id}/scene/{scene['sceneNumber']}/lineart-image"}
+    except Exception as e:
+        logger.error(f"Error uploading lineart image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
