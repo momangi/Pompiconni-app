@@ -13,6 +13,7 @@ import TerminiCondizioniPage from "./pages/TerminiCondizioniPage";
 import ContattiLegaliPage from "./pages/ContattiLegaliPage";
 import BooksPage from "./pages/BooksPage";
 import BookReaderPage from "./pages/BookReaderPage";
+import SearchPage from "./pages/SearchPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminIllustrations from "./pages/admin/AdminIllustrations";
