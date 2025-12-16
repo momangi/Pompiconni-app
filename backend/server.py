@@ -814,24 +814,43 @@ async def get_brand_kit():
 
 # ============== HELPER FUNCTIONS ==============
 
+# Filtro per illustrazioni SCARICABILI (con almeno immagine o PDF caricato)
+DOWNLOADABLE_FILTER = {
+    "$or": [
+        {"imageFileId": {"$ne": None, "$exists": True}},
+        {"pdfFileId": {"$ne": None, "$exists": True}}
+    ]
+}
+
 async def recalculate_bundle_counts():
     """
     Ricalcola automaticamente i conteggi dei bundle basandosi sui dati reali.
+    CONTA SOLO illustrazioni SCARICABILI (con imageFileId o pdfFileId).
     Chiamato ogni volta che un'illustrazione viene creata, modificata o eliminata.
     """
     try:
-        # Conta totale illustrazioni
-        total_count = await db.illustrations.count_documents({})
-        free_count = await db.illustrations.count_documents({"isFree": True})
-        mestieri_count = await db.illustrations.count_documents({"themeId": "mestieri"})
-        stagioni_count = await db.illustrations.count_documents({"themeId": "stagioni"})
+        # Conta SOLO illustrazioni scaricabili (con file caricato)
+        total_count = await db.illustrations.count_documents(DOWNLOADABLE_FILTER)
         
-        # Aggiorna Starter Pack (max 10 gratuite)
+        # Gratuite e scaricabili
+        free_filter = {**DOWNLOADABLE_FILTER, "isFree": True}
+        free_count = await db.illustrations.count_documents(free_filter)
+        
+        # Mestieri e scaricabili
+        mestieri_filter = {**DOWNLOADABLE_FILTER, "themeId": "mestieri"}
+        mestieri_count = await db.illustrations.count_documents(mestieri_filter)
+        
+        # Stagioni e scaricabili
+        stagioni_filter = {**DOWNLOADABLE_FILTER, "themeId": "stagioni"}
+        stagioni_count = await db.illustrations.count_documents(stagioni_filter)
+        
+        # Aggiorna Starter Pack (max 10 gratuite scaricabili)
+        starter_count = min(free_count, 10)
         await db.bundles.update_one(
             {"name": "Starter Pack Poppiconni"},
             {"$set": {
-                "illustrationCount": min(free_count, 10),
-                "description": f"{min(free_count, 10)} tavole gratuite per iniziare a colorare!"
+                "illustrationCount": starter_count,
+                "description": f"{starter_count} tavole gratuite per iniziare a colorare!" if starter_count > 0 else "Tavole gratuite in arrivo!"
             }}
         )
         
@@ -840,7 +859,7 @@ async def recalculate_bundle_counts():
             {"name": "Album Mestieri Completo"},
             {"$set": {
                 "illustrationCount": mestieri_count,
-                "description": f"Tutte le {mestieri_count} tavole dei mestieri in PDF"
+                "description": f"Tutte le {mestieri_count} tavole dei mestieri in PDF" if mestieri_count > 0 else "Tavole mestieri in arrivo!"
             }}
         )
         
@@ -849,7 +868,7 @@ async def recalculate_bundle_counts():
             {"name": "Mega Pack Stagioni"},
             {"$set": {
                 "illustrationCount": stagioni_count,
-                "description": f"{stagioni_count} tavole per tutte le stagioni + bonus festività"
+                "description": f"{stagioni_count} tavole per tutte le stagioni + bonus festività" if stagioni_count > 0 else "Tavole stagioni in arrivo!"
             }}
         )
         
@@ -858,21 +877,30 @@ async def recalculate_bundle_counts():
             {"name": "Collezione Completa"},
             {"$set": {
                 "illustrationCount": total_count,
-                "description": f"Tutti i {total_count} disegni + bonus esclusivi"
+                "description": f"Tutti i {total_count} disegni + bonus esclusivi" if total_count > 0 else "Collezione in preparazione!"
             }}
         )
         
-        logger.info(f"Bundle counts updated: total={total_count}, free={free_count}, mestieri={mestieri_count}, stagioni={stagioni_count}")
+        logger.info(f"Bundle counts updated (downloadable only): total={total_count}, free={free_count}, mestieri={mestieri_count}, stagioni={stagioni_count}")
     except Exception as e:
         logger.error(f"Error updating bundle counts: {e}")
 
 async def recalculate_theme_count(theme_id: str):
     """
-    Ricalcola il conteggio illustrazioni per un singolo tema.
+    Ricalcola il conteggio illustrazioni SCARICABILI per un singolo tema.
+    CONTA SOLO illustrazioni con imageFileId o pdfFileId.
     """
     if not theme_id:
         return
-    count = await db.illustrations.count_documents({"themeId": theme_id})
+    # Conta solo illustrazioni scaricabili per questo tema
+    filter_query = {
+        "themeId": theme_id,
+        "$or": [
+            {"imageFileId": {"$ne": None, "$exists": True}},
+            {"pdfFileId": {"$ne": None, "$exists": True}}
+        ]
+    }
+    count = await db.illustrations.count_documents(filter_query)
     await db.themes.update_one(
         {"id": theme_id},
         {"$set": {"illustrationCount": count}}
