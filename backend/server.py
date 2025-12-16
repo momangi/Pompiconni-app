@@ -907,10 +907,14 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
     await db.illustrations.insert_one(illust_dict)
     
     # Update theme illustration count
-    await db.themes.update_one(
-        {"id": illustration.themeId},
-        {"$inc": {"illustrationCount": 1}}
-    )
+    if illustration.themeId:
+        await db.themes.update_one(
+            {"id": illustration.themeId},
+            {"$inc": {"illustrationCount": 1}}
+        )
+    
+    # Update bundle counts automatically
+    await recalculate_bundle_counts()
     
     # Remove MongoDB _id field to avoid serialization issues
     illust_dict.pop('_id', None)
