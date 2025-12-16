@@ -812,6 +812,72 @@ async def get_brand_kit():
         ]
     }
 
+# ============== HELPER FUNCTIONS ==============
+
+async def recalculate_bundle_counts():
+    """
+    Ricalcola automaticamente i conteggi dei bundle basandosi sui dati reali.
+    Chiamato ogni volta che un'illustrazione viene creata, modificata o eliminata.
+    """
+    try:
+        # Conta totale illustrazioni
+        total_count = await db.illustrations.count_documents({})
+        free_count = await db.illustrations.count_documents({"isFree": True})
+        mestieri_count = await db.illustrations.count_documents({"themeId": "mestieri"})
+        stagioni_count = await db.illustrations.count_documents({"themeId": "stagioni"})
+        
+        # Aggiorna Starter Pack (max 10 gratuite)
+        await db.bundles.update_one(
+            {"name": "Starter Pack Poppiconni"},
+            {"$set": {
+                "illustrationCount": min(free_count, 10),
+                "description": f"{min(free_count, 10)} tavole gratuite per iniziare a colorare!"
+            }}
+        )
+        
+        # Aggiorna Album Mestieri
+        await db.bundles.update_one(
+            {"name": "Album Mestieri Completo"},
+            {"$set": {
+                "illustrationCount": mestieri_count,
+                "description": f"Tutte le {mestieri_count} tavole dei mestieri in PDF"
+            }}
+        )
+        
+        # Aggiorna Mega Pack Stagioni
+        await db.bundles.update_one(
+            {"name": "Mega Pack Stagioni"},
+            {"$set": {
+                "illustrationCount": stagioni_count,
+                "description": f"{stagioni_count} tavole per tutte le stagioni + bonus festività"
+            }}
+        )
+        
+        # Aggiorna Collezione Completa
+        await db.bundles.update_one(
+            {"name": "Collezione Completa"},
+            {"$set": {
+                "illustrationCount": total_count,
+                "description": f"Tutti i {total_count} disegni + bonus esclusivi"
+            }}
+        )
+        
+        logger.info(f"Bundle counts updated: total={total_count}, free={free_count}, mestieri={mestieri_count}, stagioni={stagioni_count}")
+    except Exception as e:
+        logger.error(f"Error updating bundle counts: {e}")
+
+async def recalculate_theme_count(theme_id: str):
+    """
+    Ricalcola il conteggio illustrazioni per un singolo tema.
+    """
+    if not theme_id:
+        return
+    count = await db.illustrations.count_documents({"themeId": theme_id})
+    await db.themes.update_one(
+        {"id": theme_id},
+        {"$set": {"illustrationCount": count}}
+    )
+
 # ============== ADMIN ENDPOINTS ==============
 
 @admin_router.post("/login", response_model=LoginResponse)
