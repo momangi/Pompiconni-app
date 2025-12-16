@@ -211,7 +211,7 @@ FORMATO OUTPUT (JSON):
         session_id=session_id,
         system_message=system_message
     )
-    chat.set_model("openai", "gpt-4o")
+    chat = chat.with_model("openai", "gpt-4o")
     
     # Costruisci il messaggio
     user_text = f"""Richiesta utente: {user_request}
@@ -348,7 +348,7 @@ FORMATO OUTPUT (JSON):
         session_id=session_id,
         system_message=system_message
     )
-    chat.set_model("openai", "gpt-4o")
+    chat = chat.with_model("openai", "gpt-4o")
     
     # Converti immagine in base64
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
