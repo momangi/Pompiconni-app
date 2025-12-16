@@ -1000,14 +1000,10 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
     illust_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.illustrations.insert_one(illust_dict)
     
-    # Update theme illustration count
-    if illustration.themeId:
-        await db.themes.update_one(
-            {"id": illustration.themeId},
-            {"$inc": {"illustrationCount": 1}}
-        )
-    
-    # Update bundle counts automatically
+    # Ricalcola conteggi (solo se l'illustrazione è scaricabile)
+    # Nota: alla creazione non ha ancora file, quindi non incrementa i conteggi
+    # I conteggi si aggiorneranno quando verrà caricato un file
+    await recalculate_theme_count(illustration.themeId)
     await recalculate_bundle_counts()
     
     # Remove MongoDB _id field to avoid serialization issues
