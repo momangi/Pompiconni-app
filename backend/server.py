@@ -1282,6 +1282,10 @@ async def attach_image_to_illustration(
             }
         )
         
+        # Ricalcola conteggi (ora l'illustrazione è scaricabile)
+        await recalculate_theme_count(illust.get('themeId'))
+        await recalculate_bundle_counts()
+        
         return {
             "success": True,
             "fileId": str(file_id),
