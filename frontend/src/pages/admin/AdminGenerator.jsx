@@ -406,6 +406,69 @@ const AdminGenerator = () => {
                 />
               </div>
 
+              {/* Reference Image Upload - CRITICAL FOR STYLE MATCHING */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <ImagePlus className="w-4 h-4 text-purple-500" />
+                  Immagine Prototipo (Riferimento Stile)
+                </Label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Carica un'immagine di riferimento. L'AI analizzerà tratti, linee e forme per replicare lo stile.
+                </p>
+                
+                <input
+                  ref={referenceInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  onChange={handleReferenceImageUpload}
+                  className="hidden"
+                />
+
+                {referenceImagePreview ? (
+                  <div className="relative border-2 border-purple-200 rounded-lg overflow-hidden bg-purple-50">
+                    <img 
+                      src={referenceImagePreview} 
+                      alt="Riferimento stile" 
+                      className="w-full h-40 object-contain"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                        onClick={() => referenceInputRef.current?.click()}
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-red-50"
+                        onClick={handleRemoveReferenceImage}
+                      >
+                        <X className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-purple-600/90 text-white text-xs py-1.5 px-2 text-center">
+                      ✓ L'AI copierà tratti, linee e forme da questa immagine
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-colors"
+                    onClick={() => referenceInputRef.current?.click()}
+                  >
+                    <ImagePlus className="w-10 h-10 mx-auto text-purple-400 mb-2" />
+                    <p className="text-sm text-purple-600 font-medium">
+                      Clicca per caricare immagine prototipo
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      JPG, PNG, WEBP (max 10MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs text-gray-500">Template Rapidi</Label>
                 <div className="flex flex-wrap gap-1.5">
