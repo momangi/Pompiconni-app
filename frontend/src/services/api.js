@@ -381,4 +381,48 @@ export const uploadSceneLineartImage = async (bookId, sceneId, file) => {
   return response.data;
 };
 
+// ============== POPPICONNI MULTI-AI PIPELINE ==============
+
+// Generation Styles (Reference Image Library)
+export const getGenerationStyles = async () => {
+  const response = await api.get('/admin/styles');
+  return response.data;
+};
+
+export const createGenerationStyle = async (style) => {
+  const response = await api.post('/admin/styles', style);
+  return response.data;
+};
+
+export const deleteGenerationStyle = async (styleId) => {
+  const response = await api.delete(`/admin/styles/${styleId}`);
+  return response.data;
+};
+
+export const uploadStyleReference = async (styleId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/styles/${styleId}/upload-reference`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// Multi-AI Pipeline Generation
+export const generatePoppiconni = async (userRequest, options = {}) => {
+  const response = await api.post('/admin/generate-poppiconni', {
+    user_request: userRequest,
+    style_id: options.styleId || null,
+    style_lock: options.styleLock || false,
+    save_to_gallery: options.saveToGallery !== false,
+    theme_id: options.themeId || null
+  });
+  return response.data;
+};
+
+export const getPipelineStatus = async (generationId) => {
+  const response = await api.get(`/admin/pipeline-status/${generationId}`);
+  return response.data;
+};
+
 export default api;
