@@ -918,11 +918,33 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
 
 @admin_router.put("/illustrations/{illustration_id}")
 async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
+    # Get current illustration to check if theme changed
+    current = await db.illustrations.find_one({"id": illustration_id})
+    if not current:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    old_theme_id = current.get('themeId')
+    new_theme_id = illustration.themeId
+    
     illust_dict = illustration.dict()
     illust_dict['updatedAt'] = datetime.now(timezone.utc)
     result = await db.illustrations.update_one({"id": illustration_id}, {"$set": illust_dict})
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    # If theme changed, update counts on both themes
+    if old_theme_id != new_theme_id:
+        if old_theme_id:
+            await db.themes.update_one(
+                {"id": old_theme_id},
+                {"$inc": {"illustrationCount": -1}}
+            )
+        if new_theme_id:
+            await db.themes.update_one(
+                {"id": new_theme_id},
+                {"$inc": {"illustrationCount": 1}}
+            )
+        # Also update bundle counts
+        await recalculate_bundle_counts()
+    
     return {"success": True}
 
 @admin_router.delete("/illustrations/{illustration_id}")
