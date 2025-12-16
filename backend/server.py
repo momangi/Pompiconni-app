@@ -253,6 +253,7 @@ class PoppiconniGenerateRequest(BaseModel):
     style_lock: bool = False  # If true, strictly follow reference style
     save_to_gallery: bool = True  # Auto-save to illustrations
     theme_id: Optional[str] = None  # Optional theme for categorization
+    reference_image_base64: Optional[str] = None  # Direct reference image upload (base64)
 
 class PoppiconniGenerateResponse(BaseModel):
     """Response from Poppiconni Multi-AI Pipeline"""
