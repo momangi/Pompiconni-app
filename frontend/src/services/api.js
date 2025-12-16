@@ -415,7 +415,8 @@ export const generatePoppiconni = async (userRequest, options = {}) => {
     style_id: options.styleId || null,
     style_lock: options.styleLock || false,
     save_to_gallery: options.saveToGallery !== false,
-    theme_id: options.themeId || null
+    theme_id: options.themeId || null,
+    reference_image_base64: options.referenceImageBase64 || null // Direct reference image
   });
   return response.data;
 };
