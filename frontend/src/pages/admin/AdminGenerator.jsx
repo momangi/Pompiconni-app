@@ -388,12 +388,12 @@ const AdminGenerator = () => {
               {styles.length > 0 && (
                 <div className="space-y-2">
                   <Label>Stile di Riferimento</Label>
-                  <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                  <Select value={selectedStyle || "none"} onValueChange={(val) => setSelectedStyle(val === "none" ? "" : val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Nessuno stile" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nessuno stile</SelectItem>
+                      <SelectItem value="none">Nessuno stile</SelectItem>
                       {styles.filter(s => s.referenceImageFileId).map(style => (
                         <SelectItem key={style.id} value={style.id}>{style.styleName}</SelectItem>
                       ))}
