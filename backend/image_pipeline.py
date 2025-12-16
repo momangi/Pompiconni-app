@@ -221,8 +221,30 @@ RICORDA: Il barattolo di popcorn con scritta "POPPICONNI" è OBBLIGATORIO.
 """
     
     file_contents = []
-    if reference_image_base64 and style_lock:
-        user_text += "\n\nÈ presente un'immagine di riferimento. Analizzala ed estrai lo stile da replicare."
+    if reference_image_base64:
+        user_text += """
+
+⚠️ IMPORTANTE: È presente un'IMMAGINE DI RIFERIMENTO (prototipo).
+DEVI analizzare attentamente questa immagine e nel tuo prompt includere:
+
+1. ANALISI DELLO STILE dell'immagine di riferimento:
+   - Tipo di tratti (spessi/sottili, uniformi/variabili)
+   - Stile delle linee (curve morbide, angoli netti, etc.)
+   - Livello di dettaglio
+   - Proporzioni del personaggio
+   - Stile degli occhi, espressioni, pose
+
+2. Nel "generation_prompt" DEVI specificare di replicare esattamente:
+   - Lo stesso spessore delle linee
+   - Lo stesso stile di tratto
+   - Le stesse proporzioni del personaggio
+   - Lo stesso livello di dettaglio
+   - Lo stesso stile kawaii/cartoon se presente
+
+3. Nel "style_spec" descrivi in dettaglio lo stile estratto dall'immagine.
+
+L'obiettivo è che l'immagine generata sembri disegnata dalla STESSA MANO dell'immagine di riferimento.
+"""
         file_contents.append(ImageContent(image_base64=reference_image_base64))
     
     message = UserMessage(text=user_text, file_contents=file_contents if file_contents else None)
