@@ -1045,14 +1045,8 @@ async def delete_illustration(illustration_id: str, email: str = Depends(verify_
     # Delete illustration
     await db.illustrations.delete_one({"id": illustration_id})
     
-    # Update theme count
-    if illust.get('themeId'):
-        await db.themes.update_one(
-            {"id": illust['themeId']},
-            {"$inc": {"illustrationCount": -1}}
-        )
-    
-    # Update bundle counts automatically
+    # Ricalcola conteggi (solo scaricabili)
+    await recalculate_theme_count(illust.get('themeId'))
     await recalculate_bundle_counts()
     
     return {"success": True}
