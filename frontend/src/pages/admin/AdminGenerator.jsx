@@ -320,14 +320,20 @@ const AdminGenerator = () => {
     }
 
     setIsGenerating(true);
-    toast.info('Pipeline Multi-AI avviata... può richiedere 1-2 minuti');
+    
+    if (referenceImageBase64) {
+      toast.info('Pipeline Multi-AI avviata con immagine prototipo... può richiedere 1-2 minuti');
+    } else {
+      toast.info('Pipeline Multi-AI avviata... può richiedere 1-2 minuti');
+    }
 
     try {
       const result = await generatePoppiconni(userRequest, {
         styleId: selectedStyle || null,
-        styleLock: styleLock,
+        styleLock: styleLock || !!referenceImageBase64, // Auto-enable style lock if reference image provided
         saveToGallery: saveToGallery,
-        themeId: selectedTheme && selectedTheme !== 'none' ? selectedTheme : null
+        themeId: selectedTheme && selectedTheme !== 'none' ? selectedTheme : null,
+        referenceImageBase64: referenceImageBase64 // Pass the reference image directly
       });
 
       const newResult = {
