@@ -1,141 +1,154 @@
-<analysis>
-**dichiarazione_originale_problema:**
-L'utente vuole costruire un progetto chiamato Pompiconni, un marchio incentrato su un personaggio unicorno per libri da colorare per bambini. Il progetto si è evoluto attraverso diverse fasi:
+<analysis>**original_problem_statement:**
+L'utente ha richiesto di implementare una pipeline di generazione di immagini multi-AI orchestrata completamente automatica per il marchio Poppiconni. L'obiettivo è produrre illustrazioni di line-art coerenti e pronte per la stampa (300 DPI), adatte per libri da colorare per bambini.
 
-1. **Build iniziale:** È stata creata un'applicazione full-stack (React, FastAPI, MongoDB) con una pagina di destinazione, una galleria di illustrazioni e una dashboard di amministrazione con dati fittizi e funzionalità demo.
-2. **Prontezza alla produzione:** È stato eseguito un importante refactor per trasformare l'applicazione in un prodotto reale. Ciò ha comportato l'implementazione di download di file reali (utilizzando MongoDB GridFS), contatori di dati reali, un sistema di revisione gestibile, archiviazione persistente per immagini generate dall'intelligenza artificiale e preparazione per l'integrazione di Stripe mostrando i messaggi di pagamenti inattivi. Un bug critico che mostra i conteggi di download falsi è stato identificato dall'utente e risolto con successo.
-3. **Nuova richiesta di funzionalità:** L'utente ha ora richiesto una nuova funzione importante: una sezione Libri (Libri). Questa sezione consentirà all'amministratore di creare libri di fiabe illustrati a più pagine (massimo 15 scene) con testo e immagini. Il sito pubblico presenterà un lettore di libri con un layout a doppia pagina sul desktop e una vista impilata sul cellulare. La funzione deve anche includere la possibilità di salvare i progressi di lettura e scaricare i libri come PDF di alta qualità.
+**REQUISITI DEL PRODOTTO:**
 
-**Lingua preferita dell'utente**: italiano
+1.  **Regole del Marchio Fisse (Sempre Attive):**
+    *   Stile: disegno per bambini, line-art pulita, senza ombreggiature realistiche.
+    *   Elemento obbligatorio: un barattolo di popcorn con la scritta POPPICONNI chiaramente leggibile, frontale, non curva, in maiuscolo e ad alto contrasto.
+    *   Contenuti: Nessun contenuto violento, per adulti o spaventoso. Composizione semplice e adatta alla colorazione.
 
-**cosa esiste attualmente? **
-Un'applicazione full-stack stabile e pronta per la produzione che utilizza React, FastAPI e MongoDB. Il comportamento demo è stato completamente rimosso.
-- **Frontend:** Un'interfaccia utente completa con una pagina di destinazione, una galleria di illustrazioni e una dashboard di amministrazione. Tutti i contatori di dati (download, statistiche) sono ora provenienti da dati di backend reali e sono nascosti sul sito pubblico se il conteggio è zero. I pulsanti di acquisto sono correttamente disabilitati, mostrando un messaggio Pagamenti non ancora attivi.
-- **Backend:** I robusti endpoint API servono dati reali. Tutti i caricamenti di file (illustrazioni, immagini di eroi) utilizzano MongoDB GridFS per un'archiviazione persistente. Gli endpoint per la gestione dei temi, le impostazioni del sito (immagine dell'eroe) e le recensioni sono completamente funzionali e protetti. Il generatore di immagini AI salva direttamente su GridFS.
-- **Libri Feature Scaffolding:** In risposta all'ultima richiesta dell'utente, è stata creata l'impalcatura di backend iniziale per la funzione Libri. Ciò include modelli Pydantic e un set completo di endpoint API in  per la gestione dei libri e delle loro scene. Sono state create anche pagine frontend segnaposto (, ).
+2.  **Pipeline Multi-AI a 4 Fasi (Completamente Automatica):**
+    *   **Fase 1 (AI #1 - LLM):** Interpretare la richiesta dell'utente (), applicare le regole del marchio e generare un  e un  ottimizzati. Se viene fornita un'immagine di riferimento, estrarre uno .
+    *   **Fase 2 (AI #2 - Image-to-Image):** Generare un'immagine candidata () utilizzando i prompt della Fase 1. Se è presente un'immagine di riferimento con , usarla come guida di stile.
+    *   **Fase 3 (AI #3 - Vision + OCR):** Eseguire un controllo di qualità automatico sull'immagine candidata per verificare la conformità alle regole del marchio (presenza del barattolo di popcorn, leggibilità della scritta POPPICONNI tramite OCR, stile line-art, colorabilità). Se il controllo fallisce, generare una patch per il prompt e riprovare.
+    *   **Fase 4 (AI #4 - Post-Produzione):** Dopo l'approvazione del QC, pulire l'immagine, normalizzare il contrasto ed esportare i file finali (, ), una miniatura e i metadati.
 
-**Ultimo articolo funzionante**:
-- **L'agente dell'ultimo elemento stava lavorando:** L'agente ha iniziato a implementare la nuova sezione Libri (Libri). I modelli di backend (, ) e una suite completa di endpoint API CRUD per la gestione di libri e scene sono stati aggiunti a . Il servizio API frontend () è stato aggiornato e sono stati creati file segnaposto per la galleria di libri e il lettore rivolti al pubblico.
-- **Stato:** IN CORSO
-- **Test dell'agente fatto:** N
-- **Quale agente del metodo di test usare? ** entrambi
-- **Test utente fatti:** N
+3.  **Loop di Rigenerazione e Gestione dei Fallimenti:**
+    *   Eseguire un massimo di 5 tentativi sincroni.
+    *   Se il QC fallisce dopo 5 tentativi, salvare il miglior candidato con uno stato .
+    *   Successivamente, avviare un singolo ciclo asincrono aggiuntivo (con un massimo di altri 5 tentativi). Nessun loop infinito.
 
-**Tutti gli elenchi dei problemi in sospeso/in corso**:
-- **Problema 1: Implementare la funzione Libri (Libri) (P0)**
+4.  **Libreria di Stili Persistente:**
+    *   Consentire agli utenti di caricare e salvare più immagini di riferimento in una libreria personale ( collection).
+    *   L'utente può selezionare una reference per ogni generazione.
 
-**Dettagli dei problemi:**
-- **Problema 1: Implementare la funzione Libri (Libri)**
-- **Tentati di correzione:** La struttura e i modelli dell'API di backend sono stati creati in . Sono stati creati file segnaposto frontend.
-- **Prossima lista di controllo del debug:**
-1. **Crea interfaccia utente di amministrazione (libri):** Crea la pagina di amministrazione () per le operazioni CRUD sui libri (titolo, descrizione, immagine di copertina, stato). Aggiungi questa pagina al router e alla barra laterale dell'amministratore.
-2. **Crea l'interfaccia utente amministratore (Editor di scene):** Costruisci l'interfaccia utente per aggiungere/modificare scene all'interno di un libro (max 15). Questo deve includere l'editor di testo ricco specificato, caricamenti separati per immagini colorate/line-art su GridFS e un'anteprima dal vivo.
-3. **Implementa Public Books Gallery ():** Crea l'interfaccia utente per visualizzare una griglia di tutti i libri visibili con le loro copertine e badge Gratis o Premium.
-4. **Implementa Book Reader ():** Costruisci il componente del lettore con il layout desktop a doppia pagina e la vista mobile impilata. Dovrebbe recuperare e visualizzare il contenuto della scena (testo e immagini) dal backend.
-5. **Implementa i progressi di lettura:** Usa  per salvare la scena corrente dell'utente in un libro e aggiungere un pulsante Riprendi da dove eri rimasto (Riprendi da dove hai lasciato).
-6. **Implementare la generazione di PDF:** Crea un endpoint di backend che utilizzi una libreria (ad esempio, ) per generare e trasmettere in streaming un PDF di alta qualità in formato A4 di un intero libro, con il layout di pagina corretto (testo+immagine debole a sinistra, line-art a destra).
-- **Perché risolvere questo problema e cosa si otterrà con la correzione? ** Per fornire la nuova principale sezione di contenuti Libri secondo le specifiche dettagliate dell'utente, aggiungendo un valore significativo all'applicazione.
-- **Stato:** IN CORSO
-- **È un problema ricorrente? ** N
-- **Dovrebbe testare frontend/backend/entrambi dopo la correzione? ** Entrambi
-- **Bloccato su un altro problema:** Nessuno
+5.  **Vincolo di Intervento Stretto (Non Negoziabile):**
+    *   Le modifiche devono essere **strettamente limitate** al solo processo di creazione e generazione delle immagini.
+    *   È **espressamente vietato** modificare qualsiasi altra parte del sistema esistente (frontend, backend, flussi utente, database, autenticazione, pagamenti, download, ecc.). L'unica eccezione è l'aggiunta della nuova collezione per la libreria di stili.
 
-**Elenco delle attività in corso**:
-- **Compito 1: Implementare la funzione Libri (Libri) (P0)**
-- **Dove riprendere:** L'API di backend è pronta. Il passo successivo è costruire il frontend, a partire dalla sezione di amministrazione. Crea  per gestire l'elenco dei libri e collegarti a un editor di scene.
-- **Cosa si otterrà con questo? ** Un CMS completo e funzionale per creare e leggere libri di fiabe digitali, completamente integrato nell'applicazione esistente.
-- **Stato:** IN CORSO
-- **Dovrebbe testare frontend/backend/entrambi dopo la correzione? ** Entrambi
-- **Bloccato su qualcosa:** Nessuno
+**User's preferred language**: italiano
 
-**Attività imminenti e future**
-- **Compito futuro (P2):** Espandi la funzionalità di e-commerce per supportare la vendita di libri fisici.
+**what currently exists?**
+Un'applicazione full-stack stabile e pronta per la produzione (React, FastAPI, MongoDB) per il marchio Poppiconni. Il sito include una galleria pubblica, un sistema di libri digitali con lettore e download di PDF, un'area amministrativa completa e una funzione di ricerca per le illustrazioni. L'agente ha recentemente completato con successo diversi compiti importanti, tra cui il re-branding da Pompiconni a Poppiconni, lo spostamento del Brand Kit nell'area admin e una serie di test di qualità finali. L'infrastruttura di base per la generazione di immagini (usando ) esiste in , che sarà il punto di partenza per l'estensione richiesta.
 
-**Completato il lavoro in questa sessione**
-- **Produzione-Ready Refactor:** Convertito con successo tutte le funzionalità demo in componenti reali e funzionali.
-- **Download di file reali:** Download di file implementati per illustrazioni utilizzando MongoDB GridFS.
-- **Contatori di dati reali e correzione di bug:** Sostituiti tutti i contatori falsi e codificati con dati reali aggregati da eventi di backend (). Risolto un bug critico per cui i vecchi dati falsi venivano ancora visualizzati.
-- **Prepazione integrazione Stripe:** Disabilitati tutti i pulsanti di acquisto e implementati messaggi Pagamenti non ancora attivi in attesa di chiavi API utente.
-- **Generazione persistente di intelligenza artificiale:** Le immagini generate dall'IA sono ora salvate direttamente su GridFS e collegate a un documento .
-- **CMS amministratore completo:** implementato un CMS amministratore completo per la gestione di temi (con tavolozze di colori), impostazioni del sito (immagine dinamica dell'eroe) e illustrazioni (con caricamenti diretti di file).
-- **Controllo e verifica dello stato:** Ha eseguito più controlli di salute e verifiche richieste dall'utente per confermare la stabilità dell'applicazione e la prontezza per la distribuzione.
+**Last working item**:
+- **Last item agent was working:** L'agente era nella fase di pianificazione e conferma per l'implementazione della nuova e complessa pipeline di generazione di immagini multi-AI. Ha analizzato i requisiti dettagliati dell'utente, proposto un'architettura a 4 fasi, eseguito un'analisi di fattibilità, stimato i costi e posto domande di chiarimento. L'utente ha fornito risposte definitive, approvando l'architettura e autorizzando l'inizio dei lavori.
+- **Status:** NOT STARTED
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** both
+- **User Testing Done:** N
 
-**Problemi precedenti trovati/menzionati ma non risolti**
-- Nessuno. Tutti i problemi identificati, incluso il bug critico con falsi contatori di download, sono stati risolti.
-
-**Noto problema ricorrente dal fork precedente**
+**All Pending/In progress Issue list**:
 - Nessuno.
 
-**Architettura del codice**
+**In progress Task List**:
+- **Task 1: Implementare la pipeline di generazione di immagini Multi-AI (P0)**
+
+**Task Detail:**
+- **Task 1:**
+  - **Where to resume:** L'agente deve iniziare l'implementazione pratica. I primi passi sono:
+    1.  Creare un nuovo modulo backend in  che conterrà la logica di orchestrazione delle 4 fasi AI.
+    2.  Definire e creare la nuova collezione MongoDB  per la libreria di stili.
+    3.  Creare il nuovo endpoint API protetto  in  per avviare la pipeline.
+    4.  Iniziare a modificare l'interfaccia utente in  per includere l'upload delle immagini di riferimento, i nuovi controlli (es. ) e la visualizzazione dello stato della pipeline.
+  - **What will be achieved with this?** L'implementazione di un sistema di generazione di immagini completamente automatizzato e on-brand, che garantirà la coerenza del marchio, ridurrà il lavoro manuale e produrrà asset di alta qualità pronti per la stampa.
+  - **Status:** NOT STARTED
+  - **Should Test frontend/backend/both after fix?** both
+  - **Blocked on something:** Nulla.
+
+**Upcoming and Future Tasks**
+- **Future Tasks:**
+  - **P2:** Espandere la funzionalità di e-commerce per supportare la vendita di libri fisici.
+
+**Completed work in this session**
+- **Milestone 1:** Implementato il CRUD completo per i Libri nella sezione admin ().
+- **Milestone 2:** Creato l'Editor di Scene con l'integrazione di TipTap, rispettando vincoli specifici su formattazione e funzionalità ().
+- **Milestone 3 & 4:** Realizzate la Galleria Libri pubblica () e il Lettore di Libri () con gestione del progresso.
+- **Milestone 5:** Implementata la funzionalità di download PDF per i libri usando ReportLab, inclusa l'aggiunta di note di copyright.
+- **Re-branding Globale:** Sostituito il nome del marchio da Pompiconni a Poppiconni in tutti i testi visibili all'utente (frontend e database).
+- **Refactor Organizzativo:** Spostata la pagina Brand Kit dalla sezione pubblica al pannello di amministrazione.
+- **Nuova Funzionalità:** Implementata una ricerca pubblica per le illustrazioni con logica di scoring personalizzata nel backend.
+- **Test e QA:** Eseguiti test finali approfonditi su tutte le nuove funzionalità, inclusi casi limite e sanitizzazione degli input.
+- **Preparazione al Deploy:** Eseguito un Health Check per verificare la prontezza dell'applicazione alla distribuzione.
+
+**Earlier issues found/mentioned but not fixed**
+- Nessuno.
+
+**Known issue recurrence from previous fork**
+- Nessuno.
+
+**Code Architecture**
 
 
-**Concetti tecnici chiave**
-- **Frontend:** React (Crea App React), TailwindCSS, .
+**Key Technical Concepts**
+- **Frontend:** React, TailwindCSS, , .
 - **Backend:** FastAPI, Pydantic.
-- **Database:** MongoDB, MongoDB GridFS per l'archiviazione dei file.
-- **Da aggiungere:**
-- Una libreria di editor di testo ricco per l'editor di scene di libri.
-- Una libreria di generazione PDF (ad esempio, ) per la funzione Scarica PDF.
--  per salvare i progressi di lettura.
-- **Integrazioni:** OpenAI (generazione di immagini), Stripe (chiavi utente in sospeso).
+- **Database:** MongoDB, MongoDB GridFS.
+- **Generazione PDF:** .
+- **Editor Rich Text:** .
+- **Pipeline AI (da implementare):**
+  - **NLP:** LLM (GPT-4o/Claude) per prompt engineering.
+  - **Image Gen:** .
+  - **Vision/OCR:** GPT-4 Vision () per controllo qualità.
+  - **Image Processing:**  per la post-produzione.
 
-**schema DB chiave**
-- : {id, nome, descrizione, colore, ...}
+**key DB schema**
+- : {id, titolo, descrizione, coverImageFileId, isFree, isVisible, sceneOrder: [sceneId]}
+- : {id, bookId, pageNumber, text, coloredImageFileId, lineArtImageFileId}
 - : {id, title, themeId, isFree, imageFileId, pdfFileId, ...}
-- : {autore, testo, valutazione, is_approved}
-- : {illustrationId, timestamp}
-- : {heroImageFileId, mostra_recensioni, ...}
 - **Da aggiungere:**
-- : {id, titolo, descrizione, coverImageFileId, isFree, isVisible, sceneOrder: [sceneId], ...}
-- : {id, bookId, pageNumber, text, coloredImageFileId, lineArtImageFileId, ...}
+  - : {id, userId, styleName, referenceImageFileId, isActive, ...}
 
-**Tutti i file di riferimento**
-- **/app/backend/server.py**: Contiene tutta la logica di backend, inclusi gli endpoint appena aggiunti (ma non testati) per la funzione Libri.
-- **/app/frontend/src/services/api.js**: Aggiornato con nuove funzioni API per la funzione Libri.
-- **/app/frontend/src/pages/BooksPage.jsx**: Nuovo file segnaposto per la galleria di libri pubblici.
-- **/app/frontend/src/pages/BookReaderPage.jsx**: Nuovo file segnaposto per l'interfaccia utente del lettore di libri.
-- **/app/frontend/src/App.js**: Dovrà essere modificato per includere i percorsi per le nuove pagine del libro.
-- **/app/frontend/src/pages/admin/AdminLayout.jsx**: Dovrà essere modificato per aggiungere Libri alla barra laterale di navigazione dell'amministratore.
-- **(Nuovo file) /app/frontend/src/pages/admin/AdminBooks.jsx**: Da creare per l'interfaccia utente di gestione del libro.
+**All files of reference**
+- : Contiene tutta la logica di backend. Sarà modificato per aggiungere il nuovo endpoint .
+- : La pagina UI esistente per la generazione di immagini. Sarà pesantemente modificata per supportare la nuova pipeline.
+- **(Nuovo file) **: Da creare per contenere tutta la logica di orchestrazione della pipeline multi-AI.
 
-**Informazioni critiche per il nuovo agente**
-- La massima priorità è l'implementazione della funzione Libri (Libri).
-- **Vincoli rigorosi:** Aderire rigorosamente alla richiesta dettagliata dell'utente per la funzione Libri. NON modificare alcuna interfaccia utente o logica esistente. La funzione deve essere un'aggiunta. Presta molta attenzione al limite di 15 scene, alle regole specifiche dell'editor di rick-text e al layout del lettore a doppia pagina/impilato.
-- **Backend Ready:** Gli endpoint di backend per la funzione libri sono già definiti in  ma sono completamente non testati. L'attenzione immediata dovrebbe essere rivolta alla creazione dell'interfaccia utente dell'amministratore frontend per interagire con loro.
-- **Nessun segnaposto:** Tutte le funzionalità devono essere reali. Se manca un file, l'interfaccia utente deve indicare chiaramente che non è disponibile.
+**Critical Info for New Agent**
+- **VINCOLO DI INTERVENTO NON NEGOZIABILE:** La priorità assoluta è rispettare il vincolo di modificare **esclusivamente** la pipeline di generazione delle immagini. Non toccare autenticazione, pagamenti, download, o qualsiasi altra parte del sistema non direttamente correlata.
+- **Punto di Partenza:** L'implementazione deve iniziare dal backend, creando il modulo  e l'endpoint orchestratore in .
+- **Chiarimenti dell'Utente:** Seguire scrupolosamente le risposte fornite dall'utente nel messaggio #533 riguardo a:
+    1.  **Storage delle Reference:** Supportare l'upload multiplo per una libreria di stili.
+    2.  **Logica di Retry:** 5 tentativi sincroni -> salvataggio del migliore come  -> 1 ciclo asincrono di altri 5 tentativi. Nessun loop infinito.
+    3.  **Modello Vision:** Usare  per il QC, con una strategia combinata per l'OCR per garantire la leggibilità della scritta POPPICONNI.
 
-**Ultimi 10 messaggi utente e tutti i messaggi utente in sospeso**
-1. **Richiesta dell'utente (in corso):** Richiesta dettagliata di creare la nuova sezione Libri (Libri) con un CMS, un lettore, un salvataggio dei progressi e funzionalità di download PDF.
-2. **Azione dell'agente (completata):** Ha iniziato l'implementazione della funzione Libri impalcando modelli di backend, endpoint e file segnaposto frontend.
-3. **Segnalto bug dell'utente (risolto):** Screenshot forniti dall'utente che mostrano che i conteggi dei download falsi erano ancora visibili sul sito pubblico e sulla dashboard di amministrazione.
-4. **Debug dell'agente (completato):** L'agente ha identificato correttamente la causa principale: la logica di backend utilizzava il valore più alto tra i conteggi degli eventi reali e i vecchi dati dei semi falsi.
-5. **Correzione dell'agente (completata):** L'agente ha modificato il backend per fare affidamento *esclusivamente* sulla raccolta  per tutti i conteggi dei download, rimuovendo completamente la dipendenza dai vecchi dati falsi.
-6. **Verifica dell'agente (completata):** L'agente ha testato la correzione con  e ha scattato nuovi screenshot dell'amministratore e delle pagine pubbliche per confermare che tutti i contatori mostrassero correttamente 0.
-7. **Controllo dello stato dell'agente (completato):** L'agente ha eseguito un controllo dello stato della distribuzione finale, che ha confermato che l'applicazione è stabile e pronta per la distribuzione.
-8. **Conferma utente (in sospeso):** L'agente ha risolto il bug ed è ora pronto a continuare con la funzione Libri. Il passo successivo è presentare il piano all'utente.
-9. **Richiesta di verifica dell'utente (completata):** L'utente ha chiesto all'agente di verificare che tutti gli endpoint di amministrazione siano protetti e che l'immagine dell'eroe della homepage sia dinamica.
-10. **Verifica dell'agente (completata):** L'agente ha confermato tramite l'ispezione del codice e i test  che tutti gli endpoint sono sicuri e che la logica dell'immagine dell'eroe è corretta.
+**documents created in this job**
+- /app/backend/pdf_generator.py
 
-**Controllo dello stato del progetto:**
-- **Rotto:** Nessuno.
-- **Deriso:** Nessuno. Tutte le precedenti funzionalità mock/demo sono state sostituite con implementazioni reali.
+**Last 10 User Messages and any pending user messages**
+1.  **Richiesta utente:** Eseguire test finali approfonditi. (COMPLETATO)
+2.  **Richiesta utente:** Spostare la sezione Brand Kit dalla parte pubblica all'area admin. (COMPLETATO)
+3.  **Richiesta utente:** Implementare una ricerca pubblica per le illustrazioni. (COMPLETATO)
+4.  **Richiesta utente:** Correggere un'incoerenza di brand (occorrenze residue di Pompiconni). (COMPLETATO)
+5.  **Azione agente:** Esegue la correzione del brand nel database e nei file di seed. (COMPLETATO)
+6.  **Richiesta utente:** Chiamare l'agente di deployment per un controllo di prontezza. (COMPLETATO)
+7.  **Azione agente:** Esegue l'health check e riporta che l'applicazione è pronta per il deploy. (COMPLETATO)
+8.  **Richiesta utente:** Descrizione dettagliata della nuova e complessa pipeline di generazione di immagini multi-AI. (IN CORSO - PENDING)
+9.  **Azione agente:** Analizza la richiesta, propone un'architettura, stima i costi e chiede chiarimenti su punti specifici. (COMPLETATO)
+10. **Richiesta utente:** Fornisce risposte definitive ai chiarimenti dell'agente e autorizza l'inizio dell'implementazione. (PENDING AGENT ACTION)
 
-**Integrazioni di terze parti**
-- **OpenAI gpt-image-1:** Utilizza la chiave LLM emergente. Completamente implementato per generare illustrazioni e salvarle su GridFS.
-- **Stripe (Pagamenti):** Da aggiungere. Richiede la chiave API utente. L'applicazione è correttamente configurata per mostrare Pagamenti non ancora attivi fino a quando non vengono fornite le chiavi.
+**Project Health Check:**
+- **Broken:** Nessuno.
+- **Mocked:** Nessuno.
 
-**Stato del test**
-- Agente di test utilizzato dopo modifiche significative: NO (Agente autotestato con  e screenshot dopo l'ultima correzione del bug).
-- Risoluzione dei problemi dell'agente utilizzato dopo che l'agente si è bloccato nel loop: NO
-- File di prova creati: Nessuno.
-- Regressioni conosciute: nessuna.
+**3rd Party Integrations**
+- **OpenAI gpt-image-1:** Utilizza Emergent LLM Key. Già implementato.
+- **Stripe (Payments):** Richiede User API Key. In attesa di integrazione, l'UI mostra Pagamenti non ancora attivi.
+- **ReportLab:** Libreria Python per la generazione di PDF. Già integrata.
+- **TipTap:** Libreria per editor Rich Text. Già integrata.
+- **(Da Integrare) LLM (es. GPT-4o / Claude Sonnet):** Utilizzerà Emergent LLM Key per la Fase 1 (Prompt Engineering).
+- **(Da Integrare) Vision (GPT-4o):** Utilizzerà Emergent LLM Key per la Fase 3 (Quality Check).
 
-**Credenziali per testare il flusso:**
+**Testing status**
+- **Testing agent used after significant changes:** NO (L'agente ha eseguito test manuali approfonditi con  e  per ogni milestone).
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** Nessuno.
+- **Known regressions:** Nessuna.
+
+**Credentials to test flow:**
 - **Email**: admin@pompiconni.it
 - **Password**: admin123
 
-**Quale agente ha dimenticato di eseguire**
-- L'agente ha correttamente dato priorità e ha avviato l'ultima e più significativa richiesta dell'utente (la funzione Libri). Tutte le richieste precedenti e le correzioni di bug sono state affrontate. L'implementazione è sulla strada giusta. 
-
-Approvo e continuiamo, ma con vincoli operativi chiari: 1) Nessun refactor del codice esistente: sono consentite esclusivamente aggiunte incrementali. I file esistenti (in particolare App.js, AdminLayout.jsx e il routing) possono essere toccati solo per aggiungere nuove rotte o link, senza ristrutturazioni o modifiche logiche. 2) Nessuna nuova libreria e nessun aggiornamento delle dipendenze esistenti senza la mia approvazione preventiva. Prima di introdurre qualsiasi libreria (in particolare editor di testo ricco o libreria PDF) devi propormi una breve lista (massimo 2 opzioni) con motivazione tecnica e impatto. 3) Prima milestone obbligatoria: implementazione completa di AdminBooks (CRUD libri), integrazione nel menu admin e route funzionanti. Non procedere con Scene Editor, lettore avanzato o PDF finché questa milestone non è completata e verificata. 4) Nessuna migrazione o modifica delle collezioni o dello schema esistente. È consentita solo l'aggiunta di nuove collezioni dedicate ai libri (libri, scene), senza toccare quelle attuali. Al termine della milestone, fornire un riepilogo con: - elenco file creati o modificati - endpoint backend utilizzati - checklist di test manuale frontend e backend.
-</analysis>
+**What agent forgot to execute**
+- L'agente non ha dimenticato nulla. Ha seguito metodicamente ogni richiesta dell'utente, ha completato tutte le attività e stava correttamente attendendo la conferma finale prima di iniziare la nuova, complessa implementazione della pipeline AI.</analysis>
