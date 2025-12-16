@@ -1024,20 +1024,14 @@ async def update_illustration(illustration_id: str, illustration: IllustrationCr
     illust_dict['updatedAt'] = datetime.now(timezone.utc)
     result = await db.illustrations.update_one({"id": illustration_id}, {"$set": illust_dict})
     
-    # If theme changed, update counts on both themes
-    if old_theme_id != new_theme_id:
-        if old_theme_id:
-            await db.themes.update_one(
-                {"id": old_theme_id},
-                {"$inc": {"illustrationCount": -1}}
-            )
-        if new_theme_id:
-            await db.themes.update_one(
-                {"id": new_theme_id},
-                {"$inc": {"illustrationCount": 1}}
-            )
-        # Also update bundle counts
-        await recalculate_bundle_counts()
+    # Ricalcola conteggi per entrambi i temi (vecchio e nuovo)
+    if old_theme_id:
+        await recalculate_theme_count(old_theme_id)
+    if new_theme_id and new_theme_id != old_theme_id:
+        await recalculate_theme_count(new_theme_id)
+    
+    # Ricalcola bundle counts
+    await recalculate_bundle_counts()
     
     return {"success": True}
 
