@@ -2645,6 +2645,9 @@ async def generate_poppiconni_illustration(
                     {"id": request.theme_id},
                     {"$inc": {"illustrationCount": 1}}
                 )
+            
+            # Update bundle counts automatically
+            await recalculate_bundle_counts()
         
         # If LOW_CONFIDENCE, schedule async retry
         if result.status == PipelineStatus.LOW_CONFIDENCE:
