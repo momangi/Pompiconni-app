@@ -2453,9 +2453,15 @@ async def generate_poppiconni_illustration(
     """
     from bson import ObjectId
     
-    # Get reference image if style_id provided
+    # Get reference image - prioritize direct upload, then style library
     reference_image_base64 = None
-    if request.style_id:
+    
+    # 1. First check if direct reference image was uploaded
+    if request.reference_image_base64:
+        reference_image_base64 = request.reference_image_base64
+        logger.info("Using directly uploaded reference image for style analysis")
+    # 2. Otherwise, check style library
+    elif request.style_id:
         style = await db.generation_styles.find_one({"id": request.style_id, "userId": email})
         if style and style.get('referenceImageFileId'):
             try:
@@ -2464,15 +2470,16 @@ async def generate_poppiconni_illustration(
                 )
                 content = await grid_out.read()
                 reference_image_base64 = base64.b64encode(content).decode('utf-8')
+                logger.info(f"Using reference image from style library: {style.get('styleName')}")
             except Exception as e:
-                logger.warning(f"Could not load reference image: {e}")
+                logger.warning(f"Could not load reference image from style: {e}")
     
-    # Run the pipeline
+    # Run the pipeline with reference image for style analysis
     try:
         result = await run_pipeline(
             user_request=request.user_request,
             reference_image_base64=reference_image_base64,
-            style_lock=request.style_lock,
+            style_lock=request.style_lock or bool(reference_image_base64),  # Auto-enable style lock if image provided
             user_id=email
         )
         
