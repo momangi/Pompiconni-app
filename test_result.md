@@ -1,4 +1,4 @@
-# Pompiconni CMS Reale - Test Results
+# Poppiconni CMS - Test Results
 
 ## Implementazioni Completate
 
@@ -11,54 +11,95 @@
 - ✅ `GET /api/illustrations/{id}/download` - stream PDF con Content-Disposition
 - ✅ Contatori download incrementati solo su download PDF riuscito
 
-### 2. Generazione AI Persistente
+### 2. Generazione AI Persistente (OLD)
 - ✅ Generazione solo backend con EMERGENT_LLM_KEY
 - ✅ Output salvato in GridFS come PNG
 - ✅ Creazione documento Illustration con `imageFileId`
 - ✅ Salvataggio prompt, style, tema associato
-- ✅ UI admin con preview immagine generata
-- ✅ Scelta tema per assegnazione automatica
 
-### 3. Gestione Temi Admin (CRUD)
+### 3. 🆕 PIPELINE MULTI-AI POPPICONNI (NEW!)
+Pipeline automatica a 4 fasi per generare illustrazioni on-brand:
+
+**Endpoint principale:** `POST /api/admin/generate-poppiconni`
+
+**Fasi della Pipeline:**
+1. **Fase 1 - LLM (GPT-4o):** Interpreta richiesta utente + applica regole brand → genera prompt ottimizzato
+2. **Fase 2 - Image Gen (gpt-image-1):** Genera immagine candidata
+3. **Fase 3 - Vision/OCR (GPT-4o):** Quality Check automatico (barattolo popcorn, scritta "POPPICONNI", stile line-art)
+4. **Fase 4 - Post-Produzione (Pillow):** Pulizia, normalizzazione, export (PNG 300DPI, PDF, thumbnail)
+
+**Logica Retry:**
+- Max 5 tentativi sincroni con patch automatica del prompt
+- Se fallisce: salva come `LOW_CONFIDENCE`
+- Ciclo asincrono aggiuntivo (altri 5 tentativi)
+
+**Nuova collezione DB: `generation_styles`**
+- Libreria stili persistente per utente
+- Limite configurabile (default: 20 reference per utente)
+- Upload immagini di riferimento
+
+**Nuovi Endpoint Styles:**
+- ✅ `GET /api/admin/styles` - Lista stili utente
+- ✅ `POST /api/admin/styles` - Crea nuovo stile
+- ✅ `DELETE /api/admin/styles/{id}` - Elimina stile
+- ✅ `POST /api/admin/styles/{id}/upload-reference` - Carica reference image
+- ✅ `GET /api/admin/styles/{id}/reference-image` - Serve reference image
+
+**Nuovi Endpoint Pipeline:**
+- ✅ `POST /api/admin/generate-poppiconni` - Avvia pipeline completa
+- ✅ `GET /api/admin/pipeline-status/{generation_id}` - Check stato async
+
+**Frontend:**
+- ✅ `AdminGenerator.jsx` rinnovato con:
+  - Form descrizione scena in linguaggio naturale
+  - Template rapidi
+  - Selettore tema per organizzazione galleria
+  - Selettore stile di riferimento
+  - Toggle Style Lock
+  - Toggle Salva in Galleria
+  - Visualizzazione risultati pipeline con:
+    - Status badge (pending, phase1, phase2, phase3, phase4, completed, low_confidence, failed)
+    - QC Report dettagliato
+    - Thumbnail preview
+    - Download PNG/PDF
+
+### 4. Gestione Temi Admin (CRUD)
 - ✅ Pagina Admin "Temi" con lista completa
 - ✅ Creare tema: name, description, color
 - ✅ Edit tema
 - ✅ Delete tema con verifica illustrazioni
 - ✅ Palette 12 colori predefiniti
-- ✅ Colori già usati disabilitati nella selezione
-- ✅ `GET /api/admin/themes/check-delete/{id}` - verifica eliminabilità
-- ✅ `DELETE /api/admin/themes/{id}?force=true` - elimina con riassegnazione
 
-### 4. Hero Image Homepage
-- ✅ Pagina Admin "Impostazioni Sito"
+### 5. Hero Image Homepage
 - ✅ Upload hero image (JPG, JPEG, PNG)
-- ✅ Preview immagine attuale
-- ✅ Pulsante "Sostituisci"
-- ✅ Pulsante "Rimuovi" (ripristina default)
-- ✅ Storage GridFS: `heroImageFileId`, `heroImageContentType`, etc.
-- ✅ `GET /api/site/hero-image` - stream immagine
-- ✅ `GET /api/site/hero-status` - check disponibilità
-- ✅ `POST /api/admin/site/hero-image` - upload
-- ✅ `DELETE /api/admin/site/hero-image` - rimuovi
-- ✅ LandingPage mostra hero dinamica con fallback emoji
+- ✅ Storage GridFS
+- ✅ Stream immagine
+
+### 6. Libri Digitali
+- ✅ CRUD libri
+- ✅ Editor scene con TipTap
+- ✅ Galleria libri pubblica
+- ✅ Lettore libri con tracking progresso
+- ✅ Download PDF con ReportLab
 
 ## Schema DB Aggiornato
 
-### themes
+### generation_styles (NEW)
 ```json
 {
   "id": "string",
-  "name": "string",
-  "description": "string",
-  "icon": "BookOpen",
-  "color": "#FFB6C1",
-  "illustrationCount": 0,
+  "userId": "string",
+  "styleName": "string",
+  "description": "string|null",
+  "isActive": true,
+  "referenceImageFileId": "GridFS ObjectId|null",
+  "referenceImageUrl": "string|null",
   "createdAt": "datetime",
   "updatedAt": "datetime"
 }
 ```
 
-### illustrations
+### illustrations (UPDATED)
 ```json
 {
   "id": "string",
@@ -67,84 +108,52 @@
   "themeId": "string|null",
   "imageUrl": "/api/illustrations/{id}/image",
   "imageFileId": "GridFS ObjectId",
-  "imageContentType": "image/png",
-  "imageOriginalFilename": "string",
   "pdfUrl": "/api/illustrations/{id}/download",
   "pdfFileId": "GridFS ObjectId",
   "isFree": true,
   "price": 0.99,
   "downloadCount": 0,
-  "generatedByAI": false,
-  "aiPrompt": "string|null",
-  "aiStyle": "lineart|null"
+  "generatedByAI": true,
+  "aiPrompt": "string",
+  "aiStyle": "multi_ai_pipeline",
+  "pipelineGenerationId": "uuid",
+  "pipelineStatus": "completed|low_confidence|failed",
+  "qcPassed": true,
+  "qcConfidenceScore": 0.9
 }
 ```
 
-### site_settings
-```json
-{
-  "id": "global",
-  "show_reviews": true,
-  "stripe_enabled": false,
-  "heroImageFileId": "GridFS ObjectId|null",
-  "heroImageContentType": "image/png",
-  "heroImageFileName": "original.png",
-  "heroImageUpdatedAt": "datetime"
-}
-```
-
-## File Modificati
-- `/app/backend/server.py` - Tutti i nuovi endpoint
-- `/app/frontend/src/App.js` - Nuove routes
+## File Modificati/Creati per Pipeline Multi-AI
+- `/app/backend/image_pipeline.py` - Modulo orchestrazione pipeline (NEW)
+- `/app/backend/server.py` - Nuovi endpoint styles e pipeline
 - `/app/frontend/src/services/api.js` - Nuove funzioni API
-- `/app/frontend/src/pages/LandingPage.jsx` - Hero dinamica
-- `/app/frontend/src/pages/admin/AdminLayout.jsx` - Nuovo menu
-- `/app/frontend/src/pages/admin/AdminIllustrations.jsx` - Badge status file
+- `/app/frontend/src/pages/admin/AdminGenerator.jsx` - UI rinnovata
 
-## File Creati
-- `/app/frontend/src/pages/admin/AdminThemes.jsx` - Gestione temi
-- `/app/frontend/src/pages/admin/AdminSettings.jsx` - Impostazioni sito
+## Test Cases per Pipeline Multi-AI
 
-## Istruzioni Test Manuale
+### Backend Tests
+1. **Test creazione stile:** `POST /api/admin/styles` con nome/descrizione
+2. **Test limite stili:** Verificare che oltre 20 stili dia errore
+3. **Test upload reference:** `POST /api/admin/styles/{id}/upload-reference`
+4. **Test pipeline completa:** `POST /api/admin/generate-poppiconni`
+5. **Test QC report:** Verificare presenza di tutti i campi nel report
 
-### 1. Upload Hero Image
-1. Admin → Impostazioni
-2. Clicca "Carica Immagine"
-3. Seleziona un file JPG/PNG
-4. Verifica preview aggiornata
-5. Vai alla homepage pubblica → l'immagine deve apparire nella hero
+### Frontend Tests
+1. **Test form generazione:** Inserimento prompt, selezione tema/stile
+2. **Test visualizzazione risultati:** Status badge, QC report, thumbnail
+3. **Test libreria stili:** Creazione, eliminazione, upload reference
+4. **Test toggle options:** Style Lock, Salva in Galleria
 
-### 2. Creare Nuovo Tema
-1. Admin → Temi
-2. Clicca "Nuovo Tema"
-3. Inserisci nome e descrizione
-4. Seleziona un colore dalla palette
-5. Clicca "Crea Tema"
-6. Il tema appare nella griglia
-
-### 3. Generare Illustrazione AI
-1. Admin → Generatore AI
-2. Scrivi prompt (es. "Pompiconni in spiaggia")
-3. Seleziona un tema dal dropdown
-4. Clicca "Genera Immagine"
-5. Attendi (fino a 1 minuto)
-6. L'immagine appare nella galleria e viene salvata
-
-### 4. Assegnare Tema a Illustrazione
-1. Admin → Illustrazioni
-2. Clicca su un'illustrazione per modificare
-3. Cambia tema dal dropdown
-4. Salva
-
-### 5. Verifica Preview Pubblica
-1. Vai alla Galleria pubblica
-2. Seleziona un tema
-3. Le illustrazioni con immagini caricate mostrano la preview
-4. Le illustrazioni senza file mostrano placeholder unicorno
-
-## Credenziali
+## Credenziali Test
 - Admin: admin@pompiconni.it / admin123
 
-## Note
-- "Pagamenti non ancora attivi" rimane finché non vengono fornite le chiavi Stripe
-- Download non disponibile se PDF non caricato
+## Note Importanti
+- La pipeline può impiegare 1-2 minuti per completare tutti i 5 tentativi
+- Il QC verifica la leggibilità della scritta "POPPICONNI" tramite GPT-4o Vision
+- Se QC fallisce dopo 5 tentativi, l'immagine viene salvata come `LOW_CONFIDENCE`
+- I file finali sono: PNG 300 DPI, PDF pronto stampa, thumbnail per UI
+
+## Testing Protocol
+- ✅ Read /app/image_testing.md before testing image integrations
+- Use base64-encoded images for all tests
+- Accepted formats: JPEG, PNG, WEBP only
