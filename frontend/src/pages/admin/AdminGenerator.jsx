@@ -217,6 +217,50 @@ const AdminGenerator = () => {
     fetchData();
   }, []);
 
+  // Handle reference image upload
+  const handleReferenceImageUpload = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Solo immagini JPG, PNG o WEBP sono permesse');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Immagine troppo grande (max 10MB)');
+      return;
+    }
+
+    setReferenceImage(file);
+
+    // Create preview and base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result;
+      setReferenceImagePreview(base64);
+      // Extract just the base64 data without the data:image/... prefix
+      const base64Data = base64.split(',')[1];
+      setReferenceImageBase64(base64Data);
+    };
+    reader.readAsDataURL(file);
+
+    toast.success('Immagine di riferimento caricata! L\'AI analizzerà lo stile.');
+  }, []);
+
+  // Remove reference image
+  const handleRemoveReferenceImage = useCallback(() => {
+    setReferenceImage(null);
+    setReferenceImagePreview(null);
+    setReferenceImageBase64(null);
+    if (referenceInputRef.current) {
+      referenceInputRef.current.value = '';
+    }
+  }, []);
+
   const promptTemplates = [
     'Poppiconni come pompiere che salva un gattino',
     'Poppiconni in fattoria che accarezza una pecora',
