@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Wand2, Download, RefreshCw, Sparkles, Image as ImageIcon, Save, 
   Plus, Trash2, Upload, CheckCircle, XCircle, AlertTriangle, 
-  Layers, Eye, Palette, Settings2, Clock, ChevronDown, ChevronUp
+  Layers, Eye, Palette, Settings2, Clock, ChevronDown, ChevronUp,
+  ImagePlus, X
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
