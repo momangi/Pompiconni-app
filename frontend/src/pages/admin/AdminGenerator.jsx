@@ -179,6 +179,12 @@ const AdminGenerator = () => {
   const [styleLock, setStyleLock] = useState(false);
   const [saveToGallery, setSaveToGallery] = useState(true);
   
+  // Reference image state (direct upload)
+  const [referenceImage, setReferenceImage] = useState(null); // File object
+  const [referenceImagePreview, setReferenceImagePreview] = useState(null); // Base64 preview
+  const [referenceImageBase64, setReferenceImageBase64] = useState(null); // Base64 for API
+  const referenceInputRef = useRef(null);
+  
   // Data state
   const [themes, setThemes] = useState([]);
   const [styles, setStyles] = useState([]);
