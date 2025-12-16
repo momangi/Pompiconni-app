@@ -2616,7 +2616,6 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
-from fastapi import BackgroundTasks
 
 # Mount uploads directory
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
