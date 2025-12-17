@@ -41,6 +41,8 @@ function App() {
           <Route path="/libri/:bookId" element={<BookReaderPage />} />
           <Route path="/cerca" element={<SearchPage />} />
           <Route path="/download" element={<DownloadPage />} />
+          <Route path="/poster" element={<PostersPage />} />
+          <Route path="/poster/:posterId" element={<PosterDetailPage />} />
           
           {/* Redirect old brand-kit URL to home */}
           <Route path="/brand-kit" element={<Navigate to="/" replace />} />
