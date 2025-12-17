@@ -77,7 +77,7 @@ const PosterDetailPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-pink-50 via-white to-blue-50">
-        <Header />
+        <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
         </div>
@@ -89,7 +89,7 @@ const PosterDetailPage = () => {
   if (!poster) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-pink-50 via-white to-blue-50">
-        <Header />
+        <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <ImageIcon className="w-24 h-24 mx-auto text-gray-300 mb-4" />
           <h1 className="text-2xl font-bold text-gray-700 mb-2">Poster non trovato</h1>
