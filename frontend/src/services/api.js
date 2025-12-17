@@ -426,4 +426,66 @@ export const getPipelineStatus = async (generationId) => {
   return response.data;
 };
 
+// ============== POSTER API ==============
+
+// Public Poster API
+export const getPublicPosters = async () => {
+  const response = await api.get('/posters');
+  return response.data;
+};
+
+export const getPublicPoster = async (posterId) => {
+  const response = await api.get(`/posters/${posterId}`);
+  return response.data;
+};
+
+// Admin Poster API
+export const getAdminPosters = async () => {
+  const response = await api.get('/admin/posters');
+  return response.data;
+};
+
+export const getAdminPoster = async (posterId) => {
+  const response = await api.get(`/admin/posters/${posterId}`);
+  return response.data;
+};
+
+export const createPoster = async (poster) => {
+  const response = await api.post('/admin/posters', poster);
+  return response.data;
+};
+
+export const updatePoster = async (posterId, data) => {
+  const response = await api.put(`/admin/posters/${posterId}`, data);
+  return response.data;
+};
+
+export const deletePoster = async (posterId) => {
+  const response = await api.delete(`/admin/posters/${posterId}`);
+  return response.data;
+};
+
+export const uploadPosterImage = async (posterId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/posters/${posterId}/upload-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const uploadPosterPdf = async (posterId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/posters/${posterId}/upload-pdf`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const getPosterStats = async () => {
+  const response = await api.get('/admin/posters/stats/summary');
+  return response.data;
+};
+
 export default api;
