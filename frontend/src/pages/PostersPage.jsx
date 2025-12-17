@@ -4,7 +4,7 @@ import { Image as ImageIcon, Download, ShoppingCart, Sparkles } from 'lucide-rea
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { getPublicPosters } from '../services/api';
-import Header from '../components/layout/Header';
+import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
