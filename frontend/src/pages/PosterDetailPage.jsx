@@ -7,7 +7,7 @@ import {
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { getPublicPoster } from '../services/api';
-import Header from '../components/layout/Header';
+import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { toast } from 'sonner';
 
