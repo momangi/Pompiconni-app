@@ -24,6 +24,7 @@ const AdminLayout = () => {
   const navItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/illustrations', label: 'Illustrazioni', icon: Images },
+    { path: '/admin/posters', label: 'Poster', icon: ImageIcon },
     { path: '/admin/themes', label: 'Temi', icon: Palette },
     { path: '/admin/books', label: 'Libri', icon: BookOpen },
     { path: '/admin/generator', label: 'Generatore AI', icon: Wand2 },
