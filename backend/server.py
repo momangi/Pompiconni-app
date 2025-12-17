@@ -2753,6 +2753,313 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
         "message": "Generazione in corso o non trovata"
     }
 
+# ============== POSTER ENDPOINTS ==============
+
+# --- PUBLIC POSTER ENDPOINTS ---
+
+@api_router.get("/posters")
+async def get_public_posters():
+    """Get all published posters for public display"""
+    posters = await db.posters.find(
+        {"status": "published"},
+        {"_id": 0}
+    ).sort("createdAt", -1).to_list(100)
+    return posters
+
+@api_router.get("/posters/{poster_id}")
+async def get_public_poster(poster_id: str):
+    """Get a single published poster by ID"""
+    poster = await db.posters.find_one(
+        {"id": poster_id, "status": "published"},
+        {"_id": 0}
+    )
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    return poster
+
+@api_router.get("/posters/{poster_id}/image")
+async def get_poster_image(poster_id: str):
+    """Serve poster preview image from GridFS"""
+    from bson import ObjectId
+    
+    poster = await db.posters.find_one({"id": poster_id})
+    if not poster or not poster.get('imageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(poster['imageFileId']))
+        content = await grid_out.read()
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving poster image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+
+@api_router.get("/posters/{poster_id}/download")
+async def download_poster_pdf(poster_id: str):
+    """Download poster PDF (only if free or purchased)"""
+    from bson import ObjectId
+    
+    poster = await db.posters.find_one({"id": poster_id, "status": "published"})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    if not poster.get('pdfFileId'):
+        raise HTTPException(status_code=404, detail="PDF non disponibile")
+    
+    # Check if poster is free
+    if poster.get('price', 0) > 0:
+        # TODO: Check if user has purchased this poster
+        # For now, return error for paid posters
+        raise HTTPException(status_code=403, detail="Poster a pagamento - acquista per scaricare")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(poster['pdfFileId']))
+        content = await grid_out.read()
+        
+        # Increment download count
+        await db.posters.update_one(
+            {"id": poster_id},
+            {"$inc": {"downloadCount": 1}}
+        )
+        
+        safe_title = re.sub(r'[^\w\s-]', '', poster.get('title', 'poster')).strip().replace(' ', '_')
+        filename = f"Poppiconni_Poster_{safe_title}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Cache-Control": "no-cache"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error downloading poster PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel download")
+
+# --- ADMIN POSTER ENDPOINTS ---
+
+@admin_router.get("/posters")
+async def admin_get_posters(email: str = Depends(verify_token)):
+    """Get all posters for admin panel"""
+    posters = await db.posters.find({}, {"_id": 0}).sort("createdAt", -1).to_list(100)
+    return posters
+
+@admin_router.post("/posters")
+async def admin_create_poster(poster: PosterCreate, email: str = Depends(verify_token)):
+    """Create a new poster"""
+    poster_dict = {
+        "id": str(uuid.uuid4()),
+        "title": poster.title,
+        "description": poster.description,
+        "price": poster.price,
+        "status": poster.status,
+        "imageFileId": None,
+        "imageUrl": None,
+        "pdfFileId": None,
+        "pdfUrl": None,
+        "downloadCount": 0,
+        "createdAt": datetime.now(timezone.utc),
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    await db.posters.insert_one(poster_dict)
+    poster_dict.pop('_id', None)
+    
+    return poster_dict
+
+@admin_router.get("/posters/{poster_id}")
+async def admin_get_poster(poster_id: str, email: str = Depends(verify_token)):
+    """Get a single poster for editing"""
+    poster = await db.posters.find_one({"id": poster_id}, {"_id": 0})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    return poster
+
+@admin_router.put("/posters/{poster_id}")
+async def admin_update_poster(poster_id: str, poster: PosterUpdate, email: str = Depends(verify_token)):
+    """Update a poster"""
+    update_data = {k: v for k, v in poster.dict().items() if v is not None}
+    update_data['updatedAt'] = datetime.now(timezone.utc)
+    
+    result = await db.posters.update_one({"id": poster_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    return {"success": True}
+
+@admin_router.delete("/posters/{poster_id}")
+async def admin_delete_poster(poster_id: str, email: str = Depends(verify_token)):
+    """Delete a poster and its files"""
+    from bson import ObjectId
+    
+    poster = await db.posters.find_one({"id": poster_id})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    # Delete image from GridFS
+    if poster.get('imageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(poster['imageFileId']))
+        except Exception:
+            pass
+    
+    # Delete PDF from GridFS
+    if poster.get('pdfFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(poster['pdfFileId']))
+        except Exception:
+            pass
+    
+    await db.posters.delete_one({"id": poster_id})
+    return {"success": True}
+
+@admin_router.post("/posters/{poster_id}/upload-image")
+async def admin_upload_poster_image(
+    poster_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload preview image for a poster"""
+    from bson import ObjectId
+    
+    poster = await db.posters.find_one({"id": poster_id})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, JPEG, PNG permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"poster_{poster_id}{ext}"
+        
+        # Delete old image if exists
+        if poster.get('imageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(poster['imageFileId']))
+            except Exception:
+                pass
+        
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={
+                "poster_id": poster_id,
+                "type": "poster_image",
+                "content_type": content_type
+            }
+        )
+        
+        await db.posters.update_one(
+            {"id": poster_id},
+            {
+                "$set": {
+                    "imageFileId": str(file_id),
+                    "imageUrl": f"/api/posters/{poster_id}/image",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "imageUrl": f"/api/posters/{poster_id}/image"
+        }
+    except Exception as e:
+        logger.error(f"Error uploading poster image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@admin_router.post("/posters/{poster_id}/upload-pdf")
+async def admin_upload_poster_pdf(
+    poster_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload print-ready PDF for a poster"""
+    from bson import ObjectId
+    
+    poster = await db.posters.find_one({"id": poster_id})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext != ".pdf":
+        raise HTTPException(status_code=400, detail="Solo file PDF permessi")
+    
+    try:
+        content = await file.read()
+        filename = f"poster_{poster_id}.pdf"
+        
+        # Delete old PDF if exists
+        if poster.get('pdfFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(poster['pdfFileId']))
+            except Exception:
+                pass
+        
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={
+                "poster_id": poster_id,
+                "type": "poster_pdf",
+                "content_type": "application/pdf"
+            }
+        )
+        
+        await db.posters.update_one(
+            {"id": poster_id},
+            {
+                "$set": {
+                    "pdfFileId": str(file_id),
+                    "pdfUrl": f"/api/posters/{poster_id}/download",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "pdfUrl": f"/api/posters/{poster_id}/download"
+        }
+    except Exception as e:
+        logger.error(f"Error uploading poster PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@admin_router.get("/posters/stats/summary")
+async def admin_poster_stats(email: str = Depends(verify_token)):
+    """Get poster statistics"""
+    total = await db.posters.count_documents({})
+    published = await db.posters.count_documents({"status": "published"})
+    drafts = await db.posters.count_documents({"status": "draft"})
+    free = await db.posters.count_documents({"status": "published", "price": 0})
+    
+    # Sum all downloads
+    pipeline = [{"$group": {"_id": None, "total": {"$sum": "$downloadCount"}}}]
+    result = await db.posters.aggregate(pipeline).to_list(1)
+    total_downloads = result[0]['total'] if result else 0
+    
+    return {
+        "total": total,
+        "published": published,
+        "drafts": drafts,
+        "free": free,
+        "paid": published - free,
+        "totalDownloads": total_downloads
+    }
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
