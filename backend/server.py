@@ -115,19 +115,39 @@ class Illustration(IllustrationBase):
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
 class BundleBase(BaseModel):
-    name: str
-    description: str
+    title: str
+    subtitle: str = ""
     price: float = 0
+    currency: str = "EUR"
     isFree: bool = True
+    badgeText: str = ""
+    isActive: bool = True
+    sortOrder: int = 0
 
 class BundleCreate(BundleBase):
     illustrationIds: List[str] = []
+
+class BundleUpdate(BaseModel):
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    isFree: Optional[bool] = None
+    badgeText: Optional[str] = None
+    isActive: Optional[bool] = None
+    sortOrder: Optional[int] = None
+    illustrationIds: Optional[List[str]] = None
 
 class Bundle(BundleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     illustrationIds: List[str] = []
     illustrationCount: int = 0
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    pdfFileId: Optional[str] = None
+    pdfUrl: Optional[str] = None
+    backgroundImageFileId: Optional[str] = None
+    backgroundImageUrl: Optional[str] = None
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Review(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
