@@ -345,20 +345,21 @@ const LandingPage = () => {
                 {expandedTrait === 'dolce' && <Heart className="w-5 h-5" />}
                 {expandedTrait === 'simpatico' && <Sparkles className="w-5 h-5" />}
                 {expandedTrait === 'impacciato' && <Star className="w-5 h-5" />}
-                <span className="font-semibold capitalize">{expandedTrait}</span>
+                <span className="font-semibold capitalize">{characterImages[expandedTrait]?.title || expandedTrait}</span>
               </div>
 
-              <h3 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
-                Poppiconni è {expandedTrait}
+              <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                Poppiconni è {characterImages[expandedTrait]?.title || expandedTrait}
               </h3>
 
               <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                {expandedTrait === 'dolce' && 
-                  "Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini."}
-                {expandedTrait === 'simpatico' && 
-                  "Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un'occasione per ridere insieme."}
-                {expandedTrait === 'impacciato' && 
-                  "Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
+                {characterImages[expandedTrait]?.longDescription || (
+                  expandedTrait === 'dolce' 
+                    ? "Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini."
+                    : expandedTrait === 'simpatico'
+                    ? "Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un'occasione per ridere insieme."
+                    : "Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."
+                )}
               </p>
 
               <Link to="/galleria">
