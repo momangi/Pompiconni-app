@@ -38,10 +38,17 @@ const AdminSettings = () => {
       setHeroStatus(heroData);
       // Convert array to object keyed by trait
       const charObj = {};
+      const textsObj = {};
       characterData.forEach(item => {
         charObj[item.trait] = item;
+        textsObj[item.trait] = {
+          title: item.title || '',
+          shortDescription: item.shortDescription || '',
+          longDescription: item.longDescription || ''
+        };
       });
       setCharacterImages(charObj);
+      setCharacterTexts(textsObj);
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast.error('Errore nel caricamento delle impostazioni');
