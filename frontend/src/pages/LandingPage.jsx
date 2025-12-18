@@ -295,7 +295,7 @@ const LandingPage = () => {
       {/* Character Trait Modal */}
       {expandedTrait && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in-0 duration-300"
           onClick={closeModal}
         >
           {/* Backdrop */}
@@ -303,7 +303,7 @@ const LandingPage = () => {
           
           {/* Modal Content */}
           <div 
-            className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn"
+            className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-in zoom-in-95 fade-in-0 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
