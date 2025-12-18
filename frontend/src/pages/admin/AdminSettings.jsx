@@ -311,6 +311,21 @@ const AdminSettings = () => {
               />
             </div>
 
+            {/* Show Bundles Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base">Mostra Sezione Bundle</Label>
+                <p className="text-sm text-gray-500">
+                  Abilita/disabilita la sezione &quot;Download &amp; Bundle&quot; sulla homepage
+                </p>
+              </div>
+              <Switch
+                checked={settings?.showBundlesSection ?? true}
+                onCheckedChange={(checked) => handleSettingChange('showBundlesSection', checked)}
+                disabled={saving}
+              />
+            </div>
+
             {/* Stripe Status (read-only) */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
