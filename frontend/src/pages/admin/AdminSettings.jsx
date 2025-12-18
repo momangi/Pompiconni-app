@@ -100,6 +100,57 @@ const AdminSettings = () => {
     }
   };
 
+  // Character Image Handlers
+  const handleCharacterUpload = async (trait, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Solo file JPG, JPEG o PNG sono permessi');
+      return;
+    }
+
+    setCharacterUploading(prev => ({ ...prev, [trait]: true }));
+    try {
+      const result = await uploadCharacterImage(trait, file);
+      toast.success(`Immagine "${trait}" caricata con successo!`);
+      setCharacterImages(prev => ({
+        ...prev,
+        [trait]: { trait, imageUrl: result.imageUrl, fileId: result.fileId }
+      }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Errore durante il caricamento');
+    } finally {
+      setCharacterUploading(prev => ({ ...prev, [trait]: false }));
+    }
+  };
+
+  const handleCharacterDelete = async (trait) => {
+    if (!window.confirm(`Sei sicuro di voler rimuovere l'immagine "${trait}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteCharacterImage(trait);
+      toast.success(`Immagine "${trait}" rimossa`);
+      setCharacterImages(prev => {
+        const newState = { ...prev };
+        delete newState[trait];
+        return newState;
+      });
+    } catch (error) {
+      toast.error('Errore durante la rimozione');
+    }
+  };
+
+  const characterTraits = [
+    { key: 'dolce', label: 'Dolce', color: 'pink', emoji: '💖' },
+    { key: 'simpatico', label: 'Simpatico', color: 'blue', emoji: '✨' },
+    { key: 'impacciato', label: 'Impacciato', color: 'yellow', emoji: '⭐' }
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
