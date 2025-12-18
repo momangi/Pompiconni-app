@@ -3060,6 +3060,146 @@ async def admin_poster_stats(email: str = Depends(verify_token)):
         "totalDownloads": total_downloads
     }
 
+# ============== POPPICONNI CHARACTER IMAGES ==============
+
+# Character traits with their images (for "Chi è Poppiconni?" section)
+CHARACTER_TRAITS = ["dolce", "simpatico", "impacciato"]
+
+@api_router.get("/character-images")
+async def get_character_images():
+    """Get all character trait images for public display"""
+    images = await db.character_images.find({}, {"_id": 0}).to_list(10)
+    # Return as dict for easy access
+    result = {}
+    for img in images:
+        result[img['trait']] = img
+    return result
+
+@admin_router.get("/character-images")
+async def admin_get_character_images(email: str = Depends(verify_token)):
+    """Get all character trait images for admin"""
+    images = await db.character_images.find({}, {"_id": 0}).to_list(10)
+    # Ensure all traits exist
+    existing_traits = {img['trait'] for img in images}
+    for trait in CHARACTER_TRAITS:
+        if trait not in existing_traits:
+            images.append({
+                "trait": trait,
+                "imageFileId": None,
+                "imageUrl": None
+            })
+    return images
+
+@admin_router.post("/character-images/{trait}/upload")
+async def admin_upload_character_image(
+    trait: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload image for a character trait (dolce, simpatico, impacciato)"""
+    from bson import ObjectId
+    
+    if trait not in CHARACTER_TRAITS:
+        raise HTTPException(status_code=400, detail=f"Trait must be one of: {CHARACTER_TRAITS}")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"character_{trait}{ext}"
+        
+        # Check if image already exists for this trait
+        existing = await db.character_images.find_one({"trait": trait})
+        if existing and existing.get('imageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(existing['imageFileId']))
+            except Exception:
+                pass
+        
+        # Upload new image
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={
+                "trait": trait,
+                "type": "character_image",
+                "content_type": content_type
+            }
+        )
+        
+        # Upsert character image record
+        await db.character_images.update_one(
+            {"trait": trait},
+            {
+                "$set": {
+                    "trait": trait,
+                    "imageFileId": str(file_id),
+                    "imageUrl": f"/api/character-images/{trait}/image",
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "trait": trait,
+            "imageUrl": f"/api/character-images/{trait}/image"
+        }
+    except Exception as e:
+        logger.error(f"Error uploading character image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@api_router.get("/character-images/{trait}/image")
+async def get_character_image(trait: str):
+    """Serve character trait image"""
+    from bson import ObjectId
+    
+    if trait not in CHARACTER_TRAITS:
+        raise HTTPException(status_code=400, detail="Invalid trait")
+    
+    record = await db.character_images.find_one({"trait": trait})
+    if not record or not record.get('imageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(record['imageFileId']))
+        content = await grid_out.read()
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving character image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+
+@admin_router.delete("/character-images/{trait}")
+async def admin_delete_character_image(trait: str, email: str = Depends(verify_token)):
+    """Delete character trait image"""
+    from bson import ObjectId
+    
+    if trait not in CHARACTER_TRAITS:
+        raise HTTPException(status_code=400, detail="Invalid trait")
+    
+    record = await db.character_images.find_one({"trait": trait})
+    if record and record.get('imageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(record['imageFileId']))
+        except Exception:
+            pass
+    
+    await db.character_images.delete_one({"trait": trait})
+    return {"success": True}
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
