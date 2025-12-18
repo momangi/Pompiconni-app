@@ -843,18 +843,23 @@ async def get_reviews():
 
 @api_router.get("/site-settings")
 async def get_public_site_settings():
-    """Get public site settings (stripe status, hero image, etc)"""
+    """Get public site settings (stripe status, hero image, social links, etc)"""
     settings = await db.site_settings.find_one({"id": "global"})
     stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
     has_hero = bool(settings and settings.get('heroImageFileId')) if settings else False
     show_bundles = settings.get("showBundlesSection", True) if settings else True
+    has_brand_logo = bool(settings and settings.get('brandLogoFileId')) if settings else False
     
     return {
         "stripe_enabled": stripe_enabled,
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None,
         "hasHeroImage": has_hero,
         "heroImageUrl": "/api/site/hero-image" if has_hero else None,
-        "showBundlesSection": show_bundles
+        "showBundlesSection": show_bundles,
+        "hasBrandLogo": has_brand_logo,
+        "brandLogoUrl": "/api/site/brand-logo" if has_brand_logo else None,
+        "instagramUrl": settings.get("instagramUrl", "") if settings else "",
+        "tiktokUrl": settings.get("tiktokUrl", "") if settings else ""
     }
 
 @api_router.get("/brand-kit")
