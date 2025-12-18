@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Images, Wand2, LogOut, Home, Palette, Settings, BookOpen, FileText, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, Images, Wand2, LogOut, Home, Palette, Settings, BookOpen, FileText, Image as ImageIcon, Package } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { isAuthenticated, adminLogout } from '../../services/api';
 import { toast } from 'sonner';
