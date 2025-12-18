@@ -136,6 +136,11 @@ export const deleteIllustration = async (illustrationId) => {
 };
 
 // Bundle CRUD
+export const getAdminBundles = async () => {
+  const response = await api.get('/admin/bundles');
+  return response.data;
+};
+
 export const createBundle = async (bundle) => {
   const response = await api.post('/admin/bundles', bundle);
   return response.data;
@@ -148,6 +153,24 @@ export const updateBundle = async (bundleId, bundle) => {
 
 export const deleteBundle = async (bundleId) => {
   const response = await api.delete(`/admin/bundles/${bundleId}`);
+  return response.data;
+};
+
+export const uploadBundleBackground = async (bundleId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/bundles/${bundleId}/upload-background`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const uploadBundlePdf = async (bundleId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/bundles/${bundleId}/upload-pdf`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return response.data;
 };
 
