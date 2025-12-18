@@ -17,22 +17,28 @@ const LandingPage = () => {
   const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false, hasHeroImage: false });
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Character images state
+  const [characterImages, setCharacterImages] = useState({});
+  const [expandedTrait, setExpandedTrait] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [themesData, bundlesData, reviewsData, illustrationsData, settingsData] = await Promise.all([
+        const [themesData, bundlesData, reviewsData, illustrationsData, settingsData, characterData] = await Promise.all([
           getThemes(),
           getBundles(),
           getReviews(),
           getIllustrations(),
-          getSiteSettings()
+          getSiteSettings(),
+          getCharacterImages().catch(() => ({}))
         ]);
         setThemes(themesData);
         setBundles(bundlesData);
         setReviews(reviewsData);
         setIllustrations(illustrationsData);
         setSiteSettings(settingsData);
+        setCharacterImages(characterData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -40,6 +46,29 @@ const LandingPage = () => {
       }
     };
     fetchData();
+  }, []);
+
+  // Handle modal close with Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setExpandedTrait(null);
+    };
+    if (expandedTrait) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [expandedTrait]);
+
+  const handleCardClick = useCallback((trait) => {
+    setExpandedTrait(trait);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setExpandedTrait(null);
   }, []);
 
   // Auto-rotate reviews every 15 seconds
