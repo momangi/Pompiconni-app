@@ -1089,32 +1089,233 @@ async def delete_illustration(illustration_id: str, email: str = Depends(verify_
     
     return {"success": True}
 
+@admin_router.get("/bundles")
+async def admin_get_bundles(email: str = Depends(verify_token)):
+    """Get all bundles for admin (including inactive), sorted by sortOrder"""
+    bundles = await db.bundles.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
+    for b in bundles:
+        if b.get('backgroundImageFileId'):
+            b['backgroundImageUrl'] = f"/api/bundles/{b['id']}/background-image"
+        if b.get('pdfFileId'):
+            b['pdfUrl'] = f"/api/bundles/{b['id']}/download"
+    return bundles
+
 @admin_router.post("/bundles")
 async def create_bundle(bundle: BundleCreate, email: str = Depends(verify_token)):
     bundle_dict = bundle.dict()
     bundle_dict['id'] = str(uuid.uuid4())
     bundle_dict['illustrationCount'] = len(bundle.illustrationIds)
+    bundle_dict['pdfFileId'] = None
+    bundle_dict['pdfUrl'] = None
+    bundle_dict['backgroundImageFileId'] = None
+    bundle_dict['backgroundImageUrl'] = None
     bundle_dict['createdAt'] = datetime.now(timezone.utc)
+    bundle_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.bundles.insert_one(bundle_dict)
-    # Remove MongoDB _id field to avoid serialization issues
     bundle_dict.pop('_id', None)
     return bundle_dict
 
 @admin_router.put("/bundles/{bundle_id}")
-async def update_bundle(bundle_id: str, bundle: BundleCreate, email: str = Depends(verify_token)):
-    bundle_dict = bundle.dict()
-    bundle_dict['illustrationCount'] = len(bundle.illustrationIds)
-    result = await db.bundles.update_one({"id": bundle_id}, {"$set": bundle_dict})
-    if result.modified_count == 0:
+async def update_bundle(bundle_id: str, bundle: BundleUpdate, email: str = Depends(verify_token)):
+    existing = await db.bundles.find_one({"id": bundle_id})
+    if not existing:
         raise HTTPException(status_code=404, detail="Bundle non trovato")
-    return {"success": True}
+    
+    update_data = {"updatedAt": datetime.now(timezone.utc)}
+    bundle_data = bundle.dict(exclude_unset=True)
+    
+    for key, value in bundle_data.items():
+        if value is not None:
+            update_data[key] = value
+    
+    # Recalculate illustrationCount if illustrationIds changed
+    if 'illustrationIds' in update_data:
+        update_data['illustrationCount'] = len(update_data['illustrationIds'])
+    
+    await db.bundles.update_one({"id": bundle_id}, {"$set": update_data})
+    
+    updated = await db.bundles.find_one({"id": bundle_id}, {"_id": 0})
+    if updated.get('backgroundImageFileId'):
+        updated['backgroundImageUrl'] = f"/api/bundles/{bundle_id}/background-image"
+    if updated.get('pdfFileId'):
+        updated['pdfUrl'] = f"/api/bundles/{bundle_id}/download"
+    return updated
 
 @admin_router.delete("/bundles/{bundle_id}")
 async def delete_bundle(bundle_id: str, email: str = Depends(verify_token)):
-    result = await db.bundles.delete_one({"id": bundle_id})
-    if result.deleted_count == 0:
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle:
         raise HTTPException(status_code=404, detail="Bundle non trovato")
+    
+    # Delete associated files from GridFS
+    if bundle.get('pdfFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(bundle['pdfFileId']))
+        except Exception:
+            pass
+    if bundle.get('backgroundImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(bundle['backgroundImageFileId']))
+        except Exception:
+            pass
+    
+    await db.bundles.delete_one({"id": bundle_id})
     return {"success": True}
+
+@admin_router.post("/bundles/{bundle_id}/upload-background")
+async def upload_bundle_background(
+    bundle_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload background image for a bundle"""
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"bundle_bg_{bundle_id}{ext}"
+        
+        # Delete old image if exists
+        if bundle.get('backgroundImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(bundle['backgroundImageFileId']))
+            except Exception:
+                pass
+        
+        # Upload new image
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"bundle_id": bundle_id, "type": "bundle_background", "content_type": content_type}
+        )
+        
+        await db.bundles.update_one(
+            {"id": bundle_id},
+            {"$set": {
+                "backgroundImageFileId": str(file_id),
+                "backgroundImageUrl": f"/api/bundles/{bundle_id}/background-image",
+                "updatedAt": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {"success": True, "backgroundImageUrl": f"/api/bundles/{bundle_id}/background-image"}
+    except Exception as e:
+        logger.error(f"Error uploading bundle background: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@admin_router.post("/bundles/{bundle_id}/upload-pdf")
+async def upload_bundle_pdf(
+    bundle_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload PDF for a bundle"""
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext != ".pdf":
+        raise HTTPException(status_code=400, detail="Solo file PDF permessi")
+    
+    try:
+        content = await file.read()
+        filename = f"bundle_{bundle_id}.pdf"
+        
+        # Delete old PDF if exists
+        if bundle.get('pdfFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(bundle['pdfFileId']))
+            except Exception:
+                pass
+        
+        # Upload new PDF
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"bundle_id": bundle_id, "type": "bundle_pdf", "content_type": "application/pdf"}
+        )
+        
+        await db.bundles.update_one(
+            {"id": bundle_id},
+            {"$set": {
+                "pdfFileId": str(file_id),
+                "pdfUrl": f"/api/bundles/{bundle_id}/download",
+                "updatedAt": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {"success": True, "pdfUrl": f"/api/bundles/{bundle_id}/download"}
+    except Exception as e:
+        logger.error(f"Error uploading bundle PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@api_router.get("/bundles/{bundle_id}/background-image")
+async def get_bundle_background_image(bundle_id: str):
+    """Serve bundle background image"""
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle or not bundle.get('backgroundImageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['backgroundImageFileId']))
+        content = await grid_out.read()
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving bundle background: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+
+@api_router.get("/bundles/{bundle_id}/download")
+async def download_bundle_pdf(bundle_id: str):
+    """Download bundle PDF"""
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle non trovato")
+    
+    if not bundle.get('pdfFileId'):
+        raise HTTPException(status_code=404, detail="PDF non disponibile per questo bundle")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['pdfFileId']))
+        content = await grid_out.read()
+        
+        safe_title = bundle.get('title', 'bundle').replace(' ', '_')
+        filename = f"Poppiconni_{safe_title}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except Exception as e:
+        logger.error(f"Error downloading bundle PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel download")
 
 @admin_router.post("/upload")
 async def upload_file(
