@@ -26,12 +26,19 @@ const AdminSettings = () => {
 
   const fetchData = async () => {
     try {
-      const [settingsData, heroData] = await Promise.all([
+      const [settingsData, heroData, characterData] = await Promise.all([
         getAdminSettings(),
-        getHeroStatus()
+        getHeroStatus(),
+        getAdminCharacterImages().catch(() => [])
       ]);
       setSettings(settingsData);
       setHeroStatus(heroData);
+      // Convert array to object keyed by trait
+      const charObj = {};
+      characterData.forEach(item => {
+        charObj[item.trait] = item;
+      });
+      setCharacterImages(charObj);
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast.error('Errore nel caricamento delle impostazioni');
