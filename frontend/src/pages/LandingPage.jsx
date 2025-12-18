@@ -218,10 +218,10 @@ const LandingPage = () => {
                 <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Heart className="w-6 h-6 text-pink-300" />
-                    Dolce
+                    {characterImages.dolce?.title || 'Dolce'}
                   </h3>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza
+                    {characterImages.dolce?.shortDescription || 'Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza'}
                   </p>
                 </CardContent>
               </Card>
@@ -247,10 +247,10 @@ const LandingPage = () => {
                 <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-blue-300" />
-                    Simpatico
+                    {characterImages.simpatico?.title || 'Simpatico'}
                   </h3>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti
+                    {characterImages.simpatico?.shortDescription || 'Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti'}
                   </p>
                 </CardContent>
               </Card>
@@ -276,10 +276,10 @@ const LandingPage = () => {
                 <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-300" />
-                    Impacciato
+                    {characterImages.impacciato?.title || 'Impacciato'}
                   </h3>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    Un po&apos; goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione
+                    {characterImages.impacciato?.shortDescription || 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione'}
                   </p>
                 </CardContent>
               </Card>
