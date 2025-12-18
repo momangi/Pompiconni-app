@@ -156,10 +156,34 @@ const AdminSettings = () => {
   };
 
   const characterTraits = [
-    { key: 'dolce', label: 'Dolce', color: 'pink', emoji: '💖' },
-    { key: 'simpatico', label: 'Simpatico', color: 'blue', emoji: '✨' },
-    { key: 'impacciato', label: 'Impacciato', color: 'yellow', emoji: '⭐' }
+    { key: 'dolce', label: 'Dolce', color: 'pink', emoji: '💖', defaultShort: 'Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza', defaultLong: 'Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini.' },
+    { key: 'simpatico', label: 'Simpatico', color: 'blue', emoji: '✨', defaultShort: 'Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti', defaultLong: 'Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un\'occasione per ridere insieme.' },
+    { key: 'impacciato', label: 'Impacciato', color: 'yellow', emoji: '⭐', defaultShort: 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione', defaultLong: 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi.' }
   ];
+
+  const handleTextChange = (trait, field, value) => {
+    setCharacterTexts(prev => ({
+      ...prev,
+      [trait]: {
+        ...prev[trait],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveText = async (trait) => {
+    setCharacterSaving(prev => ({ ...prev, [trait]: true }));
+    try {
+      await updateCharacterText(trait, characterTexts[trait]);
+      toast.success(`Testi "${trait}" salvati con successo!`);
+      setEditingTrait(null);
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Errore durante il salvataggio');
+    } finally {
+      setCharacterSaving(prev => ({ ...prev, [trait]: false }));
+    }
+  };
 
   if (loading) {
     return (
