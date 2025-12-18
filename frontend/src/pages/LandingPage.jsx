@@ -185,7 +185,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* About Character */}
+      {/* Who is Poppiconni - Enhanced with images */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -198,36 +198,179 @@ const LandingPage = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg hover-lift bg-gradient-to-b from-white to-gray-50">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-pink-100 flex items-center justify-center">
-                  <Heart className="w-8 h-8 text-pink-500" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Dolce</h3>
-                <p className="text-gray-600">Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg hover-lift bg-gradient-to-b from-white to-gray-50">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-100 flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-blue-500" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Simpatico</h3>
-                <p className="text-gray-600">Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg hover-lift bg-gradient-to-b from-white to-gray-50">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-yellow-100 flex items-center justify-center">
-                  <Star className="w-8 h-8 text-yellow-500" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Impacciato</h3>
-                <p className="text-gray-600">Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione</p>
-              </CardContent>
-            </Card>
+            {/* Dolce Card */}
+            <div 
+              className="group cursor-pointer"
+              onClick={() => handleCardClick('dolce')}
+            >
+              <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-80 relative">
+                {characterImages.dolce?.imageUrl ? (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                    style={{ backgroundImage: `url(${BACKEND_URL}${characterImages.dolce.imageUrl})` }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
+                    <Heart className="w-24 h-24 text-pink-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Heart className="w-6 h-6 text-pink-300" />
+                    Dolce
+                  </h3>
+                  <p className="text-white/90 text-sm line-clamp-2">
+                    Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Simpatico Card */}
+            <div 
+              className="group cursor-pointer"
+              onClick={() => handleCardClick('simpatico')}
+            >
+              <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-80 relative">
+                {characterImages.simpatico?.imageUrl ? (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                    style={{ backgroundImage: `url(${BACKEND_URL}${characterImages.simpatico.imageUrl})` }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                    <Sparkles className="w-24 h-24 text-blue-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-blue-300" />
+                    Simpatico
+                  </h3>
+                  <p className="text-white/90 text-sm line-clamp-2">
+                    Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Impacciato Card */}
+            <div 
+              className="group cursor-pointer"
+              onClick={() => handleCardClick('impacciato')}
+            >
+              <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-80 relative">
+                {characterImages.impacciato?.imageUrl ? (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                    style={{ backgroundImage: `url(${BACKEND_URL}${characterImages.impacciato.imageUrl})` }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                    <Star className="w-24 h-24 text-yellow-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Star className="w-6 h-6 text-yellow-300" />
+                    Impacciato
+                  </h3>
+                  <p className="text-white/90 text-sm line-clamp-2">
+                    Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+          
+          <p className="text-center text-gray-400 text-sm mt-6">
+            Clicca su una card per scoprire di più
+          </p>
         </div>
       </section>
+
+      {/* Character Trait Modal */}
+      {expandedTrait && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={closeModal}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          
+          {/* Modal Content */}
+          <div 
+            className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button 
+              className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
+              onClick={closeModal}
+            >
+              <X className="w-6 h-6 text-gray-600" />
+            </button>
+
+            {/* Image Section */}
+            <div className="h-64 sm:h-80 relative">
+              {characterImages[expandedTrait]?.imageUrl ? (
+                <img 
+                  src={`${BACKEND_URL}${characterImages[expandedTrait].imageUrl}`}
+                  alt={expandedTrait}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className={`w-full h-full flex items-center justify-center ${
+                  expandedTrait === 'dolce' ? 'bg-gradient-to-br from-pink-100 to-pink-200' :
+                  expandedTrait === 'simpatico' ? 'bg-gradient-to-br from-blue-100 to-blue-200' :
+                  'bg-gradient-to-br from-yellow-100 to-yellow-200'
+                }`}>
+                  {expandedTrait === 'dolce' && <Heart className="w-32 h-32 text-pink-300" />}
+                  {expandedTrait === 'simpatico' && <Sparkles className="w-32 h-32 text-blue-300" />}
+                  {expandedTrait === 'impacciato' && <Star className="w-32 h-32 text-yellow-300" />}
+                </div>
+              )}
+            </div>
+
+            {/* Content Section */}
+            <div className="p-8 text-center">
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 ${
+                expandedTrait === 'dolce' ? 'bg-pink-100 text-pink-600' :
+                expandedTrait === 'simpatico' ? 'bg-blue-100 text-blue-600' :
+                'bg-yellow-100 text-yellow-600'
+              }`}>
+                {expandedTrait === 'dolce' && <Heart className="w-5 h-5" />}
+                {expandedTrait === 'simpatico' && <Sparkles className="w-5 h-5" />}
+                {expandedTrait === 'impacciato' && <Star className="w-5 h-5" />}
+                <span className="font-semibold capitalize">{expandedTrait}</span>
+              </div>
+
+              <h3 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
+                Poppiconni è {expandedTrait}
+              </h3>
+
+              <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                {expandedTrait === 'dolce' && 
+                  "Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini."}
+                {expandedTrait === 'simpatico' && 
+                  "Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un'occasione per ridere insieme."}
+                {expandedTrait === 'impacciato' && 
+                  "Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
+              </p>
+
+              <Link to="/galleria">
+                <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                  Scopri le sue avventure
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Themes */}
       <section className="py-20 bg-gradient-to-b from-blue-50 to-white">
