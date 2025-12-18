@@ -440,10 +440,10 @@ SEED_ILLUSTRATIONS = [
 ]
 
 SEED_BUNDLES = [
-    {"id": "1", "name": "Starter Pack Poppiconni", "description": "10 tavole gratuite per iniziare a colorare!", "illustrationCount": 10, "price": 0, "isFree": True, "illustrationIds": []},
-    {"id": "2", "name": "Album Mestieri Completo", "description": "Tutte le 12 tavole dei mestieri in PDF", "illustrationCount": 12, "price": 4.99, "isFree": False, "illustrationIds": []},
-    {"id": "3", "name": "Mega Pack Stagioni", "description": "16 tavole per tutte le stagioni + bonus festività", "illustrationCount": 16, "price": 6.99, "isFree": False, "illustrationIds": []},
-    {"id": "4", "name": "Collezione Completa", "description": "Tutti i temi + bonus esclusivi", "illustrationCount": 71, "price": 19.99, "isFree": False, "illustrationIds": []}
+    {"id": "1", "title": "Starter Pack Poppiconni", "subtitle": "10 tavole gratuite per iniziare a colorare!", "illustrationCount": 0, "price": 0, "currency": "EUR", "isFree": True, "badgeText": "GRATIS", "isActive": True, "sortOrder": 1, "illustrationIds": [], "pdfFileId": None, "backgroundImageFileId": None},
+    {"id": "2", "title": "Album Mestieri Completo", "subtitle": "Tutte le 12 tavole dei mestieri in PDF", "illustrationCount": 0, "price": 4.99, "currency": "EUR", "isFree": False, "badgeText": "", "isActive": True, "sortOrder": 2, "illustrationIds": [], "pdfFileId": None, "backgroundImageFileId": None},
+    {"id": "3", "title": "Mega Pack Stagioni", "subtitle": "16 tavole per tutte le stagioni + bonus festività", "illustrationCount": 0, "price": 6.99, "currency": "EUR", "isFree": False, "badgeText": "", "isActive": True, "sortOrder": 3, "illustrationIds": [], "pdfFileId": None, "backgroundImageFileId": None},
+    {"id": "4", "title": "Collezione Completa", "subtitle": "Tutti i temi + bonus esclusivi", "illustrationCount": 0, "price": 19.99, "currency": "EUR", "isFree": False, "badgeText": "BEST VALUE", "isActive": True, "sortOrder": 4, "illustrationIds": [], "pdfFileId": None, "backgroundImageFileId": None}
 ]
 
 # ============== DATABASE INIT ==============
