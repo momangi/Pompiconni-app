@@ -488,4 +488,30 @@ export const getPosterStats = async () => {
   return response.data;
 };
 
+// ============== CHARACTER IMAGES API ==============
+
+export const getCharacterImages = async () => {
+  const response = await api.get('/character-images');
+  return response.data;
+};
+
+export const getAdminCharacterImages = async () => {
+  const response = await api.get('/admin/character-images');
+  return response.data;
+};
+
+export const uploadCharacterImage = async (trait, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/character-images/${trait}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const deleteCharacterImage = async (trait) => {
+  const response = await api.delete(`/admin/character-images/${trait}`);
+  return response.data;
+};
+
 export default api;
