@@ -307,6 +307,99 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
 
+        {/* Character Images Section */}
+        <Card className="lg:col-span-2 border-2 border-purple-100">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="w-5 h-5 text-purple-500" />
+              Immagini Caratteristiche (Chi è Poppiconni?)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Gestisci le immagini per le tre caratteristiche di Poppiconni mostrate nella homepage.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {characterTraits.map(({ key, label, color, emoji }) => (
+                <div key={key} className="space-y-3">
+                  <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                    <span>{emoji}</span> {label}
+                  </h4>
+                  
+                  {/* Preview */}
+                  <div className={`relative h-40 bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl flex items-center justify-center overflow-hidden`}>
+                    {characterImages[key]?.imageUrl ? (
+                      <img
+                        src={`${BACKEND_URL}${characterImages[key].imageUrl}?t=${Date.now()}`}
+                        alt={label}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center text-gray-400">
+                        <div className="text-4xl mb-1">{emoji}</div>
+                        <p className="text-xs">Nessuna immagine</p>
+                      </div>
+                    )}
+                    {characterImages[key]?.imageUrl && (
+                      <div className="absolute top-2 right-2">
+                        <CheckCircle className="w-5 h-5 text-green-500 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload/Delete Buttons */}
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) => handleCharacterUpload(key, e)}
+                      className="hidden"
+                      id={`character-upload-${key}`}
+                      disabled={characterUploading[key]}
+                    />
+                    <label
+                      htmlFor={`character-upload-${key}`}
+                      className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors ${
+                        characterUploading[key]
+                          ? 'bg-gray-100 text-gray-400'
+                          : `bg-${color}-50 text-${color}-600 hover:bg-${color}-100`
+                      }`}
+                    >
+                      {characterUploading[key] ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          <span>...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3 h-3" />
+                          <span>{characterImages[key]?.imageUrl ? 'Cambia' : 'Carica'}</span>
+                        </>
+                      )}
+                    </label>
+
+                    {characterImages[key]?.imageUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-200 text-red-500 hover:bg-red-50 px-2"
+                        onClick={() => handleCharacterDelete(key)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-gray-400 mt-4">
+              Formati supportati: JPG, JPEG, PNG. Le immagini verranno mostrate nelle card della sezione &quot;Chi è Poppiconni?&quot; sulla homepage.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Preview Link */}
         <Card className="lg:col-span-2 border-2 border-green-100">
           <CardContent className="p-6">
