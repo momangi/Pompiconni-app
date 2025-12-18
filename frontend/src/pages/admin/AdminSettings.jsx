@@ -232,7 +232,9 @@ const AdminSettings = () => {
     setCharacterTexts(prev => ({
       ...prev,
       [trait]: {
-        ...prev[trait],
+        title: prev[trait]?.title || '',
+        shortDescription: prev[trait]?.shortDescription || '',
+        longDescription: prev[trait]?.longDescription || '',
         [field]: value
       }
     }));
