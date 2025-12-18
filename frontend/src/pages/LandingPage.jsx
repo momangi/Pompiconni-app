@@ -408,41 +408,91 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Bundles */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-              <span className="gradient-text">Download</span> & Bundle
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Scarica le tavole gratuite o scegli un pacchetto completo!</p>
+      {/* Bundles - Only show if enabled and bundles exist */}
+      {siteSettings.showBundlesSection !== false && bundles.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+                <span className="gradient-text">Download</span> & Bundle
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">Scarica le tavole gratuite o scegli un pacchetto completo!</p>
+            </div>
+            
+            {/* Grid layout for ≤4, horizontal scroll for >4 */}
+            <div className={bundles.length > 4 
+              ? "flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent -mx-4 px-4"
+              : "grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            }>
+              {bundles.map((bundle) => (
+                <div 
+                  key={bundle.id} 
+                  className={bundles.length > 4 ? "flex-shrink-0 w-72 snap-start" : ""}
+                >
+                  <Card className={`relative overflow-hidden border-2 hover-lift h-full ${bundle.isFree ? 'border-green-200' : 'border-pink-200'}`}>
+                    {/* Background Image Layer (blurred) */}
+                    {bundle.backgroundImageUrl && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ 
+                          backgroundImage: `url(${BACKEND_URL}${bundle.backgroundImageUrl})`,
+                          filter: 'blur(8px)',
+                          transform: 'scale(1.1)'
+                        }}
+                      />
+                    )}
+                    {/* Overlay for readability */}
+                    <div className={`absolute inset-0 ${
+                      bundle.backgroundImageUrl 
+                        ? 'bg-white/80' 
+                        : bundle.isFree ? 'bg-green-50/30' : 'bg-white'
+                    }`} />
+                    
+                    {/* Content Layer (not blurred) */}
+                    <CardContent className="relative p-6 text-center z-10">
+                      {bundle.badgeText && (
+                        <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full mb-4 ${
+                          bundle.isFree ? 'bg-green-100 text-green-600' : 'bg-pink-100 text-pink-600'
+                        }`}>
+                          {bundle.badgeText}
+                        </span>
+                      )}
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{bundle.title}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{bundle.subtitle}</p>
+                      <p className="text-3xl font-bold text-pink-500 mb-4">
+                        {bundle.isFree ? 'Gratis' : `€${bundle.price}`}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-4">{bundle.illustrationCount || 0} illustrazioni</p>
+                      
+                      {/* Button logic */}
+                      {!bundle.pdfUrl && !bundle.pdfFileId ? (
+                        <div className="p-2 bg-gray-100 rounded-lg">
+                          <p className="text-xs text-gray-500">Presto disponibile</p>
+                        </div>
+                      ) : !bundle.isFree && !siteSettings.stripe_enabled ? (
+                        <div className="p-2 bg-yellow-50 rounded-lg">
+                          <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
+                        </div>
+                      ) : (
+                        <a 
+                          href={bundle.isFree && bundle.pdfUrl ? `${BACKEND_URL}${bundle.pdfUrl}` : undefined}
+                          target={bundle.isFree ? "_blank" : undefined}
+                          rel={bundle.isFree ? "noopener noreferrer" : undefined}
+                        >
+                          <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`}>
+                            <Download className="w-4 h-4 mr-2" />
+                            {bundle.isFree ? 'Scarica Ora' : 'Acquista'}
+                          </Button>
+                        </a>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
           </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bundles.map((bundle) => (
-              <Card key={bundle.id} className={`border-2 hover-lift ${bundle.isFree ? 'border-green-200 bg-green-50/30' : 'border-pink-200'}`}>
-                <CardContent className="p-6 text-center">
-                  {bundle.isFree && <span className="inline-block px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full mb-4">GRATIS</span>}
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">{bundle.name}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{bundle.description}</p>
-                  <p className="text-3xl font-bold text-pink-500 mb-4">{bundle.isFree ? 'Gratis' : `€${bundle.price}`}</p>
-                  <p className="text-xs text-gray-500 mb-4">{bundle.illustrationCount} illustrazioni</p>
-                  {!bundle.isFree && !siteSettings.stripe_enabled ? (
-                    <div className="p-2 bg-yellow-50 rounded-lg">
-                      <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
-                    </div>
-                  ) : (
-                    <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`}>
-                      <Download className="w-4 h-4 mr-2" />
-                      {bundle.isFree ? 'Scarica Ora' : 'Acquista'}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Single Review with rotation - only show if there are reviews */}
       {reviews.length > 0 && (
