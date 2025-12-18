@@ -52,7 +52,11 @@ const AdminSettings = () => {
       });
       // Convert array to object keyed by trait
       const charObj = {};
-      const textsObj = {};
+      const textsObj = {
+        dolce: { title: '', shortDescription: '', longDescription: '' },
+        simpatico: { title: '', shortDescription: '', longDescription: '' },
+        impacciato: { title: '', shortDescription: '', longDescription: '' }
+      };
       characterData.forEach(item => {
         charObj[item.trait] = item;
         textsObj[item.trait] = {
