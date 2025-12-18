@@ -486,9 +486,37 @@ async def init_database():
         bundles_to_insert = []
         for bundle in SEED_BUNDLES:
             bundle['createdAt'] = now
+            bundle['updatedAt'] = now
             bundles_to_insert.append(bundle)
         await db.bundles.insert_many(bundles_to_insert)
         logger.info("Seed bundles inserted")
+    else:
+        # Migrate existing bundles to add new fields if missing
+        await db.bundles.update_many(
+            {"isActive": {"$exists": False}},
+            {"$set": {
+                "isActive": True,
+                "sortOrder": 0,
+                "badgeText": "",
+                "subtitle": "",
+                "currency": "EUR",
+                "backgroundImageFileId": None,
+                "backgroundImageUrl": None,
+                "pdfFileId": None,
+                "pdfUrl": None,
+                "updatedAt": datetime.now(timezone.utc)
+            }}
+        )
+        # Migrate name to title if needed
+        await db.bundles.update_many(
+            {"title": {"$exists": False}, "name": {"$exists": True}},
+            [{"$set": {"title": "$name", "subtitle": "$description"}}]
+        )
+        # Set sortOrder based on existing order
+        bundles = await db.bundles.find({}, {"id": 1}).to_list(100)
+        for idx, b in enumerate(bundles, 1):
+            await db.bundles.update_one({"id": b['id'], "sortOrder": 0}, {"$set": {"sortOrder": idx}})
+        logger.info("Existing bundles migrated with new fields")
     
     # Check if reviews exist - use insert_many for batch performance
     reviews_count = await db.reviews.count_documents({})
