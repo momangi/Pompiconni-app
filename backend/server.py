@@ -819,12 +819,14 @@ async def get_public_site_settings():
     settings = await db.site_settings.find_one({"id": "global"})
     stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
     has_hero = bool(settings and settings.get('heroImageFileId')) if settings else False
+    show_bundles = settings.get("showBundlesSection", True) if settings else True
     
     return {
         "stripe_enabled": stripe_enabled,
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None,
         "hasHeroImage": has_hero,
-        "heroImageUrl": "/api/site/hero-image" if has_hero else None
+        "heroImageUrl": "/api/site/hero-image" if has_hero else None,
+        "showBundlesSection": show_bundles
     }
 
 @api_router.get("/brand-kit")
