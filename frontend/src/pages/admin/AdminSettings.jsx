@@ -351,18 +351,26 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-600">
-              Gestisci le immagini per le tre caratteristiche di Poppiconni mostrate nella homepage.
+              Gestisci le immagini e i testi per le tre caratteristiche di Poppiconni mostrate nella homepage.
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {characterTraits.map(({ key, label, color, emoji }) => (
-                <div key={key} className="space-y-3">
-                  <h4 className="font-medium text-gray-700 flex items-center gap-2">
-                    <span>{emoji}</span> {label}
-                  </h4>
+              {characterTraits.map(({ key, label, color, emoji, defaultShort, defaultLong }) => (
+                <div key={key} className="space-y-3 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                      <span>{emoji}</span> {label}
+                    </h4>
+                    <button
+                      onClick={() => setEditingTrait(editingTrait === key ? null : key)}
+                      className={`p-1.5 rounded-lg transition-colors ${editingTrait === key ? 'bg-purple-100 text-purple-600' : 'hover:bg-gray-200 text-gray-500'}`}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  </div>
                   
                   {/* Preview */}
-                  <div className={`relative h-40 bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl flex items-center justify-center overflow-hidden`}>
+                  <div className={`relative h-32 bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl flex items-center justify-center overflow-hidden`}>
                     {characterImages[key]?.imageUrl ? (
                       <img
                         src={`${BACKEND_URL}${characterImages[key].imageUrl}?t=${Date.now()}`}
@@ -371,13 +379,13 @@ const AdminSettings = () => {
                       />
                     ) : (
                       <div className="text-center text-gray-400">
-                        <div className="text-4xl mb-1">{emoji}</div>
+                        <div className="text-3xl mb-1">{emoji}</div>
                         <p className="text-xs">Nessuna immagine</p>
                       </div>
                     )}
                     {characterImages[key]?.imageUrl && (
                       <div className="absolute top-2 right-2">
-                        <CheckCircle className="w-5 h-5 text-green-500 bg-white rounded-full" />
+                        <CheckCircle className="w-4 h-4 text-green-500 bg-white rounded-full" />
                       </div>
                     )}
                   </div>
@@ -424,12 +432,66 @@ const AdminSettings = () => {
                       </Button>
                     )}
                   </div>
+
+                  {/* Text Fields - Collapsible */}
+                  {editingTrait === key && (
+                    <div className="space-y-3 pt-3 border-t border-gray-200">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Titolo</label>
+                        <input
+                          type="text"
+                          value={characterTexts[key]?.title || ''}
+                          onChange={(e) => handleTextChange(key, 'title', e.target.value)}
+                          placeholder={label}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Descrizione breve (card)</label>
+                        <textarea
+                          value={characterTexts[key]?.shortDescription || ''}
+                          onChange={(e) => handleTextChange(key, 'shortDescription', e.target.value)}
+                          placeholder={defaultShort}
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Descrizione estesa (modale)</label>
+                        <textarea
+                          value={characterTexts[key]?.longDescription || ''}
+                          onChange={(e) => handleTextChange(key, 'longDescription', e.target.value)}
+                          placeholder={defaultLong}
+                          rows={3}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 resize-none"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full bg-purple-500 hover:bg-purple-600"
+                        onClick={() => handleSaveText(key)}
+                        disabled={characterSaving[key]}
+                      >
+                        {characterSaving[key] ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                            Salvataggio...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3 h-3 mr-1" />
+                            Salva Testi
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
             <p className="text-xs text-gray-400 mt-4">
-              Formati supportati: JPG, JPEG, PNG. Le immagini verranno mostrate nelle card della sezione &quot;Chi è Poppiconni?&quot; sulla homepage.
+              Formati supportati: JPG, JPEG, PNG. Clicca l&apos;icona ✏️ per modificare i testi di ogni caratteristica.
             </p>
           </CardContent>
         </Card>
