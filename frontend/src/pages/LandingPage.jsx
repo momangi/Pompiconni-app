@@ -460,7 +460,7 @@ const LandingPage = () => {
                         <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
                       ))}
                     </div>
-                    <p className="text-xl text-gray-600 mb-8 italic leading-relaxed">"{currentReview.text}"</p>
+                    <p className="text-xl text-gray-600 mb-8 italic leading-relaxed">&quot;{currentReview.text}&quot;</p>
                     <div>
                       <p className="font-bold text-gray-800 text-lg">{currentReview.name}</p>
                       <p className="text-gray-500">{currentReview.role}</p>
