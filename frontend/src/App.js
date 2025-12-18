@@ -64,6 +64,7 @@ function App() {
             <Route path="books" element={<AdminBooks />} />
             <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
             <Route path="posters" element={<AdminPosters />} />
+            <Route path="bundles" element={<AdminBundles />} />
             <Route path="brand-kit" element={<BrandKitPage />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
