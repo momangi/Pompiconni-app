@@ -2013,6 +2013,123 @@ async def delete_hero_image(email: str = Depends(verify_token)):
     
     return {"success": True, "message": "Hero image rimossa, ripristinato default"}
 
+# ============== BRAND LOGO ==============
+
+@api_router.get("/site/brand-logo")
+async def get_brand_logo():
+    """Serve brand logo image"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    if not settings or not settings.get('brandLogoFileId'):
+        raise HTTPException(status_code=404, detail="Brand logo non configurato")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(settings['brandLogoFileId']))
+        content = await grid_out.read()
+        content_type = settings.get('brandLogoContentType', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving brand logo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel caricamento logo")
+
+@admin_router.get("/brand-logo-status")
+async def get_brand_logo_status(email: str = Depends(verify_token)):
+    """Get brand logo status"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    has_logo = bool(settings and settings.get('brandLogoFileId'))
+    return {
+        "hasBrandLogo": has_logo,
+        "brandLogoUrl": "/api/site/brand-logo" if has_logo else None
+    }
+
+@admin_router.post("/upload-brand-logo")
+async def upload_brand_logo(
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload brand logo image"""
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"brand_logo{ext}"
+        
+        settings = await db.site_settings.find_one({"id": "global"})
+        
+        # Delete old logo if exists
+        if settings and settings.get('brandLogoFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(settings['brandLogoFileId']))
+            except Exception:
+                pass
+        
+        # Upload new logo
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"type": "brand_logo", "content_type": content_type}
+        )
+        
+        await db.site_settings.update_one(
+            {"id": "global"},
+            {
+                "$set": {
+                    "brandLogoFileId": str(file_id),
+                    "brandLogoContentType": content_type,
+                    "brandLogoUpdatedAt": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {"success": True, "brandLogoUrl": f"/api/site/brand-logo?v={datetime.now(timezone.utc).timestamp()}"}
+    except Exception as e:
+        logger.error(f"Error uploading brand logo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
+
+@admin_router.delete("/brand-logo")
+async def delete_brand_logo(email: str = Depends(verify_token)):
+    """Delete brand logo"""
+    settings = await db.site_settings.find_one({"id": "global"})
+    
+    if settings and settings.get('brandLogoFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(settings['brandLogoFileId']))
+        except Exception:
+            pass
+        
+        await db.site_settings.update_one(
+            {"id": "global"},
+            {"$set": {"brandLogoFileId": "", "brandLogoContentType": "", "brandLogoUpdatedAt": ""}}
+        )
+    
+    return {"success": True}
+
+# ============== SOCIAL LINKS ==============
+
+@admin_router.put("/social-links")
+async def update_social_links(
+    instagramUrl: str = "",
+    tiktokUrl: str = "",
+    email: str = Depends(verify_token)
+):
+    """Update social media links"""
+    await db.site_settings.update_one(
+        {"id": "global"},
+        {"$set": {"instagramUrl": instagramUrl, "tiktokUrl": tiktokUrl}},
+        upsert=True
+    )
+    return {"success": True, "instagramUrl": instagramUrl, "tiktokUrl": tiktokUrl}
+
 @api_router.get("/theme-colors")
 async def get_theme_color_palette():
     """Get available theme colors"""
