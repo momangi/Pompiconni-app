@@ -241,9 +241,11 @@ const AdminSettings = () => {
   };
 
   const handleSaveText = async (trait) => {
+    const textData = characterTexts[trait] || { title: '', shortDescription: '', longDescription: '' };
+    
     setCharacterSaving(prev => ({ ...prev, [trait]: true }));
     try {
-      await updateCharacterText(trait, characterTexts[trait]);
+      await updateCharacterText(trait, textData);
       toast.success(`Testi "${trait}" salvati con successo!`);
       setEditingTrait(null);
     } catch (error) {
