@@ -15,6 +15,10 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Character images state
+  const [characterImages, setCharacterImages] = useState({});
+  const [characterUploading, setCharacterUploading] = useState({});
 
   useEffect(() => {
     fetchData();
