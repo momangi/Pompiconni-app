@@ -514,4 +514,9 @@ export const deleteCharacterImage = async (trait) => {
   return response.data;
 };
 
+export const updateCharacterText = async (trait, data) => {
+  const response = await api.put(`/admin/character-images/${trait}/text`, data);
+  return response.data;
+};
+
 export default api;
