@@ -3200,6 +3200,41 @@ async def admin_delete_character_image(trait: str, email: str = Depends(verify_t
     await db.character_images.delete_one({"trait": trait})
     return {"success": True}
 
+class CharacterTextUpdate(BaseModel):
+    """Model for updating character trait texts"""
+    title: Optional[str] = None
+    shortDescription: Optional[str] = None
+    longDescription: Optional[str] = None
+
+@admin_router.put("/character-images/{trait}/text")
+async def admin_update_character_text(
+    trait: str,
+    data: CharacterTextUpdate,
+    email: str = Depends(verify_token)
+):
+    """Update text content for a character trait"""
+    if trait not in CHARACTER_TRAITS:
+        raise HTTPException(status_code=400, detail=f"Trait must be one of: {CHARACTER_TRAITS}")
+    
+    update_data = {"trait": trait, "updatedAt": datetime.now(timezone.utc)}
+    
+    if data.title is not None:
+        update_data["title"] = data.title
+    if data.shortDescription is not None:
+        update_data["shortDescription"] = data.shortDescription
+    if data.longDescription is not None:
+        update_data["longDescription"] = data.longDescription
+    
+    await db.character_images.update_one(
+        {"trait": trait},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    # Return updated record
+    record = await db.character_images.find_one({"trait": trait}, {"_id": 0})
+    return {"success": True, "data": record}
+
 # ============== STATIC FILES ==============
 
 from fastapi.staticfiles import StaticFiles
