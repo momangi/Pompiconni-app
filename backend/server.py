@@ -789,9 +789,14 @@ async def get_image_status(illustration_id: str):
 
 @api_router.get("/bundles", response_model=List[dict])
 async def get_bundles():
-    bundles = await db.bundles.find().to_list(100)
+    """Get public bundles - only active ones, sorted by sortOrder"""
+    bundles = await db.bundles.find({"isActive": True}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
+    # Add background image URL if available
     for b in bundles:
-        b['_id'] = str(b.get('_id', ''))
+        if b.get('backgroundImageFileId'):
+            b['backgroundImageUrl'] = f"/api/bundles/{b['id']}/background-image"
+        if b.get('pdfFileId'):
+            b['pdfUrl'] = f"/api/bundles/{b['id']}/download"
     return bundles
 
 @api_router.get("/reviews", response_model=List[dict])
