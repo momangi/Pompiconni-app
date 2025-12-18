@@ -488,6 +488,54 @@ const AdminSettings = () => {
                 </code>
               </div>
             )}
+
+            {/* Social Links */}
+            <div className="pt-4 border-t border-gray-200">
+              <Label className="text-base mb-3 block">Link Social</Label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Instagram className="w-5 h-5 text-pink-500" />
+                  <input
+                    type="url"
+                    value={socialLinks.instagramUrl}
+                    onChange={(e) => setSocialLinks(prev => ({ ...prev, instagramUrl: e.target.value }))}
+                    placeholder="https://instagram.com/poppiconni"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Music2 className="w-5 h-5 text-gray-800" />
+                  <input
+                    type="url"
+                    value={socialLinks.tiktokUrl}
+                    onChange={(e) => setSocialLinks(prev => ({ ...prev, tiktokUrl: e.target.value }))}
+                    placeholder="https://tiktok.com/@poppiconni"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSocialLinksSave}
+                  disabled={socialSaving}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  {socialSaving ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Salvataggio...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3 h-3 mr-1" />
+                      Salva Link Social
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                I link appariranno nel footer. Lascia vuoto per nascondere l&apos;icona.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
