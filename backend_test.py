@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any, Optional
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://ai-lineartgen.preview.emergentagent.com/api"
+BACKEND_URL = "https://brand-showcase-66.preview.emergentagent.com/api"
 
 class PompiconniAPITester:
     def __init__(self):
