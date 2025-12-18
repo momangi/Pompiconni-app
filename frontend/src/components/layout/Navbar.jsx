@@ -44,8 +44,14 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-200 to-blue-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <span className="text-xl">🦄</span>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-200 to-blue-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+              {siteSettings.hasBrandLogo ? (
+                <img 
+                  src={`${BACKEND_URL}${siteSettings.brandLogoUrl}`} 
+                  alt="Poppiconni" 
+                  className="w-full h-full object-cover"
+                />
+              ) : null}
             </div>
             <span className="text-xl font-bold text-gray-800 font-['Quicksand']">
               Poppiconni
