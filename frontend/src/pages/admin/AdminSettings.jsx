@@ -22,6 +22,14 @@ const AdminSettings = () => {
   const [characterTexts, setCharacterTexts] = useState({});
   const [characterSaving, setCharacterSaving] = useState({});
   const [editingTrait, setEditingTrait] = useState(null);
+  
+  // Brand logo state
+  const [brandLogoStatus, setBrandLogoStatus] = useState({ hasBrandLogo: false });
+  const [brandLogoUploading, setBrandLogoUploading] = useState(false);
+  
+  // Social links state
+  const [socialLinks, setSocialLinks] = useState({ instagramUrl: '', tiktokUrl: '' });
+  const [socialSaving, setSocialSaving] = useState(false);
 
   useEffect(() => {
     fetchData();
