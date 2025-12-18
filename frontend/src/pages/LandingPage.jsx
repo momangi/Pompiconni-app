@@ -354,11 +354,11 @@ const LandingPage = () => {
 
               <p className="text-lg text-gray-600 leading-relaxed mb-6">
                 {expandedTrait === 'dolce' && 
-                  &quot;Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini.&quot;}
+                  "Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza. Il suo sguardo tenero e il suo sorriso gentile scaldano il cuore di grandi e piccini."}
                 {expandedTrait === 'simpatico' && 
-                  &quot;Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un&apos;occasione per ridere insieme.&quot;}
+                  "Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un'occasione per ridere insieme."}
                 {expandedTrait === 'impacciato' && 
-                  "Un po&apos; goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
+                  "Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
               </p>
 
               <Link to="/galleria">
