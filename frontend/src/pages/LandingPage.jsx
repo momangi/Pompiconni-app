@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowRight, Download, Sparkles, Star, Heart, BookOpen, ChevronLeft, ChevronRight, AlertCircle, X } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings } from '../services/api';
+import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings, getCharacterImages } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
