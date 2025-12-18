@@ -37,13 +37,19 @@ const AdminSettings = () => {
 
   const fetchData = async () => {
     try {
-      const [settingsData, heroData, characterData] = await Promise.all([
+      const [settingsData, heroData, characterData, brandLogoData] = await Promise.all([
         getAdminSettings(),
         getHeroStatus(),
-        getAdminCharacterImages().catch(() => [])
+        getAdminCharacterImages().catch(() => []),
+        getBrandLogoStatus().catch(() => ({ hasBrandLogo: false }))
       ]);
       setSettings(settingsData);
       setHeroStatus(heroData);
+      setBrandLogoStatus(brandLogoData);
+      setSocialLinks({
+        instagramUrl: settingsData?.instagramUrl || '',
+        tiktokUrl: settingsData?.tiktokUrl || ''
+      });
       // Convert array to object keyed by trait
       const charObj = {};
       const textsObj = {};
