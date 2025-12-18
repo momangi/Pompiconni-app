@@ -279,7 +279,7 @@ const LandingPage = () => {
                     Impacciato
                   </h3>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione
+                    Un po&apos; goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione
                   </p>
                 </CardContent>
               </Card>
