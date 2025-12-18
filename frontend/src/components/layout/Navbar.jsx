@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen, Search, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { getSiteSettings } from '../../services/api';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [siteSettings, setSiteSettings] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getSiteSettings().then(setSiteSettings).catch(() => {});
+  }, []);
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
