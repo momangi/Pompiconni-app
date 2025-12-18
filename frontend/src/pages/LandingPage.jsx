@@ -358,7 +358,7 @@ const LandingPage = () => {
                 {expandedTrait === 'simpatico' && 
                   "Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti. Poppiconni sa come trasformare ogni momento in un'occasione per ridere insieme."}
                 {expandedTrait === 'impacciato' && 
-                  "Un po' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
+                  "Un po&apos; goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi."}
               </p>
 
               <Link to="/galleria">
