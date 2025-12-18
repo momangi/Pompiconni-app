@@ -108,6 +108,32 @@ export const getDashboard = async () => {
   return response.data;
 };
 
+// Brand Logo
+export const getBrandLogoStatus = async () => {
+  const response = await api.get('/admin/brand-logo-status');
+  return response.data;
+};
+
+export const uploadBrandLogo = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/admin/upload-brand-logo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const deleteBrandLogo = async () => {
+  const response = await api.delete('/admin/brand-logo');
+  return response.data;
+};
+
+// Social Links
+export const updateSocialLinks = async (instagramUrl, tiktokUrl) => {
+  const response = await api.put(`/admin/social-links?instagramUrl=${encodeURIComponent(instagramUrl)}&tiktokUrl=${encodeURIComponent(tiktokUrl)}`);
+  return response.data;
+};
+
 // Theme CRUD
 export const createTheme = async (theme) => {
   const response = await api.post('/admin/themes', theme);
