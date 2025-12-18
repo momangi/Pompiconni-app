@@ -2018,6 +2018,8 @@ async def delete_hero_image(email: str = Depends(verify_token)):
 @api_router.get("/site/brand-logo")
 async def get_brand_logo():
     """Serve brand logo image"""
+    from bson import ObjectId
+    
     settings = await db.site_settings.find_one({"id": "global"})
     if not settings or not settings.get('brandLogoFileId'):
         raise HTTPException(status_code=404, detail="Brand logo non configurato")
