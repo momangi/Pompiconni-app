@@ -175,6 +175,55 @@ const AdminSettings = () => {
     { key: 'impacciato', label: 'Impacciato', color: 'yellow', emoji: '⭐', defaultShort: 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione', defaultLong: 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione. Le sue disavventure insegnano che dagli errori si impara e che non bisogna mai arrendersi.' }
   ];
 
+  // Brand Logo Handlers
+  const handleBrandLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Solo file JPG, PNG o WEBP sono permessi');
+      return;
+    }
+
+    setBrandLogoUploading(true);
+    try {
+      const result = await uploadBrandLogo(file);
+      toast.success('Logo caricato con successo!');
+      setBrandLogoStatus({ hasBrandLogo: true, brandLogoUrl: result.brandLogoUrl });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Errore durante il caricamento');
+    } finally {
+      setBrandLogoUploading(false);
+    }
+  };
+
+  const handleBrandLogoDelete = async () => {
+    if (!window.confirm('Sei sicuro di voler rimuovere il logo?')) return;
+
+    try {
+      await deleteBrandLogo();
+      toast.success('Logo rimosso');
+      setBrandLogoStatus({ hasBrandLogo: false, brandLogoUrl: null });
+    } catch (error) {
+      toast.error('Errore durante la rimozione');
+    }
+  };
+
+  // Social Links Handler
+  const handleSocialLinksSave = async () => {
+    setSocialSaving(true);
+    try {
+      await updateSocialLinks(socialLinks.instagramUrl, socialLinks.tiktokUrl);
+      toast.success('Link social salvati!');
+    } catch (error) {
+      toast.error('Errore durante il salvataggio');
+    } finally {
+      setSocialSaving(false);
+    }
+  };
+
   const handleTextChange = (trait, field, value) => {
     setCharacterTexts(prev => ({
       ...prev,
