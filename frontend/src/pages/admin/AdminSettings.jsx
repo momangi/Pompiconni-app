@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Switch } from '../../components/ui/switch';
 import { Label } from '../../components/ui/label';
-import { getAdminSettings, updateAdminSettings, getHeroStatus, uploadHeroImage, deleteHeroImage } from '../../services/api';
+import { getAdminSettings, updateAdminSettings, getHeroStatus, uploadHeroImage, deleteHeroImage, getAdminCharacterImages, uploadCharacterImage, deleteCharacterImage } from '../../services/api';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
