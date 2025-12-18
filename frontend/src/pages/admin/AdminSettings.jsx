@@ -350,6 +350,78 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
 
+        {/* Brand Logo */}
+        <Card className="border-2 border-purple-100">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="w-5 h-5 text-purple-500" />
+              Logo Poppiconni
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Logo/avatar mostrato nell&apos;header e footer del sito.
+            </p>
+
+            {/* Preview */}
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-200 to-blue-200 flex items-center justify-center overflow-hidden">
+                {brandLogoStatus.hasBrandLogo ? (
+                  <img
+                    src={`${BACKEND_URL}/api/site/brand-logo?t=${Date.now()}`}
+                    alt="Brand Logo"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-400 text-xs text-center">Nessun logo</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-2">
+                  {brandLogoStatus.hasBrandLogo ? 'Logo configurato' : 'Nessun logo caricato'}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleBrandLogoUpload}
+                    className="hidden"
+                    id="brand-logo-upload"
+                    disabled={brandLogoUploading}
+                  />
+                  <label
+                    htmlFor="brand-logo-upload"
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg cursor-pointer transition-colors ${
+                      brandLogoUploading
+                        ? 'bg-gray-100 text-gray-400'
+                        : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                    }`}
+                  >
+                    {brandLogoUploading ? (
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Upload className="w-3 h-3" />
+                    )}
+                    {brandLogoStatus.hasBrandLogo ? 'Cambia' : 'Carica'}
+                  </label>
+                  {brandLogoStatus.hasBrandLogo && (
+                    <button
+                      onClick={handleBrandLogoDelete}
+                      className="px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400">
+              Dimensione consigliata: 200x200px. Sarà mostrato 32px su desktop, 28px su mobile.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* General Settings */}
         <Card className="border-2 border-blue-100">
           <CardHeader>
