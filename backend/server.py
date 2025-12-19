@@ -584,6 +584,15 @@ async def init_database():
 @app.on_event("startup")
 async def startup_event():
     await init_database()
+    
+    # Create TTL index for download_limits (auto-delete after 30 days)
+    try:
+        await db.download_limits.create_index("expiresAt", expireAfterSeconds=0)
+        logger.info("TTL index created for download_limits")
+    except Exception as e:
+        # Index might already exist
+        logger.debug(f"TTL index creation: {str(e)}")
+    
     logger.info("Database initialized")
 
 # ============== PUBLIC ENDPOINTS ==============
