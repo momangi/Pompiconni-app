@@ -6,6 +6,8 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { getThemes } from '../services/api';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 const GalleryPage = () => {
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
