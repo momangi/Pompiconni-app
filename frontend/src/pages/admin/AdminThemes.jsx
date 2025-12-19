@@ -224,6 +224,82 @@ const AdminThemes = () => {
                 </p>
               </div>
 
+              {/* Background Image + Opacity (only for editing existing themes) */}
+              {editingTheme && (
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <Label className="flex items-center gap-2">
+                    <Image className="w-4 h-4" />
+                    Immagine Sfondo + Opacità
+                  </Label>
+                  
+                  {/* Preview */}
+                  <div className="h-24 rounded-lg overflow-hidden relative bg-gray-800">
+                    {editingTheme.backgroundImageUrl ? (
+                      <>
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{ 
+                            backgroundImage: `url(${BACKEND_URL}${editingTheme.backgroundImageUrl}?t=${Date.now()})`,
+                            filter: 'blur(4px)',
+                            transform: 'scale(1.1)',
+                            opacity: (formData.backgroundOpacity ?? 30) / 100
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-white/60" />
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                          <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">PREVIEW LIVE</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                        <span className="text-xs">Nessuna immagine</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload */}
+                  <div>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleBackgroundUpload}
+                      className="hidden"
+                      id="theme-bg-upload"
+                      disabled={bgUploading}
+                    />
+                    <label
+                      htmlFor="theme-bg-upload"
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg cursor-pointer ${
+                        bgUploading ? 'bg-gray-100 text-gray-400' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'
+                      }`}
+                    >
+                      <Upload className="w-3 h-3" />
+                      {bgUploading ? 'Caricamento...' : editingTheme.backgroundImageUrl ? 'Cambia immagine' : 'Carica immagine'}
+                    </label>
+                  </div>
+
+                  {/* Opacity Slider */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-600">Opacità sfondo</span>
+                      <span className="text-sm font-bold text-pink-500">{formData.backgroundOpacity ?? 30}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="10"
+                      max="80"
+                      value={formData.backgroundOpacity ?? 30}
+                      onChange={(e) => setFormData({ ...formData, backgroundOpacity: parseInt(e.target.value) })}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>10%</span>
+                      <span>80%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={resetForm} className="flex-1">
                   Annulla
