@@ -434,7 +434,7 @@ const LandingPage = () => {
                   </CardContent>
                 </Card>
               </Link>
-            ))}
+            )})}
           </div>
         </div>
       </section>
