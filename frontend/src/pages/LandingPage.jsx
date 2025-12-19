@@ -402,8 +402,8 @@ const LandingPage = () => {
                         }}
                       />
                     )}
-                    {/* Color overlay */}
-                    <div className="absolute inset-0" style={{ backgroundColor: theme.backgroundImageUrl ? 'rgba(255,255,255,0.5)' : theme.color, opacity: theme.backgroundImageUrl ? 1 : 0.2 }} />
+                    {/* Color overlay - lighter when background image exists */}
+                    <div className="absolute inset-0" style={{ backgroundColor: theme.backgroundImageUrl ? 'rgba(255,255,255,0.3)' : theme.color, opacity: theme.backgroundImageUrl ? 1 : 0.2 }} />
                     {/* Icon */}
                     <BookOpen className="w-16 h-16 text-gray-600 group-hover:scale-110 transition-transform duration-300 relative z-10" />
                   </div>
