@@ -69,13 +69,24 @@ class ThemeBase(BaseModel):
     icon: str = "BookOpen"
     color: str = "#FFB6C1"
     coverImage: Optional[str] = None
+    backgroundOpacity: int = 30  # 10-80%
 
 class ThemeCreate(ThemeBase):
     pass
 
+class ThemeUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    coverImage: Optional[str] = None
+    backgroundOpacity: Optional[int] = None
+
 class Theme(ThemeBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     illustrationCount: int = 0
+    backgroundImageFileId: Optional[str] = None
+    backgroundImageUrl: Optional[str] = None
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
