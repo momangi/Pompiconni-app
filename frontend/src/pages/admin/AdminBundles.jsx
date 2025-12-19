@@ -328,33 +328,25 @@ const AdminBundles = () => {
                   )}
                 </div>
 
-                {/* PDF */}
+                {/* Background Opacity */}
                 <div>
-                  <Label>File PDF</Label>
-                  <div className="mt-2 p-3 bg-gray-100 rounded-lg flex items-center gap-3">
-                    <FileText className={`w-6 h-6 ${editingBundle.pdfFileId || editingBundle.pdfUrl ? 'text-green-500' : 'text-gray-400'}`} />
-                    <span className="text-sm text-gray-600">
-                      {editingBundle.pdfFileId || editingBundle.pdfUrl ? 'PDF caricato' : 'Nessun PDF'}
+                  <Label>Opacità sfondo (%)</Label>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="10"
+                      max="80"
+                      value={editingBundle.backgroundOpacity || 30}
+                      onChange={(e) => setEditingBundle(prev => ({ ...prev, backgroundOpacity: parseInt(e.target.value) }))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                    />
+                    <span className="w-12 text-center text-sm font-medium text-gray-700">
+                      {editingBundle.backgroundOpacity || 30}%
                     </span>
                   </div>
-                  {!isCreating && (
-                    <div className="mt-2">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => handlePdfUpload(editingBundle.id, e)}
-                        className="hidden"
-                        id="pdf-upload"
-                      />
-                      <label
-                        htmlFor="pdf-upload"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
-                      >
-                        <Upload className="w-3 h-3" />
-                        {editingBundle.pdfFileId || editingBundle.pdfUrl ? 'Cambia PDF' : 'Carica PDF'}
-                      </label>
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Controlla quanto si vede l&apos;immagine di sfondo (10-80%)
+                  </p>
                 </div>
 
                 {/* Illustrations Count */}
