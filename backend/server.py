@@ -567,18 +567,50 @@ async def root():
 
 @api_router.get("/themes", response_model=List[dict])
 async def get_themes():
-    themes = await db.themes.find().to_list(100)
+    themes = await db.themes.find({}, {"_id": 0}).to_list(100)
     for t in themes:
-        t['_id'] = str(t.get('_id', ''))
+        # Add background image URL if available
+        if t.get('backgroundImageFileId'):
+            t['backgroundImageUrl'] = f"/api/themes/{t['id']}/background-image"
+        # Ensure backgroundOpacity has default
+        if 'backgroundOpacity' not in t:
+            t['backgroundOpacity'] = 30
     return themes
 
 @api_router.get("/themes/{theme_id}")
 async def get_theme(theme_id: str):
-    theme = await db.themes.find_one({"id": theme_id})
+    theme = await db.themes.find_one({"id": theme_id}, {"_id": 0})
     if not theme:
         raise HTTPException(status_code=404, detail="Tema non trovato")
-    theme['_id'] = str(theme.get('_id', ''))
+    if theme.get('backgroundImageFileId'):
+        theme['backgroundImageUrl'] = f"/api/themes/{theme_id}/background-image"
+    if 'backgroundOpacity' not in theme:
+        theme['backgroundOpacity'] = 30
     return theme
+
+@api_router.get("/themes/{theme_id}/background-image")
+async def get_theme_background_image(theme_id: str):
+    """Serve theme background image with caching"""
+    from bson import ObjectId
+    
+    theme = await db.themes.find_one({"id": theme_id})
+    if not theme or not theme.get('backgroundImageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(theme['backgroundImageFileId']))
+        content = await grid_out.read()
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/png')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving theme background: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
 
 @api_router.get("/illustrations", response_model=List[dict])
 async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool] = None):
