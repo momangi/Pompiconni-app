@@ -60,11 +60,41 @@ const GalleryPage = () => {
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {themes.map((theme) => (
+              {themes.map((theme) => {
+                // Calcola blur e velo in base allo slider (0-80%)
+                const themeOpacity = Math.min(Math.max(theme.backgroundOpacity ?? 0, 0), 80);
+                const themeBlurPx = (themeOpacity / 80) * 8; // 0→0px, 80→8px
+                const themeVeilOpacity = themeOpacity / 100; // 0→0, 80→0.8
+                
+                return (
                 <Link key={theme.id} to={`/galleria/${theme.id}`}>
                   <Card className="border-0 shadow-xl hover-lift overflow-hidden group cursor-pointer h-full">
                     <div className="h-48 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
-                      <div className="absolute inset-0 opacity-30 transition-opacity group-hover:opacity-40" style={{ backgroundColor: theme.color }} />
+                      {/* Background Image Layer - sempre visibile con opacity 1 */}
+                      {theme.backgroundImageUrl && (
+                        <img 
+                          src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                          style={{ 
+                            filter: `blur(${themeBlurPx}px)`,
+                            transform: 'scale(1.1)',
+                            opacity: 1
+                          }}
+                        />
+                      )}
+                      {/* Velo overlay - opacità controllata dallo slider, colore crema */}
+                      {theme.backgroundImageUrl ? (
+                        <div 
+                          className="absolute inset-0 transition-opacity group-hover:opacity-90" 
+                          style={{ 
+                            backgroundColor: 'rgba(255, 250, 245, 1)', 
+                            opacity: themeVeilOpacity 
+                          }} 
+                        />
+                      ) : (
+                        <div className="absolute inset-0 opacity-30 transition-opacity group-hover:opacity-40" style={{ backgroundColor: theme.color }} />
+                      )}
                       <div className="relative z-10 text-center">
                         <BookOpen className="w-20 h-20 mx-auto text-gray-700 group-hover:scale-110 transition-transform duration-300" />
                         <span className="mt-2 inline-block px-3 py-1 bg-white/80 rounded-full text-sm font-medium text-gray-700">
@@ -82,7 +112,8 @@ const GalleryPage = () => {
                     </CardContent>
                   </Card>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
