@@ -460,10 +460,7 @@ const AdminBundles = () => {
                     <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
                       <span>{bundle.isFree ? 'Gratuito' : `€${bundle.price}`}</span>
                       <span>{bundle.illustrationCount || 0} illustrazioni</span>
-                      <span className="flex items-center gap-1">
-                        <FileText className={`w-3 h-3 ${bundle.pdfFileId || bundle.pdfUrl ? 'text-green-500' : 'text-gray-300'}`} />
-                        {bundle.pdfFileId || bundle.pdfUrl ? 'PDF' : 'No PDF'}
-                      </span>
+                      <span>Opacità: {bundle.backgroundOpacity || 30}%</span>
                     </div>
                   </div>
 
