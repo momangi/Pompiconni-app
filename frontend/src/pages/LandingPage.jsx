@@ -390,8 +390,22 @@ const LandingPage = () => {
               <Link key={theme.id} to={`/galleria/${theme.id}`}>
                 <Card className="border-0 shadow-lg hover-lift overflow-hidden group cursor-pointer h-full">
                   <div className="h-40 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
-                    <div className="absolute inset-0 opacity-20" style={{ backgroundColor: theme.color }} />
-                    <BookOpen className="w-16 h-16 text-gray-600 group-hover:scale-110 transition-transform duration-300" />
+                    {/* Background Image Layer (if available) */}
+                    {theme.backgroundImageUrl && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ 
+                          backgroundImage: `url(${BACKEND_URL}${theme.backgroundImageUrl})`,
+                          filter: 'blur(6px)',
+                          transform: 'scale(1.1)',
+                          opacity: ((theme.backgroundOpacity ?? 30) / 100)
+                        }}
+                      />
+                    )}
+                    {/* Color overlay */}
+                    <div className="absolute inset-0" style={{ backgroundColor: theme.backgroundImageUrl ? 'rgba(255,255,255,0.5)' : theme.color, opacity: theme.backgroundImageUrl ? 1 : 0.2 }} />
+                    {/* Icon */}
+                    <BookOpen className="w-16 h-16 text-gray-600 group-hover:scale-110 transition-transform duration-300 relative z-10" />
                   </div>
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{theme.name}</h3>
