@@ -1511,6 +1511,72 @@ def calculate_bundle_hash(bundle: dict, illustrations: list) -> str:
     return hashlib.md5(hash_string.encode()).hexdigest()
 
 
+def slugify_bundle_title(title: str) -> str:
+    """Generate safe slug for bundle filename (mobile-friendly)"""
+    # Lowercase
+    slug = title.lower()
+    # Replace spaces with hyphens
+    slug = slug.replace(' ', '-')
+    # Keep only [a-z0-9-]
+    slug = re.sub(r'[^a-z0-9-]', '', slug)
+    # Reduce multiple hyphens to single
+    slug = re.sub(r'-+', '-', slug)
+    # Trim hyphens at start/end
+    slug = slug.strip('-')
+    # Fallback if empty
+    return slug if slug else 'bundle'
+
+
+def generate_bundle_filename(title: str, page_count: int) -> str:
+    """Generate clean filename: Poppiconni_Bundle-{slug}-{pages}p.pdf"""
+    slug = slugify_bundle_title(title)
+    return f"Poppiconni_Bundle-{slug}-{page_count}p.pdf"
+
+
+async def check_free_bundle_rate_limit(ip: str, bundle_id: str, pdf_hash: str) -> bool:
+    """
+    Check rate limit for free bundle downloads.
+    Returns True if download is allowed, False if limit reached.
+    Limit: max 2 downloads per IP + bundleId + hash combination.
+    """
+    rate_limit_key = f"{ip}_{bundle_id}_{pdf_hash}"
+    
+    # Find existing record
+    record = await db.download_limits.find_one({"key": rate_limit_key})
+    
+    if record:
+        # Check if limit reached (block at count >= 2)
+        if record.get('count', 0) >= 2:
+            logger.warning(f"Rate limit reached for {rate_limit_key}")
+            return False
+        
+        # Increment counter
+        await db.download_limits.update_one(
+            {"key": rate_limit_key},
+            {
+                "$inc": {"count": 1},
+                "$set": {
+                    "lastDownload": datetime.now(timezone.utc),
+                    "expiresAt": datetime.now(timezone.utc) + timedelta(days=30)
+                }
+            }
+        )
+    else:
+        # Create new record with TTL
+        await db.download_limits.insert_one({
+            "key": rate_limit_key,
+            "ip": ip,
+            "bundleId": bundle_id,
+            "pdfHash": pdf_hash,
+            "count": 1,
+            "createdAt": datetime.now(timezone.utc),
+            "lastDownload": datetime.now(timezone.utc),
+            "expiresAt": datetime.now(timezone.utc) + timedelta(days=30)
+        })
+    
+    return True
+
+
 async def generate_bundle_pdf(bundle: dict) -> bytes:
     """Generate a merged PDF from bundle illustrations"""
     from bson import ObjectId
