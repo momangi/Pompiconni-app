@@ -509,17 +509,17 @@ const LandingPage = () => {
                       </p>
                       <p className="text-xs text-gray-500 mb-4">{bundle.illustrationCount || 0} illustrazioni</p>
                       
-                      {/* Button logic - bundle senza PDF non mostra Scarica */}
+                      {/* Button logic - download PDF unico auto-generato */}
                       {bundle.isFree ? (
-                        bundle.pdfUrl ? (
+                        bundle.illustrationCount > 0 ? (
                           <a 
-                            href={`${BACKEND_URL}${bundle.pdfUrl}`}
+                            href={`${BACKEND_URL}/api/bundles/${bundle.id}/download-pdf`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
                             <Button className="w-full bg-green-500 hover:bg-green-600">
                               <Download className="w-4 h-4 mr-2" />
-                              Scarica Ora
+                              Scarica PDF
                             </Button>
                           </a>
                         ) : (
@@ -534,10 +534,16 @@ const LandingPage = () => {
                           <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
                         </div>
                       ) : (
-                        <Button className="w-full bg-pink-500 hover:bg-pink-600">
-                          <Download className="w-4 h-4 mr-2" />
-                          Acquista
-                        </Button>
+                        <a 
+                          href={`${BACKEND_URL}/api/bundles/${bundle.id}/download-pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button className="w-full bg-pink-500 hover:bg-pink-600">
+                            <Download className="w-4 h-4 mr-2" />
+                            Scarica PDF
+                          </Button>
+                        </a>
                       )}
                     </CardContent>
                   </Card>
