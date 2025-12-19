@@ -128,29 +128,6 @@ const AdminBundles = () => {
     }
   };
 
-  const handlePdfUpload = async (bundleId, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf') {
-      toast.error('Solo file PDF');
-      return;
-    }
-
-    try {
-      const result = await uploadBundlePdf(bundleId, file);
-      setBundles(prev => prev.map(b => 
-        b.id === bundleId ? { ...b, pdfUrl: result.pdfUrl, pdfFileId: true } : b
-      ));
-      if (editingBundle?.id === bundleId) {
-        setEditingBundle(prev => ({ ...prev, pdfUrl: result.pdfUrl, pdfFileId: true }));
-      }
-      toast.success('PDF caricato!');
-    } catch (error) {
-      toast.error('Errore durante il caricamento PDF');
-    }
-  };
-
   const handleToggleActive = async (bundle) => {
     try {
       const updated = await updateBundle(bundle.id, { isActive: !bundle.isActive });
