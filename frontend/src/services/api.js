@@ -200,6 +200,16 @@ export const uploadBundlePdf = async (bundleId, file) => {
   return response.data;
 };
 
+// Theme Background
+export const uploadThemeBackground = async (themeId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/themes/${themeId}/upload-background`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
 // File Upload
 export const uploadFile = async (file, fileType = 'image') => {
   const formData = new FormData();
