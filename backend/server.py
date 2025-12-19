@@ -1462,8 +1462,8 @@ async def get_bundle_background_image(bundle_id: str):
         raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
 
 @api_router.get("/bundles/{bundle_id}/download")
-async def download_bundle_pdf(bundle_id: str):
-    """Download bundle PDF"""
+async def download_bundle_pdf_legacy(bundle_id: str):
+    """Download bundle PDF (legacy - manual upload)"""
     from bson import ObjectId
     
     bundle = await db.bundles.find_one({"id": bundle_id})
@@ -1488,6 +1488,209 @@ async def download_bundle_pdf(bundle_id: str):
     except Exception as e:
         logger.error(f"Error downloading bundle PDF: {str(e)}")
         raise HTTPException(status_code=500, detail="Errore nel download")
+
+
+def calculate_bundle_hash(bundle: dict, illustrations: list) -> str:
+    """Calculate hash for bundle PDF cache validation"""
+    hash_data = {
+        "illustrationIds": bundle.get('illustrationIds', []),
+        "files": []
+    }
+    for illust in illustrations:
+        hash_data["files"].append({
+            "id": illust.get('id'),
+            "pdfFileId": illust.get('pdfFileId'),
+            "imageFileId": illust.get('imageFileId')
+        })
+    hash_string = str(sorted(hash_data.items()))
+    return hashlib.md5(hash_string.encode()).hexdigest()
+
+
+async def generate_bundle_pdf(bundle: dict) -> bytes:
+    """Generate a merged PDF from bundle illustrations"""
+    from bson import ObjectId
+    
+    illustration_ids = bundle.get('illustrationIds', [])
+    if not illustration_ids:
+        raise HTTPException(status_code=400, detail="Bundle senza illustrazioni selezionate")
+    
+    # Fetch all illustrations in order
+    illustrations = []
+    for illust_id in illustration_ids:
+        illust = await db.illustrations.find_one({"id": illust_id}, {"_id": 0})
+        if illust:
+            illustrations.append(illust)
+    
+    if not illustrations:
+        raise HTTPException(status_code=400, detail="Nessuna illustrazione trovata per questo bundle")
+    
+    # Merge PDFs
+    merger = PdfMerger()
+    pages_added = 0
+    
+    for illust in illustrations:
+        pdf_file_id = illust.get('pdfFileId')
+        image_file_id = illust.get('imageFileId')
+        
+        try:
+            if pdf_file_id:
+                # Use existing PDF
+                grid_out = await gridfs_bucket.open_download_stream(ObjectId(pdf_file_id))
+                pdf_content = await grid_out.read()
+                merger.append(io.BytesIO(pdf_content))
+                pages_added += 1
+                logger.info(f"Added PDF for illustration {illust.get('id')}")
+                
+            elif image_file_id:
+                # Convert image to PDF
+                grid_out = await gridfs_bucket.open_download_stream(ObjectId(image_file_id))
+                image_content = await grid_out.read()
+                
+                # Create PDF from image using reportlab
+                img = PILImage.open(io.BytesIO(image_content))
+                img_width, img_height = img.size
+                
+                # Calculate page size to fit image (A4 or image aspect ratio)
+                page_width, page_height = A4
+                scale = min(page_width / img_width, page_height / img_height)
+                scaled_width = img_width * scale
+                scaled_height = img_height * scale
+                
+                # Create PDF with image
+                pdf_buffer = io.BytesIO()
+                c = canvas.Canvas(pdf_buffer, pagesize=A4)
+                
+                # Center image on page
+                x = (page_width - scaled_width) / 2
+                y = (page_height - scaled_height) / 2
+                
+                # Save image temporarily for reportlab
+                temp_img_buffer = io.BytesIO()
+                img.save(temp_img_buffer, format='PNG')
+                temp_img_buffer.seek(0)
+                
+                from reportlab.lib.utils import ImageReader
+                img_reader = ImageReader(temp_img_buffer)
+                c.drawImage(img_reader, x, y, scaled_width, scaled_height)
+                c.showPage()
+                c.save()
+                
+                pdf_buffer.seek(0)
+                merger.append(pdf_buffer)
+                pages_added += 1
+                logger.info(f"Converted image to PDF for illustration {illust.get('id')}")
+                
+            else:
+                logger.warning(f"Illustration {illust.get('id')} has no PDF or image file, skipping")
+                
+        except Exception as e:
+            logger.error(f"Error processing illustration {illust.get('id')}: {str(e)}")
+            continue
+    
+    if pages_added == 0:
+        raise HTTPException(status_code=400, detail="Bundle senza file scaricabili. Nessuna illustrazione ha PDF o immagini caricate.")
+    
+    # Output merged PDF
+    output_buffer = io.BytesIO()
+    merger.write(output_buffer)
+    merger.close()
+    output_buffer.seek(0)
+    
+    logger.info(f"Generated bundle PDF with {pages_added} pages")
+    return output_buffer.read()
+
+
+@api_router.get("/bundles/{bundle_id}/download-pdf")
+async def download_bundle_generated_pdf(bundle_id: str):
+    """Download auto-generated bundle PDF (merged from illustrations)"""
+    from bson import ObjectId
+    
+    bundle = await db.bundles.find_one({"id": bundle_id})
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle non trovato")
+    
+    # Access control
+    if not bundle.get('isFree', False):
+        # For paid bundles, check Stripe purchase (future implementation)
+        # For now, block paid bundles
+        raise HTTPException(status_code=403, detail="Acquisto richiesto. Pagamenti non ancora attivi.")
+    
+    illustration_ids = bundle.get('illustrationIds', [])
+    if not illustration_ids:
+        raise HTTPException(status_code=400, detail="Bundle senza illustrazioni. Contatta l'amministratore.")
+    
+    # Fetch illustrations to calculate hash
+    illustrations = []
+    for illust_id in illustration_ids:
+        illust = await db.illustrations.find_one({"id": illust_id}, {"_id": 0})
+        if illust:
+            illustrations.append(illust)
+    
+    current_hash = calculate_bundle_hash(bundle, illustrations)
+    
+    # Check cache
+    if bundle.get('generatedPdfFileId') and bundle.get('generatedPdfHash') == current_hash:
+        # Serve cached PDF
+        try:
+            logger.info(f"Serving cached PDF for bundle {bundle_id}")
+            grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['generatedPdfFileId']))
+            content = await grid_out.read()
+            
+            safe_title = bundle.get('title', 'bundle').replace(' ', '_').replace('/', '-')
+            filename = f"Poppiconni_{safe_title}.pdf"
+            
+            return StreamingResponse(
+                io.BytesIO(content),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+            )
+        except Exception as e:
+            logger.warning(f"Cache miss, regenerating PDF: {str(e)}")
+    
+    # Generate new PDF
+    try:
+        pdf_content = await generate_bundle_pdf(bundle)
+        
+        # Delete old cached PDF if exists
+        if bundle.get('generatedPdfFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(bundle['generatedPdfFileId']))
+            except:
+                pass
+        
+        # Store new cached PDF in GridFS
+        safe_title = bundle.get('title', 'bundle').replace(' ', '_').replace('/', '-')
+        filename = f"Poppiconni_{safe_title}.pdf"
+        
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(pdf_content),
+            metadata={"bundle_id": bundle_id, "content_type": "application/pdf"}
+        )
+        
+        # Update bundle with new cache
+        await db.bundles.update_one(
+            {"id": bundle_id},
+            {"$set": {
+                "generatedPdfFileId": str(file_id),
+                "generatedPdfHash": current_hash,
+                "updatedAt": datetime.now(timezone.utc)
+            }}
+        )
+        
+        logger.info(f"Generated and cached new PDF for bundle {bundle_id}")
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating bundle PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Errore nella generazione del PDF: {str(e)}")
 
 @admin_router.post("/upload")
 async def upload_file(
