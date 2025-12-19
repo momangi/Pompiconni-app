@@ -104,13 +104,13 @@ const AdminThemes = () => {
       description: theme.description,
       icon: theme.icon || 'BookOpen',
       color: theme.color || '#FFB6C1',
-      backgroundOpacity: theme.backgroundOpacity ?? 30
+      backgroundOpacity: theme.backgroundOpacity ?? 0
     });
     setIsAddOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', icon: 'BookOpen', color: '#FFB6C1', backgroundOpacity: 30 });
+    setFormData({ name: '', description: '', icon: 'BookOpen', color: '#FFB6C1', backgroundOpacity: 0 });
     setEditingTheme(null);
     setIsAddOpen(false);
   };
