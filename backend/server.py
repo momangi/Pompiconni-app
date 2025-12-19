@@ -1097,21 +1097,85 @@ async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
     theme_dict = theme.dict()
     theme_dict['id'] = str(uuid.uuid4())
     theme_dict['illustrationCount'] = 0
+    theme_dict['backgroundImageFileId'] = None
+    theme_dict['backgroundImageUrl'] = None
     theme_dict['createdAt'] = datetime.now(timezone.utc)
     theme_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.themes.insert_one(theme_dict)
-    # Remove MongoDB _id field to avoid serialization issues
     theme_dict.pop('_id', None)
     return theme_dict
 
 @admin_router.put("/themes/{theme_id}")
-async def update_theme(theme_id: str, theme: ThemeCreate, email: str = Depends(verify_token)):
-    theme_dict = theme.dict()
-    theme_dict['updatedAt'] = datetime.now(timezone.utc)
-    result = await db.themes.update_one({"id": theme_id}, {"$set": theme_dict})
-    if result.modified_count == 0:
+async def update_theme(theme_id: str, theme: ThemeUpdate, email: str = Depends(verify_token)):
+    existing = await db.themes.find_one({"id": theme_id})
+    if not existing:
         raise HTTPException(status_code=404, detail="Tema non trovato")
-    return {"success": True}
+    
+    update_data = {"updatedAt": datetime.now(timezone.utc)}
+    theme_data = theme.dict(exclude_unset=True)
+    
+    for key, value in theme_data.items():
+        if value is not None:
+            update_data[key] = value
+    
+    await db.themes.update_one({"id": theme_id}, {"$set": update_data})
+    
+    updated = await db.themes.find_one({"id": theme_id}, {"_id": 0})
+    if updated.get('backgroundImageFileId'):
+        updated['backgroundImageUrl'] = f"/api/themes/{theme_id}/background-image"
+    return updated
+
+@admin_router.post("/themes/{theme_id}/upload-background")
+async def upload_theme_background(
+    theme_id: str,
+    file: UploadFile = File(...),
+    email: str = Depends(verify_token)
+):
+    """Upload background image for a theme"""
+    from bson import ObjectId
+    
+    theme = await db.themes.find_one({"id": theme_id})
+    if not theme:
+        raise HTTPException(status_code=404, detail="Tema non trovato")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
+    
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    content_type = content_types.get(ext, "image/png")
+    
+    try:
+        content = await file.read()
+        filename = f"theme_bg_{theme_id}{ext}"
+        
+        # Delete old image if exists
+        if theme.get('backgroundImageFileId'):
+            try:
+                await gridfs_bucket.delete(ObjectId(theme['backgroundImageFileId']))
+            except Exception:
+                pass
+        
+        # Upload new image
+        file_id = await gridfs_bucket.upload_from_stream(
+            filename,
+            io.BytesIO(content),
+            metadata={"theme_id": theme_id, "type": "theme_background", "content_type": content_type}
+        )
+        
+        await db.themes.update_one(
+            {"id": theme_id},
+            {"$set": {
+                "backgroundImageFileId": str(file_id),
+                "backgroundImageUrl": f"/api/themes/{theme_id}/background-image",
+                "updatedAt": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {"success": True, "backgroundImageUrl": f"/api/themes/{theme_id}/background-image?v={datetime.now(timezone.utc).timestamp()}"}
+    except Exception as e:
+        logger.error(f"Error uploading theme background: {str(e)}")
+        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
 
 @admin_router.post("/illustrations")
 async def create_illustration(illustration: IllustrationCreate, email: str = Depends(verify_token)):
