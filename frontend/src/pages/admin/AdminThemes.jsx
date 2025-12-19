@@ -232,20 +232,29 @@ const AdminThemes = () => {
                     Immagine Sfondo + Opacità
                   </Label>
                   
-                  {/* Preview */}
-                  <div className="h-24 rounded-lg overflow-hidden relative bg-gray-800">
+                  {/* Preview - stessa logica della homepage */}
+                  <div className="h-24 rounded-lg overflow-hidden relative bg-gray-100">
                     {editingTheme.backgroundImageUrl ? (
                       <>
-                        <div 
-                          className="absolute inset-0 bg-cover bg-center"
+                        {/* Layer immagine - sempre opacity 1, blur proporzionale */}
+                        <img 
+                          src={`${BACKEND_URL}${editingTheme.backgroundImageUrl}?t=${Date.now()}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
                           style={{ 
-                            backgroundImage: `url(${BACKEND_URL}${editingTheme.backgroundImageUrl}?t=${Date.now()})`,
-                            filter: 'blur(4px)',
+                            filter: `blur(${((formData.backgroundOpacity ?? 0) / 80) * 8}px)`,
                             transform: 'scale(1.1)',
-                            opacity: (formData.backgroundOpacity ?? 30) / 100
+                            opacity: 1
                           }}
                         />
-                        <div className="absolute inset-0 bg-white/60" />
+                        {/* Layer velo - opacità controllata dallo slider */}
+                        <div 
+                          className="absolute inset-0" 
+                          style={{ 
+                            backgroundColor: 'rgba(255, 250, 245, 1)', 
+                            opacity: (formData.backgroundOpacity ?? 0) / 100 
+                          }} 
+                        />
                         <div className="absolute inset-0 flex items-center justify-center z-10">
                           <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">PREVIEW LIVE</span>
                         </div>
