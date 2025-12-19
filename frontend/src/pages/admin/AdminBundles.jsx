@@ -269,22 +269,42 @@ const AdminBundles = () => {
 
               {/* Right Column - Files */}
               <div className="space-y-4">
-                {/* Background Image */}
+                {/* Background Image + Opacity with Live Preview */}
                 <div>
-                  <Label>Immagine Sfondo</Label>
-                  <div className="mt-2 h-32 bg-gray-100 rounded-lg overflow-hidden relative">
+                  <Label>Immagine Sfondo + Opacità</Label>
+                  {/* Live Preview Container */}
+                  <div className="mt-2 h-40 rounded-lg overflow-hidden relative bg-gray-800">
+                    {/* Background image with live opacity */}
                     {editingBundle.backgroundImageUrl ? (
-                      <img
-                        src={`${BACKEND_URL}${editingBundle.backgroundImageUrl}?t=${Date.now()}`}
-                        alt="Background"
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{ 
+                            backgroundImage: `url(${BACKEND_URL}${editingBundle.backgroundImageUrl}?t=${Date.now()})`,
+                            filter: 'blur(6px)',
+                            transform: 'scale(1.1)',
+                            opacity: (editingBundle.backgroundOpacity || 30) / 100
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-white/60" />
+                        {/* Sample content preview */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center p-4">
+                          <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full mb-1">PREVIEW</span>
+                          <span className="font-bold text-gray-800 text-sm">{editingBundle.title || 'Titolo Bundle'}</span>
+                          <span className="text-xs text-gray-600">{editingBundle.subtitle || 'Sottotitolo'}</span>
+                        </div>
+                      </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Image className="w-8 h-8" />
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                        <div className="text-center">
+                          <Image className="w-8 h-8 mx-auto mb-1" />
+                          <span className="text-xs">Carica un&apos;immagine</span>
+                        </div>
                       </div>
                     )}
                   </div>
+                  
+                  {/* Upload button */}
                   {!isCreating && (
                     <div className="mt-2">
                       <input
@@ -299,31 +319,32 @@ const AdminBundles = () => {
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer"
                       >
                         <Upload className="w-3 h-3" />
-                        {editingBundle.backgroundImageUrl ? 'Cambia' : 'Carica'}
+                        {editingBundle.backgroundImageUrl ? 'Cambia immagine' : 'Carica immagine'}
                       </label>
                     </div>
                   )}
-                </div>
 
-                {/* Background Opacity */}
-                <div>
-                  <Label>Opacità sfondo (%)</Label>
-                  <div className="mt-2 flex items-center gap-3">
+                  {/* Opacity Slider */}
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600">Opacità sfondo</span>
+                      <span className="text-sm font-bold text-pink-500">
+                        {editingBundle.backgroundOpacity || 30}%
+                      </span>
+                    </div>
                     <input
                       type="range"
                       min="10"
                       max="80"
                       value={editingBundle.backgroundOpacity || 30}
                       onChange={(e) => setEditingBundle(prev => ({ ...prev, backgroundOpacity: parseInt(e.target.value) }))}
-                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
                     />
-                    <span className="w-12 text-center text-sm font-medium text-gray-700">
-                      {editingBundle.backgroundOpacity || 30}%
-                    </span>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>10% (più chiaro)</span>
+                      <span>80% (più visibile)</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Controlla quanto si vede l&apos;immagine di sfondo (10-80%)
-                  </p>
                 </div>
 
                 {/* Illustrations Count */}
