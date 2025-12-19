@@ -455,30 +455,43 @@ const LandingPage = () => {
               ? "flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent -mx-4 px-4"
               : "grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
             }>
-              {bundles.map((bundle) => (
+              {bundles.map((bundle) => {
+                // Calcola blur e velo in base allo slider (0-80%)
+                const bundleOpacity = Math.min(Math.max(bundle.backgroundOpacity ?? 0, 0), 80);
+                const bundleBlurPx = (bundleOpacity / 80) * 8; // 0→0px, 80→8px
+                const bundleVeilOpacity = bundleOpacity / 100; // 0→0, 80→0.8
+                
+                return (
                 <div 
                   key={bundle.id} 
                   className={bundles.length > 4 ? "flex-shrink-0 w-72 snap-start" : ""}
                 >
                   <Card className={`relative overflow-hidden border-2 hover-lift h-full ${bundle.isFree ? 'border-green-200' : 'border-pink-200'}`}>
-                    {/* Background Image Layer (blurred) - with configurable opacity */}
+                    {/* Background Image Layer - sempre visibile con opacity 1 */}
                     {bundle.backgroundImageUrl && (
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center"
+                      <img 
+                        src={`${BACKEND_URL}${bundle.backgroundImageUrl}`}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
                         style={{ 
-                          backgroundImage: `url(${BACKEND_URL}${bundle.backgroundImageUrl})`,
-                          filter: 'blur(8px)',
+                          filter: `blur(${bundleBlurPx}px)`,
                           transform: 'scale(1.1)',
-                          opacity: (bundle.backgroundOpacity || 30) / 100
+                          opacity: 1
                         }}
                       />
                     )}
-                    {/* Overlay for readability */}
-                    <div className={`absolute inset-0 ${
-                      bundle.backgroundImageUrl 
-                        ? 'bg-white/60' 
-                        : bundle.isFree ? 'bg-green-50/30' : 'bg-white'
-                    }`} />
+                    {/* Velo overlay - opacità controllata dallo slider */}
+                    {bundle.backgroundImageUrl ? (
+                      <div 
+                        className="absolute inset-0" 
+                        style={{ 
+                          backgroundColor: 'rgba(255, 250, 245, 1)', 
+                          opacity: bundleVeilOpacity 
+                        }} 
+                      />
+                    ) : (
+                      <div className={`absolute inset-0 ${bundle.isFree ? 'bg-green-50/30' : 'bg-white'}`} />
+                    )}
                     
                     {/* Content Layer (not blurred) */}
                     <CardContent className="relative p-6 text-center z-10">
