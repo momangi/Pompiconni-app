@@ -386,24 +386,41 @@ const LandingPage = () => {
           </div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {themes.map((theme) => (
+            {themes.map((theme) => {
+              // Calcola blur e velo in base allo slider (0-80%)
+              const themeOpacity = Math.min(Math.max(theme.backgroundOpacity ?? 0, 0), 80);
+              const themeBlurPx = (themeOpacity / 80) * 8; // 0→0px, 80→8px
+              const themeVeilOpacity = themeOpacity / 100; // 0→0, 80→0.8
+              
+              return (
               <Link key={theme.id} to={`/galleria/${theme.id}`}>
                 <Card className="border-0 shadow-lg hover-lift overflow-hidden group cursor-pointer h-full">
                   <div className="h-40 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
-                    {/* Background Image Layer (if available) */}
+                    {/* Background Image Layer - sempre visibile con opacity 1 */}
                     {theme.backgroundImageUrl && (
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center"
+                      <img 
+                        src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
                         style={{ 
-                          backgroundImage: `url(${BACKEND_URL}${theme.backgroundImageUrl})`,
-                          filter: 'blur(6px)',
+                          filter: `blur(${themeBlurPx}px)`,
                           transform: 'scale(1.1)',
-                          opacity: ((theme.backgroundOpacity ?? 30) / 100)
+                          opacity: 1
                         }}
                       />
                     )}
-                    {/* Color overlay - lighter when background image exists */}
-                    <div className="absolute inset-0" style={{ backgroundColor: theme.backgroundImageUrl ? 'rgba(255,255,255,0.3)' : theme.color, opacity: theme.backgroundImageUrl ? 1 : 0.2 }} />
+                    {/* Velo overlay - opacità controllata dallo slider, colore crema */}
+                    {theme.backgroundImageUrl ? (
+                      <div 
+                        className="absolute inset-0" 
+                        style={{ 
+                          backgroundColor: 'rgba(255, 250, 245, 1)', 
+                          opacity: themeVeilOpacity 
+                        }} 
+                      />
+                    ) : (
+                      <div className="absolute inset-0" style={{ backgroundColor: theme.color, opacity: 0.2 }} />
+                    )}
                     {/* Icon */}
                     <BookOpen className="w-16 h-16 text-gray-600 group-hover:scale-110 transition-transform duration-300 relative z-10" />
                   </div>
