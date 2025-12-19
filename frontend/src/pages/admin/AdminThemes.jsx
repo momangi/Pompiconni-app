@@ -287,23 +287,23 @@ const AdminThemes = () => {
                     </label>
                   </div>
 
-                  {/* Opacity Slider */}
+                  {/* Opacity Slider - controlla velatura, non opacità immagine */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-600">Opacità sfondo</span>
-                      <span className="text-sm font-bold text-pink-500">{formData.backgroundOpacity ?? 30}%</span>
+                      <span className="text-xs text-gray-600">Velatura sfondo</span>
+                      <span className="text-sm font-bold text-pink-500">{formData.backgroundOpacity ?? 0}%</span>
                     </div>
                     <input
                       type="range"
-                      min="10"
+                      min="0"
                       max="80"
-                      value={formData.backgroundOpacity ?? 30}
+                      value={formData.backgroundOpacity ?? 0}
                       onChange={(e) => setFormData({ ...formData, backgroundOpacity: parseInt(e.target.value) })}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
                     />
                     <div className="flex justify-between text-xs text-gray-400">
-                      <span>10%</span>
-                      <span>80%</span>
+                      <span>0% (nitida)</span>
+                      <span>80% (velata)</span>
                     </div>
                   </div>
                 </div>
