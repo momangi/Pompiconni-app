@@ -506,8 +506,14 @@ async def init_database():
                 "backgroundImageUrl": None,
                 "pdfFileId": None,
                 "pdfUrl": None,
+                "backgroundOpacity": 30,
                 "updatedAt": datetime.now(timezone.utc)
             }}
+        )
+        # Add backgroundOpacity to bundles that don't have it
+        await db.bundles.update_many(
+            {"backgroundOpacity": {"$exists": False}},
+            {"$set": {"backgroundOpacity": 30}}
         )
         # Migrate name to title if needed
         await db.bundles.update_many(
