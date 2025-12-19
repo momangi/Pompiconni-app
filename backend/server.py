@@ -155,10 +155,13 @@ class Bundle(BundleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     illustrationIds: List[str] = []
     illustrationCount: int = 0
-    pdfFileId: Optional[str] = None
+    pdfFileId: Optional[str] = None  # Legacy - manual PDF upload
     pdfUrl: Optional[str] = None
     backgroundImageFileId: Optional[str] = None
     backgroundImageUrl: Optional[str] = None
+    # Auto-generated PDF cache
+    generatedPdfFileId: Optional[str] = None
+    generatedPdfHash: Optional[str] = None
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
