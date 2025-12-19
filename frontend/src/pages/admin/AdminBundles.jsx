@@ -333,25 +333,25 @@ const AdminBundles = () => {
                     </div>
                   )}
 
-                  {/* Opacity Slider */}
+                  {/* Opacity Slider - ora controlla il velo, non l'immagine */}
                   <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-600">Opacità sfondo</span>
+                      <span className="text-xs font-medium text-gray-600">Velatura sfondo</span>
                       <span className="text-sm font-bold text-pink-500">
-                        {editingBundle.backgroundOpacity || 30}%
+                        {editingBundle.backgroundOpacity || 0}%
                       </span>
                     </div>
                     <input
                       type="range"
-                      min="10"
+                      min="0"
                       max="80"
-                      value={editingBundle.backgroundOpacity || 30}
+                      value={editingBundle.backgroundOpacity || 0}
                       onChange={(e) => setEditingBundle(prev => ({ ...prev, backgroundOpacity: parseInt(e.target.value) }))}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
                     />
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>10% (più chiaro)</span>
-                      <span>80% (più visibile)</span>
+                      <span>0% (nitida)</span>
+                      <span>80% (velata)</span>
                     </div>
                   </div>
                 </div>
