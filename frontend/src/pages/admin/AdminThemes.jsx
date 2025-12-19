@@ -24,8 +24,10 @@ const AdminThemes = () => {
     name: '',
     description: '',
     icon: 'BookOpen',
-    color: '#FFB6C1'
+    color: '#FFB6C1',
+    backgroundOpacity: 30
   });
+  const [bgUploading, setBgUploading] = useState(false);
 
   const iconOptions = [
     { value: 'BookOpen', label: 'Libro' },
