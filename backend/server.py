@@ -548,6 +548,11 @@ async def init_database():
             {"backgroundOpacity": {"$exists": False}},
             {"$set": {"backgroundOpacity": 30}}
         )
+        # Add generatedPdf fields for auto-generation cache
+        await db.bundles.update_many(
+            {"generatedPdfFileId": {"$exists": False}},
+            {"$set": {"generatedPdfFileId": None, "generatedPdfHash": None}}
+        )
         # Migrate name to title if needed
         await db.bundles.update_many(
             {"title": {"$exists": False}, "name": {"$exists": True}},
