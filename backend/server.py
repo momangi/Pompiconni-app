@@ -123,6 +123,7 @@ class BundleBase(BaseModel):
     badgeText: str = ""
     isActive: bool = True
     sortOrder: int = 0
+    backgroundOpacity: int = 30  # 10-80%
 
 class BundleCreate(BundleBase):
     illustrationIds: List[str] = []
@@ -137,6 +138,7 @@ class BundleUpdate(BaseModel):
     isActive: Optional[bool] = None
     sortOrder: Optional[int] = None
     illustrationIds: Optional[List[str]] = None
+    backgroundOpacity: Optional[int] = None
 
 class Bundle(BundleBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
