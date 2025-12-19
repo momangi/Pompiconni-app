@@ -1672,7 +1672,7 @@ async def generate_bundle_pdf(bundle: dict) -> bytes:
 
 
 @api_router.get("/bundles/{bundle_id}/download-pdf")
-async def download_bundle_generated_pdf(bundle_id: str):
+async def download_bundle_generated_pdf(bundle_id: str, request: Request):
     """Download auto-generated bundle PDF (merged from illustrations)"""
     from bson import ObjectId
     
@@ -1680,7 +1680,7 @@ async def download_bundle_generated_pdf(bundle_id: str):
     if not bundle:
         raise HTTPException(status_code=404, detail="Bundle non trovato")
     
-    # Access control
+    # Access control for paid bundles
     if not bundle.get('isFree', False):
         # For paid bundles, check Stripe purchase (future implementation)
         # For now, block paid bundles
@@ -1698,6 +1698,25 @@ async def download_bundle_generated_pdf(bundle_id: str):
             illustrations.append(illust)
     
     current_hash = calculate_bundle_hash(bundle, illustrations)
+    page_count = len(illustrations)
+    
+    # Get client IP for rate limiting
+    client_ip = request.client.host if request.client else "unknown"
+    # Check for proxy headers
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    
+    # Rate limit check for free bundles (max 2 downloads per IP + bundle + hash)
+    is_allowed = await check_free_bundle_rate_limit(client_ip, bundle_id, current_hash)
+    if not is_allowed:
+        raise HTTPException(
+            status_code=429, 
+            detail="Limite download gratuito raggiunto per questo bundle"
+        )
+    
+    # Generate clean filename
+    filename = generate_bundle_filename(bundle.get('title', 'bundle'), page_count)
     
     # Check cache
     if bundle.get('generatedPdfFileId') and bundle.get('generatedPdfHash') == current_hash:
@@ -1706,9 +1725,6 @@ async def download_bundle_generated_pdf(bundle_id: str):
             logger.info(f"Serving cached PDF for bundle {bundle_id}")
             grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['generatedPdfFileId']))
             content = await grid_out.read()
-            
-            safe_title = bundle.get('title', 'bundle').replace(' ', '_').replace('/', '-')
-            filename = f"Poppiconni_{safe_title}.pdf"
             
             return StreamingResponse(
                 io.BytesIO(content),
@@ -1730,9 +1746,6 @@ async def download_bundle_generated_pdf(bundle_id: str):
                 pass
         
         # Store new cached PDF in GridFS
-        safe_title = bundle.get('title', 'bundle').replace(' ', '_').replace('/', '-')
-        filename = f"Poppiconni_{safe_title}.pdf"
-        
         file_id = await gridfs_bucket.upload_from_stream(
             filename,
             io.BytesIO(pdf_content),
