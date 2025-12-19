@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Palette, BookOpen, AlertTriangle, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Palette, BookOpen, AlertTriangle, Check, Upload, Image } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -7,8 +7,10 @@ import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { getThemes, createTheme, updateTheme, checkThemeDelete, deleteTheme, getThemeColorPalette } from '../../services/api';
+import { getThemes, createTheme, updateTheme, checkThemeDelete, deleteTheme, getThemeColorPalette, uploadThemeBackground } from '../../services/api';
 import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminThemes = () => {
   const [themes, setThemes] = useState([]);
