@@ -471,9 +471,23 @@ async def init_database():
         for theme in SEED_THEMES:
             theme['createdAt'] = now
             theme['updatedAt'] = now
+            theme['backgroundImageFileId'] = None
+            theme['backgroundImageUrl'] = None
+            theme['backgroundOpacity'] = 30
             themes_to_insert.append(theme)
         await db.themes.insert_many(themes_to_insert)
         logger.info("Seed themes inserted")
+    else:
+        # Migrate existing themes to add background fields if missing
+        await db.themes.update_many(
+            {"backgroundOpacity": {"$exists": False}},
+            {"$set": {
+                "backgroundOpacity": 30,
+                "backgroundImageFileId": None,
+                "backgroundImageUrl": None
+            }}
+        )
+        logger.info("Existing themes migrated with background fields")
     
     # Check if illustrations exist - use insert_many for batch performance
     illustrations_count = await db.illustrations.count_documents({})
