@@ -12,12 +12,17 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from enum import Enum
 import uuid
+import hashlib
 from datetime import datetime, timezone, timedelta
 import jwt
 import base64
 import aiofiles
 import io
 from pdf_generator import generate_book_pdf
+from PyPDF2 import PdfMerger, PdfReader
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from PIL import Image as PILImage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
