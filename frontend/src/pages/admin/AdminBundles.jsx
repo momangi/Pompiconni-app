@@ -272,21 +272,30 @@ const AdminBundles = () => {
                 {/* Background Image + Opacity with Live Preview */}
                 <div>
                   <Label>Immagine Sfondo + Opacità</Label>
-                  {/* Live Preview Container */}
-                  <div className="mt-2 h-40 rounded-lg overflow-hidden relative bg-gray-800">
+                  {/* Live Preview Container - stessa logica della homepage */}
+                  <div className="mt-2 h-40 rounded-lg overflow-hidden relative bg-gray-100">
                     {/* Background image with live opacity */}
                     {editingBundle.backgroundImageUrl ? (
                       <>
-                        <div 
-                          className="absolute inset-0 bg-cover bg-center"
+                        {/* Layer immagine - sempre opacity 1, blur proporzionale */}
+                        <img 
+                          src={`${BACKEND_URL}${editingBundle.backgroundImageUrl}?t=${Date.now()}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
                           style={{ 
-                            backgroundImage: `url(${BACKEND_URL}${editingBundle.backgroundImageUrl}?t=${Date.now()})`,
-                            filter: 'blur(6px)',
+                            filter: `blur(${((editingBundle.backgroundOpacity || 0) / 80) * 8}px)`,
                             transform: 'scale(1.1)',
-                            opacity: (editingBundle.backgroundOpacity || 30) / 100
+                            opacity: 1
                           }}
                         />
-                        <div className="absolute inset-0 bg-white/60" />
+                        {/* Layer velo - opacità controllata dallo slider */}
+                        <div 
+                          className="absolute inset-0" 
+                          style={{ 
+                            backgroundColor: 'rgba(255, 250, 245, 1)', 
+                            opacity: (editingBundle.backgroundOpacity || 0) / 100 
+                          }} 
+                        />
                         {/* Sample content preview */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center p-4">
                           <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full mb-1">PREVIEW</span>
