@@ -430,21 +430,22 @@ const LandingPage = () => {
                   className={bundles.length > 4 ? "flex-shrink-0 w-72 snap-start" : ""}
                 >
                   <Card className={`relative overflow-hidden border-2 hover-lift h-full ${bundle.isFree ? 'border-green-200' : 'border-pink-200'}`}>
-                    {/* Background Image Layer (blurred) */}
+                    {/* Background Image Layer (blurred) - with configurable opacity */}
                     {bundle.backgroundImageUrl && (
                       <div 
                         className="absolute inset-0 bg-cover bg-center"
                         style={{ 
                           backgroundImage: `url(${BACKEND_URL}${bundle.backgroundImageUrl})`,
                           filter: 'blur(8px)',
-                          transform: 'scale(1.1)'
+                          transform: 'scale(1.1)',
+                          opacity: (bundle.backgroundOpacity || 30) / 100
                         }}
                       />
                     )}
                     {/* Overlay for readability */}
                     <div className={`absolute inset-0 ${
                       bundle.backgroundImageUrl 
-                        ? 'bg-white/80' 
+                        ? 'bg-white/60' 
                         : bundle.isFree ? 'bg-green-50/30' : 'bg-white'
                     }`} />
                     
@@ -464,26 +465,35 @@ const LandingPage = () => {
                       </p>
                       <p className="text-xs text-gray-500 mb-4">{bundle.illustrationCount || 0} illustrazioni</p>
                       
-                      {/* Button logic */}
-                      {!bundle.pdfUrl && !bundle.pdfFileId ? (
-                        <div className="p-2 bg-gray-100 rounded-lg">
-                          <p className="text-xs text-gray-500">Presto disponibile</p>
-                        </div>
-                      ) : !bundle.isFree && !siteSettings.stripe_enabled ? (
+                      {/* Button logic - bundle senza PDF non mostra Scarica */}
+                      {bundle.isFree ? (
+                        bundle.pdfUrl ? (
+                          <a 
+                            href={`${BACKEND_URL}${bundle.pdfUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button className="w-full bg-green-500 hover:bg-green-600">
+                              <Download className="w-4 h-4 mr-2" />
+                              Scarica Ora
+                            </Button>
+                          </a>
+                        ) : (
+                          <Link to="/galleria">
+                            <Button className="w-full bg-green-500 hover:bg-green-600">
+                              Sfoglia Tavole
+                            </Button>
+                          </Link>
+                        )
+                      ) : !siteSettings.stripe_enabled ? (
                         <div className="p-2 bg-yellow-50 rounded-lg">
                           <p className="text-xs text-yellow-700">Pagamenti non ancora attivi</p>
                         </div>
                       ) : (
-                        <a 
-                          href={bundle.isFree && bundle.pdfUrl ? `${BACKEND_URL}${bundle.pdfUrl}` : undefined}
-                          target={bundle.isFree ? "_blank" : undefined}
-                          rel={bundle.isFree ? "noopener noreferrer" : undefined}
-                        >
-                          <Button className={`w-full ${bundle.isFree ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-500 hover:bg-pink-600'}`}>
-                            <Download className="w-4 h-4 mr-2" />
-                            {bundle.isFree ? 'Scarica Ora' : 'Acquista'}
-                          </Button>
-                        </a>
+                        <Button className="w-full bg-pink-500 hover:bg-pink-600">
+                          <Download className="w-4 h-4 mr-2" />
+                          Acquista
+                        </Button>
                       )}
                     </CardContent>
                   </Card>
