@@ -103,15 +103,39 @@ const AdminThemes = () => {
       name: theme.name,
       description: theme.description,
       icon: theme.icon || 'BookOpen',
-      color: theme.color || '#FFB6C1'
+      color: theme.color || '#FFB6C1',
+      backgroundOpacity: theme.backgroundOpacity ?? 30
     });
     setIsAddOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', icon: 'BookOpen', color: '#FFB6C1' });
+    setFormData({ name: '', description: '', icon: 'BookOpen', color: '#FFB6C1', backgroundOpacity: 30 });
     setEditingTheme(null);
     setIsAddOpen(false);
+  };
+
+  const handleBackgroundUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !editingTheme) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Solo file JPG, PNG o WEBP');
+      return;
+    }
+
+    setBgUploading(true);
+    try {
+      const result = await uploadThemeBackground(editingTheme.id, file);
+      setEditingTheme(prev => ({ ...prev, backgroundImageUrl: result.backgroundImageUrl }));
+      toast.success('Immagine sfondo caricata!');
+      fetchData();
+    } catch (error) {
+      toast.error('Errore durante il caricamento');
+    } finally {
+      setBgUploading(false);
+    }
   };
 
   // Get colors already used by other themes (excluding current editing theme)
