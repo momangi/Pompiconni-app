@@ -3834,7 +3834,7 @@ async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizat
 
 @api_router.delete("/admin/games/{game_id}")
 async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Delete a game"""
+    """Delete a game and all associated images"""
     from bson import ObjectId
     verify_admin_token(credentials)
     
@@ -3846,7 +3846,21 @@ async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = 
     if game.get('thumbnailFileId'):
         try:
             await gridfs_bucket.delete(ObjectId(game['thumbnailFileId']))
-        except:
+        except Exception:
+            pass
+    
+    # Delete card image if exists
+    if game.get('cardImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(game['cardImageFileId']))
+        except Exception:
+            pass
+    
+    # Delete page image if exists
+    if game.get('pageImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(game['pageImageFileId']))
+        except Exception:
             pass
     
     await db.games.delete_one({"id": game_id})
