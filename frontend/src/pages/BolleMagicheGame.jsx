@@ -60,12 +60,12 @@ const CANNON_CONFIG = {
   pivotOriginY: 0.85, // 85% from top = near base
   
   // Barrel length in pixels (distance from pivot to muzzle tip)
-  // Must be calibrated so trajectory starts at visible cannon tip
-  barrelLengthPx: 78,
+  // CALIBRATED: Must match visual cannon tip exactly
+  barrelLengthPx: 85,
   
   // Micro-offset for pixel-perfect muzzle alignment (optional fine-tuning)
   muzzleOffsetX: 0,
-  muzzleOffsetY: 0,
+  muzzleOffsetY: -3, // Slightly upward to match visual tip
   
   // Angle limits (degrees from vertical -90°)
   // -165° to -15° means ±75° from straight up
