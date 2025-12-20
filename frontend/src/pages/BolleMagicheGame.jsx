@@ -438,8 +438,6 @@ const BolleMagicheGame = () => {
     
     // 🎭 Poppiconni recoil animation
     
-    setTimeout(() => setPoppiconniMood('idle'), 300);
-    
     // THEN: Add bubble to grid and process matches
     setGrid(prevGrid => {
       // Clamp to valid position
