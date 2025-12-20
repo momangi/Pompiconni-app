@@ -188,6 +188,14 @@ class Game(BaseModel):
     howToPlay: List[str] = []
     thumbnailFileId: Optional[str] = None
     thumbnailUrl: Optional[str] = None
+    # Card image (for /giochi list page)
+    cardImageFileId: Optional[str] = None
+    cardImageUrl: Optional[str] = None
+    cardImageOpacity: int = 35  # 0-100%
+    # Page image (for /giochi/:slug detail page)
+    pageImageFileId: Optional[str] = None
+    pageImageUrl: Optional[str] = None
+    pageImageOpacity: int = 25  # 0-100%
     sortOrder: int = 0
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
