@@ -4076,6 +4076,7 @@ async def delete_game_page_image(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Delete page background image for game"""
+    from bson import ObjectId
     verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
