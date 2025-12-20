@@ -1022,10 +1022,55 @@ const BolleMagicheGame = () => {
   // Get current difficulty info
   const { colors: numColors } = getDifficultySettings(level);
   
+  // ============================================
+  // 📐 RESPONSIVE GAME SIZING
+  // Single source of truth for game dimensions
+  // ============================================
+  // Base dimensions (used for internal calculations)
+  const baseWidth = gameWidth;   // 484px (GRID_COLS * BUBBLE_SIZE)
+  const baseHeight = gameHeight; // ~597px
+  const aspectRatio = baseWidth / baseHeight;
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center py-2">
-      {/* Header */}
-      <div className="w-full max-w-lg px-4 py-2">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center justify-center py-2 px-2">
+      {/* 
+        ============================================
+        📐 RESPONSIVE GAME WRAPPER
+        ============================================
+        - Mobile: width = min(92vw, 480px), centered
+        - Tablet: width = min(75vw, 520px)
+        - Desktop: width = min(45vw, 600px)
+        - Large Desktop: width = min(38vw, 640px)
+        - max-height: 88vh to prevent overflow
+        - aspect-ratio preserved
+      */}
+      <div 
+        className="flex flex-col items-center w-full"
+        style={{
+          maxWidth: 'min(92vw, 480px)', // Mobile default
+          maxHeight: '88vh',
+        }}
+      >
+        <style>{`
+          @media (min-width: 768px) {
+            .game-wrapper {
+              max-width: min(75vw, 520px) !important;
+            }
+          }
+          @media (min-width: 1024px) {
+            .game-wrapper {
+              max-width: min(45vw, 600px) !important;
+            }
+          }
+          @media (min-width: 1440px) {
+            .game-wrapper {
+              max-width: min(38vw, 680px) !important;
+            }
+          }
+        `}</style>
+        
+        {/* Header - scales with game */}
+        <div className="w-full px-2 py-2 game-wrapper" style={{ maxWidth: 'inherit' }}>
         <div className="flex items-center justify-between">
           <Link to="/giochi/bolle-magiche" className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-700" />
