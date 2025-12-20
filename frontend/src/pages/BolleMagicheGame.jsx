@@ -963,11 +963,55 @@ const BolleMagicheGame = () => {
       {/* Game Area */}
       <div 
         ref={gameRef}
-        className="relative bg-white/40 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden cursor-crosshair"
+        className="relative rounded-3xl shadow-2xl overflow-hidden cursor-crosshair"
         style={{ width: gameWidth, height: gameHeight }}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
       >
+        {/* 🌈 LEVEL BACKGROUND - Changes every 5 levels */}
+        {currentBackground?.backgroundImageUrl ? (
+          <>
+            {/* Background image layer (opacity: 1) */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ 
+                backgroundImage: `url(${process.env.REACT_APP_BACKEND_URL}${currentBackground.backgroundImageUrl})`,
+              }}
+            />
+            {/* Overlay layer (controlled by slider) */}
+            <div 
+              className="absolute inset-0"
+              style={{ 
+                backgroundColor: `rgba(255, 255, 255, ${(currentBackground.backgroundOpacity || 30) / 100})`,
+                backdropFilter: `blur(${(currentBackground.backgroundOpacity || 30) / 25}px)`,
+              }}
+            />
+          </>
+        ) : (
+          /* Default background when no level background configured */
+          <div className="absolute inset-0 bg-gradient-to-b from-sky-100/60 via-pink-50/40 to-purple-100/60" />
+        )}
+        
+        {/* 🐘 POPPICONNI IMAGE - Fixed, bottom-left, identity element */}
+        <div 
+          className="absolute z-10 pointer-events-none"
+          style={{
+            left: -10,
+            bottom: 5,
+            width: 140,
+            height: 'auto',
+          }}
+        >
+          <img 
+            src={POPPICONNI_IMAGE_URL}
+            alt="Poppiconni"
+            className="w-full h-auto drop-shadow-lg"
+            style={{ 
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))',
+            }}
+          />
+        </div>
+
         {/* Grid bubbles */}
         {grid.map((row, rowIdx) => 
           row.map((bubble, colIdx) => {
