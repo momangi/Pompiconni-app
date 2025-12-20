@@ -3732,7 +3732,8 @@ async def create_game(game_data: dict, credentials: HTTPAuthorizationCredentials
     }
     
     await db.games.insert_one(game)
-    del game['_id'] if '_id' in game else None
+    if '_id' in game:
+        del game['_id']
     return game
 
 
