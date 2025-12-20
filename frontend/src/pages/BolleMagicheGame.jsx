@@ -1096,14 +1096,16 @@ const BolleMagicheGame = () => {
         {/* Shooter area - semi-transparent gradient */}
         <div 
           className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-pink-100/70 via-pink-50/40 to-transparent"
+          style={{ zIndex: 15 }}
         >
           {/* 🎀 CANNON with FIXED PIVOT at base */}
-          {/* Position: pivot point at shooterX, 50px from top of shooter area */}
+          {/* Position: pivot point at shooterX, 35px from top of shooter area */}
           <div 
             className="absolute"
             style={{ 
               left: shooterX - 35, // Center cannon (width 70 / 2)
-              top: 35, // Position pivot point
+              top: 25, // Position pivot point higher
+              zIndex: 20,
             }}
           >
             {renderToyCannon()}
