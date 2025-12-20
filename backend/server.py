@@ -4041,12 +4041,10 @@ async def admin_upload_level_background_image(
 @api_router.delete("/admin/games/bolle-magiche/level-backgrounds/{bg_id}")
 async def admin_delete_level_background(
     bg_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    user_id: str = Depends(verify_token)
 ):
     """Admin: Delete a level background"""
     from bson import ObjectId
-    
-    verify_token(credentials.credentials)
     
     bg = await db.game_level_backgrounds.find_one({"id": bg_id})
     if not bg:
