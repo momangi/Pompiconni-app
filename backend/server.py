@@ -3921,7 +3921,6 @@ async def admin_create_level_background(
     user_id: str = Depends(verify_token)
 ):
     """Admin: Create a new level background"""
-    verify_token(credentials.credentials)
     
     # Validate range
     if levelRangeStart >= levelRangeEnd:
