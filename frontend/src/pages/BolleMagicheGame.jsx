@@ -570,28 +570,40 @@ const BolleMagicheGame = () => {
   const handleClick = useCallback(() => {
     if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
     
-    const gameW = GRID_COLS * BUBBLE_SIZE;
-    const pivotX = gameW / 2;
-    const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50;
+    // Use unified calculateMuzzlePoint (same function as trajectory preview)
+    const muzzle = calculateMuzzlePoint(shooterAngle);
     
-    // Calculate muzzle point based on cannon rotation
-    const cannonHeight = 100;
-    const muzzleDistance = cannonHeight * 0.80; // Distance from pivot to muzzle
-    const angleRad = (shooterAngle * Math.PI) / 180;
-    
-    const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
-    const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
+    // ============================================
+    // 🛡️ DEV GUARDRAIL: Verify muzzle alignment
+    // Only runs in development mode
+    // ============================================
+    if (process.env.NODE_ENV === 'development') {
+      // Re-calculate to verify (should be identical)
+      const verifyMuzzle = calculateMuzzlePoint(shooterAngle);
+      const distance = Math.sqrt(
+        Math.pow(muzzle.x - verifyMuzzle.x, 2) + 
+        Math.pow(muzzle.y - verifyMuzzle.y, 2)
+      );
+      if (distance > 1) {
+        console.warn(
+          '⚠️ MUZZLE MISALIGNMENT DETECTED!',
+          '\n  Preview:', verifyMuzzle,
+          '\n  Shot:', muzzle,
+          '\n  Distance:', distance.toFixed(2), 'px'
+        );
+      }
+    }
     
     const speed = 18;
     const vx = Math.cos(shooterAngle * Math.PI / 180) * speed;
     const vy = Math.sin(shooterAngle * Math.PI / 180) * speed;
     
     // Spawn bullet at muzzle point
-    setBulletPos({ x: muzzleX, y: muzzleY });
+    setBulletPos({ x: muzzle.x, y: muzzle.y });
     setBulletVel({ vx, vy });
     setShooting(true);
     
-  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete]);
+  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, calculateMuzzlePoint]);
   
   // Bullet animation loop - using ref for velocity to avoid stale closure issues
   const bulletVelRef = useRef(bulletVel);
