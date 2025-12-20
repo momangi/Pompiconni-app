@@ -457,9 +457,11 @@ const BolleMagicheGame = () => {
   }, [nextBubble, getRandomColor, processAfterPlacement]);
   
   // Calculate trajectory for preview
+  // Calculate trajectory for preview - uses SAME logic as real physics
   const calculateTrajectory = useCallback((angle, startX, startY) => {
     const points = [];
     const speed = 15;
+    const radius = BUBBLE_SIZE / 2;
     let x = startX;
     let y = startY;
     let vx = Math.cos(angle * Math.PI / 180) * speed;
@@ -472,17 +474,17 @@ const BolleMagicheGame = () => {
       x += vx;
       y += vy;
       
-      // Wall bounce (physically correct: angle in = angle out)
-      if (x < BUBBLE_SIZE / 2) {
-        x = BUBBLE_SIZE / 2;
-        vx = -vx;
-      } else if (x > gameWidth - BUBBLE_SIZE / 2) {
-        x = gameWidth - BUBBLE_SIZE / 2;
-        vx = -vx;
+      // Wall bounce - SAME logic as real physics (clamp + absolute direction)
+      if (x < radius) {
+        x = radius;
+        vx = Math.abs(vx); // Always positive (going right)
+      } else if (x > gameWidth - radius) {
+        x = gameWidth - radius;
+        vx = -Math.abs(vx); // Always negative (going left)
       }
       
       // Stop at top or collision
-      if (y < BUBBLE_SIZE / 2) break;
+      if (y < radius) break;
       
       // Check collision with grid
       const { row, col } = getGridPos(x, y);
