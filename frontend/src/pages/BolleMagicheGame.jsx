@@ -1025,52 +1025,74 @@ const BolleMagicheGame = () => {
   // ============================================
   // 📐 RESPONSIVE GAME SIZING
   // Single source of truth for game dimensions
+  // Uses CSS zoom for scaling (not transform:scale)
   // ============================================
-  // Base dimensions (used for internal calculations)
-  const baseWidth = gameWidth;   // 484px (GRID_COLS * BUBBLE_SIZE)
+  const baseWidth = gameWidth;   // 484px
   const baseHeight = gameHeight; // ~597px
-  const aspectRatio = baseWidth / baseHeight;
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center justify-center py-2 px-2">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center justify-center py-4 px-4">
+      
       {/* 
         ============================================
-        📐 RESPONSIVE GAME WRAPPER
+        📐 RESPONSIVE STYLES - BREAKPOINTS
         ============================================
-        - Mobile: width = min(92vw, 480px), centered
-        - Tablet: width = min(75vw, 520px)
-        - Desktop: width = min(45vw, 600px)
-        - Large Desktop: width = min(38vw, 640px)
-        - max-height: 88vh to prevent overflow
-        - aspect-ratio preserved
-      */}
-      <div 
-        className="flex flex-col items-center w-full"
-        style={{
-          maxWidth: 'min(92vw, 480px)', // Mobile default
-          maxHeight: '88vh',
-        }}
-      >
-        <style>{`
-          @media (min-width: 768px) {
-            .game-wrapper {
-              max-width: min(75vw, 520px) !important;
-            }
-          }
-          @media (min-width: 1024px) {
-            .game-wrapper {
-              max-width: min(45vw, 600px) !important;
-            }
-          }
-          @media (min-width: 1440px) {
-            .game-wrapper {
-              max-width: min(38vw, 680px) !important;
-            }
-          }
-        `}</style>
+        Mobile (default): zoom ~1.0, fits screen width
+        Tablet (>=768px): zoom 1.1
+        Desktop (>=1024px): zoom 1.25-1.35
+        Large Desktop (>=1440px): zoom 1.4
         
-        {/* Header - scales with game */}
-        <div className="w-full px-2 py-2 game-wrapper" style={{ maxWidth: 'inherit' }}>
+        Using CSS zoom property (widely supported) instead of transform:scale
+        This maintains click coordinates and layout integrity.
+      */}
+      <style>{`
+        .game-container {
+          zoom: 1;
+        }
+        
+        @media (min-width: 768px) {
+          .game-container {
+            zoom: 1.1;
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          .game-container {
+            zoom: 1.3;
+          }
+        }
+        
+        @media (min-width: 1280px) {
+          .game-container {
+            zoom: 1.4;
+          }
+        }
+        
+        @media (min-width: 1536px) {
+          .game-container {
+            zoom: 1.45;
+          }
+        }
+        
+        /* Prevent overflow on mobile */
+        @media (max-width: 520px) {
+          .game-container {
+            zoom: 0.85;
+          }
+        }
+        
+        @media (max-width: 400px) {
+          .game-container {
+            zoom: 0.75;
+          }
+        }
+      `}</style>
+      
+      {/* Game Container with responsive zoom */}
+      <div className="game-container flex flex-col items-center">
+        
+        {/* Header - matches game width */}
+        <div className="w-full px-2 py-2" style={{ width: baseWidth }}>
         <div className="flex items-center justify-between">
           <Link to="/giochi/bolle-magiche" className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-700" />
