@@ -981,31 +981,37 @@ const BolleMagicheGame = () => {
         )}
         
         {/* 🐘 POPPICONNI IMAGE - Fixed, bottom-left, identity element */}
+        {/* z-index: 5 = sotto le bolle (z-20), sopra lo sfondo */}
         <div 
-          className="absolute z-10 pointer-events-none"
+          className="absolute pointer-events-none"
           style={{
-            left: -10,
-            bottom: 5,
-            width: 140,
+            left: -15,
+            bottom: 0,
+            width: 200,
             height: 'auto',
+            zIndex: 5,
           }}
         >
           <img 
             src={POPPICONNI_IMAGE_URL}
             alt="Poppiconni"
-            className="w-full h-auto drop-shadow-lg"
+            className="w-full h-auto"
             style={{ 
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.2))',
             }}
           />
         </div>
 
-        {/* Grid bubbles */}
+        {/* Grid bubbles - z-index: 20 (sopra Poppiconni) */}
         {grid.map((row, rowIdx) => 
           row.map((bubble, colIdx) => {
             if (!bubble) return null;
             const { x, y } = getPixelPos(rowIdx, colIdx);
-            return renderBubble(bubble.color, x, y, BUBBLE_SIZE, isVibrating, bubble.id);
+            return (
+              <div key={bubble.id} style={{ position: 'relative', zIndex: 20 }}>
+                {renderBubble(bubble.color, x, y, BUBBLE_SIZE, isVibrating, bubble.id)}
+              </div>
+            );
           })
         )}
         
