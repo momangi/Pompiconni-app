@@ -540,32 +540,33 @@ const BolleMagicheGame = () => {
     return points;
   }, [grid]);
   
-  // Handle mouse move for aiming (with angle clamping)
+  // Handle mouse move for aiming (with angle clamping ±75° from vertical)
   const handleMouseMove = useCallback((e) => {
     if (isShooting || isPaused || gameOver || levelComplete) return;
     
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    const gameWidth = GRID_COLS * BUBBLE_SIZE;
-    const shooterX = gameWidth / 2;
-    const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 60;
+    const gameW = GRID_COLS * BUBBLE_SIZE;
+    const pivotX = gameW / 2;
+    const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50; // Pivot position
     
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    const dx = mouseX - shooterX;
-    const dy = mouseY - shooterY;
+    const dx = mouseX - pivotX;
+    const dy = mouseY - pivotY;
     
     let angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    // Clamp angle to -160 to -20 degrees (mostly upward)
-    angle = Math.max(-160, Math.min(-20, angle));
+    
+    // Clamp angle: -165° to -15° (±75° from vertical which is -90°)
+    angle = Math.max(-165, Math.min(-15, angle));
     
     setShooterAngle(angle);
     setIsAiming(true);
   }, [isShooting, isPaused, gameOver, levelComplete]);
   
-  // Handle click to shoot
+  // Handle click to shoot - spawns bullet at muzzle point
   const handleClick = useCallback(() => {
     if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
     
