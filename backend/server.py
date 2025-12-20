@@ -177,6 +177,21 @@ class Review(BaseModel):
     text: str
     rating: int = 5
 
+class Game(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    slug: str
+    title: str
+    shortDescription: Optional[str] = None
+    longDescription: Optional[str] = None
+    status: str = "coming_soon"  # available, coming_soon
+    ageRecommended: str = "3+"
+    howToPlay: List[str] = []
+    thumbnailFileId: Optional[str] = None
+    thumbnailUrl: Optional[str] = None
+    sortOrder: int = 0
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class LoginRequest(BaseModel):
     email: str
     password: str
