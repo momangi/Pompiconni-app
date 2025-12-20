@@ -46,6 +46,33 @@ const SPECIAL_BUBBLES = {
   party: { name: 'party', extraSparkle: true, label: 'Festa' },
 };
 
+// ============================================
+// 📐 CANNON CONFIG - Centralized parameters
+// All cannon-related values in ONE place for easy fine-tuning
+// ============================================
+const CANNON_CONFIG = {
+  // Dimensions
+  width: 70,
+  height: 100,
+  
+  // Pivot point (% from top of cannon image)
+  pivotYPercent: 0.85, // 85% from top = near base
+  
+  // Muzzle point (% from top of cannon image)
+  muzzleYPercent: 0.05, // 5% from top = near tip
+  
+  // Barrel length factor (how far muzzle is from pivot, as % of height)
+  barrelLengthFactor: 0.80,
+  
+  // Angle limits (degrees from vertical -90°)
+  // -165° to -15° means ±75° from straight up
+  angleMin: -165,
+  angleMax: -15,
+  
+  // Position in game area
+  positionTop: 25, // px from top of shooter area
+};
+
 // ⏱️ DIFFICOLTÀ KIDS-FRIENDLY (tempi molto lunghi per livelli semplici)
 const getDifficultySettings = (level) => {
   if (level <= 3) return { dropInterval: 35000, colors: 3 }; // 35s, 3 colori - MOLTO facile
