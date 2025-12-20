@@ -775,6 +775,8 @@ const BolleMagicheGame = () => {
           const updatedVel = { vx: newVx, vy: vel.vy };
           bulletVelRef.current = updatedVel;
           setBulletVel(updatedVel);
+          // 🎵 Play bounce sound
+          playBounce();
         }
         
         // Top collision - attach bubble
