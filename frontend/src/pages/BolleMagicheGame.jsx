@@ -1056,27 +1056,42 @@ const BolleMagicheGame = () => {
         onClick={handleClick}
       >
         {/* 🌈 LEVEL BACKGROUND - Changes every 5 levels */}
+        {/* FULL AREA coverage: behind everything (z-index: 0), no tiling */}
         {currentBackground?.backgroundImageUrl ? (
           <>
-            {/* Background image layer (opacity: 1) */}
+            {/* Background image layer - covers ENTIRE game area */}
             <div 
-              className="absolute inset-0 bg-cover bg-center"
+              className="absolute"
               style={{ 
+                inset: 0,
+                width: '100%',
+                height: '100%',
                 backgroundImage: `url(${process.env.REACT_APP_BACKEND_URL}${currentBackground.backgroundImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                zIndex: 0,
               }}
             />
-            {/* Overlay layer (controlled by slider) */}
+            {/* Overlay layer (controlled by admin slider) */}
             <div 
-              className="absolute inset-0"
+              className="absolute"
               style={{ 
+                inset: 0,
+                width: '100%',
+                height: '100%',
                 backgroundColor: `rgba(255, 255, 255, ${(currentBackground.backgroundOpacity || 30) / 100})`,
                 backdropFilter: `blur(${(currentBackground.backgroundOpacity || 30) / 25}px)`,
+                zIndex: 1,
               }}
             />
           </>
         ) : (
           /* Default background when no level background configured */
-          <div className="absolute inset-0 bg-gradient-to-b from-sky-100/60 via-pink-50/40 to-purple-100/60" />
+          <div 
+            className="absolute bg-gradient-to-b from-sky-100/60 via-pink-50/40 to-purple-100/60" 
+            style={{ inset: 0, width: '100%', height: '100%', zIndex: 0 }}
+          />
         )}
         
         {/* 🐘 POPPICONNI IMAGE - Fixed, bottom-left, identity element */}
