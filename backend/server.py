@@ -3740,9 +3740,8 @@ async def get_game_thumbnail(slug: str):
 # --- ADMIN GAMES ENDPOINTS ---
 
 @api_router.get("/admin/games")
-async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_admin_games(email: str = Depends(verify_token)):
     """Get all games for admin"""
-    verify_token(credentials.credentials)
     games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
     
     for game in games:
