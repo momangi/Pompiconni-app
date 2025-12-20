@@ -567,6 +567,29 @@ const BolleMagicheGame = () => {
     return points;
   }, [grid]);
   
+  // ============================================
+  // 🔫 GAME DIMENSIONS & CANNON DERIVED VALUES
+  // ============================================
+  const gameWidthCalc = GRID_COLS * BUBBLE_SIZE;
+  const shooterXCalc = gameWidthCalc / 2;
+  const shooterYCalc = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
+  const muzzleDistanceCalc = CANNON_CONFIG.height * CANNON_CONFIG.barrelLengthFactor;
+  const pivotXCalc = shooterXCalc;
+  const pivotYCalc = shooterYCalc + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotYPercent);
+  
+  // ============================================
+  // 🔫 MUZZLE POINT CALCULATION (Unified)
+  // Used by BOTH trajectory preview AND bullet spawn
+  // Single source of truth for muzzle position
+  // ============================================
+  const calculateMuzzlePoint = useCallback((angle) => {
+    const angleRad = (angle * Math.PI) / 180;
+    return {
+      x: pivotXCalc + Math.cos(angleRad) * muzzleDistanceCalc,
+      y: pivotYCalc + Math.sin(angleRad) * muzzleDistanceCalc,
+    };
+  }, [pivotXCalc, pivotYCalc, muzzleDistanceCalc]);
+  
   // Handle mouse move for aiming (with angle clamping ±75° from vertical)
   const handleMouseMove = useCallback((e) => {
     if (isShooting || isPaused || gameOver || levelComplete) return;
@@ -574,24 +597,20 @@ const BolleMagicheGame = () => {
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    const gameW = GRID_COLS * BUBBLE_SIZE;
-    const pivotX = gameW / 2;
-    const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50; // Pivot position
-    
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    const dx = mouseX - pivotX;
-    const dy = mouseY - pivotY;
+    const dx = mouseX - pivotXCalc;
+    const dy = mouseY - pivotYCalc;
     
     let angle = Math.atan2(dy, dx) * 180 / Math.PI;
     
-    // Clamp angle: -165° to -15° (±75° from vertical which is -90°)
-    angle = Math.max(-165, Math.min(-15, angle));
+    // Clamp angle using CANNON_CONFIG
+    angle = Math.max(CANNON_CONFIG.angleMin, Math.min(CANNON_CONFIG.angleMax, angle));
     
     setShooterAngle(angle);
     setIsAiming(true);
-  }, [isShooting, isPaused, gameOver, levelComplete]);
+  }, [isShooting, isPaused, gameOver, levelComplete, pivotXCalc, pivotYCalc]);
   
   // Handle click to shoot - spawns bullet at MUZZLE POINT (pixel-perfect with cannon tip)
   const handleClick = useCallback(() => {
