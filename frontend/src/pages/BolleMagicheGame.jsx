@@ -55,22 +55,25 @@ const CANNON_CONFIG = {
   width: 70,
   height: 100,
   
-  // Pivot point (% from top of cannon image)
-  pivotYPercent: 0.85, // 85% from top = near base
+  // Pivot point (% from top of cannon image) - where the cannon rotates
+  pivotOriginX: 0.5,  // Center horizontally
+  pivotOriginY: 0.85, // 85% from top = near base
   
-  // Muzzle point (% from top of cannon image)
-  muzzleYPercent: 0.05, // 5% from top = near tip
-  
-  // Barrel length factor (how far muzzle is from pivot, as % of height)
-  barrelLengthFactor: 0.80,
+  // Barrel length in pixels (distance from pivot to muzzle tip)
+  // This should match the visual length of the cannon barrel
+  barrelLengthPx: 80, // Fine-tuned for pixel-perfect muzzle alignment
   
   // Angle limits (degrees from vertical -90°)
   // -165° to -15° means ±75° from straight up
   angleMin: -165,
   angleMax: -15,
   
-  // Position in game area
+  // Position in game area (shooter area coordinates)
   positionTop: 25, // px from top of shooter area
+  
+  // Trajectory dot styling
+  trajectoryDotRadius: 4.5,  // -25% from 6px
+  trajectoryDotSpacing: 0.9, // -10% spacing factor
 };
 
 // ⏱️ DIFFICOLTÀ KIDS-FRIENDLY (tempi molto lunghi per livelli semplici)
