@@ -102,11 +102,21 @@ const BolleMagicheGame = () => {
   const [bulletPos, setBulletPos] = useState(null);
   const [bulletVel, setBulletVel] = useState(null);
   
+  // 🎧 AUDIO SYSTEM - Centralized game audio
+  const { 
+    isMuted, 
+    toggleMute, 
+    initAudio, 
+    playShoot, 
+    playPop, 
+    playBounce, 
+    playMiss 
+  } = useGameAudio();
+  
   // UI state
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [showTrajectory, setShowTrajectory] = useState(true);
   const [isVibrating, setIsVibrating] = useState(false);
   const [fallingBubbles, setFallingBubbles] = useState([]);
