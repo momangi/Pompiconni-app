@@ -824,7 +824,7 @@ const BolleMagicheGame = () => {
     </div>
   );
   
-  // 🎀 RENDER TOY CANNON - Magical/infantile style inspired by Poppiconni image
+  // 🎀 RENDER OFFICIAL CANNON - Uses uploaded image
   const renderToyCannon = () => {
     return (
       <div 
@@ -834,47 +834,17 @@ const BolleMagicheGame = () => {
           transformOrigin: 'center bottom',
         }}
       >
-        {/* Cannon barrel - Pink/Cyan magical toy style */}
-        <div className="relative">
-          {/* Main barrel */}
-          <div 
-            className="w-10 h-20 rounded-t-2xl shadow-lg relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(135deg, #f9a8d4 0%, #f472b6 50%, #ec4899 100%)',
-              border: '3px solid #fbcfe8',
-            }}
-          >
-            {/* Barrel stripes (candy-like) */}
-            <div className="absolute inset-0">
-              <div className="absolute top-2 left-0 right-0 h-2 bg-white/30 rounded-full mx-1" />
-              <div className="absolute top-8 left-0 right-0 h-1.5 bg-cyan-300/40 rounded-full mx-1" />
-              <div className="absolute top-14 left-0 right-0 h-1 bg-white/20 rounded-full mx-1" />
-            </div>
-            
-            {/* Stars decoration */}
-            <div className="absolute top-3 left-1 text-yellow-300 text-xs">★</div>
-            <div className="absolute top-10 right-1 text-cyan-200 text-xs">✦</div>
-            
-            {/* Barrel opening (top) - where bubble comes from */}
-            <div 
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-7 h-3 rounded-t-full"
-              style={{
-                background: 'radial-gradient(circle at 50% 100%, #67e8f9 0%, #22d3ee 100%)',
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(34,211,238,0.5)',
-              }}
-            />
-          </div>
-          
-          {/* Cannon base (decorative ring) */}
-          <div 
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-5 rounded-full"
-            style={{
-              background: 'linear-gradient(to bottom, #a5f3fc 0%, #67e8f9 50%, #22d3ee 100%)',
-              border: '2px solid #cffafe',
-              boxShadow: '0 2px 8px rgba(34,211,238,0.4)',
-            }}
-          />
-        </div>
+        {/* Official cannon image */}
+        <img 
+          src={CANNON_IMAGE_URL}
+          alt="Cannone"
+          className="w-16 h-auto"
+          style={{
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+            marginTop: -60,
+            marginLeft: -8,
+          }}
+        />
       </div>
     );
   };
