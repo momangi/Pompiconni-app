@@ -3918,6 +3918,7 @@ async def upload_game_card_image(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Upload card image for game (used in /giochi list page)"""
+    from bson import ObjectId
     verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
