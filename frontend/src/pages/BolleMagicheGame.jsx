@@ -899,65 +899,19 @@ const BolleMagicheGame = () => {
   );
   
   // ============================================
-  // 🎯 CANNON KINEMATICS - PIVOT-BASED ROTATION
+  // 🎯 GAME AREA DIMENSIONS (for render)
+  // Uses values from CANNON_CONFIG
   // ============================================
-  
-  // Game dimensions (calculated once)
   const gameWidth = GRID_COLS * BUBBLE_SIZE;
   const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
   const shooterX = gameWidth / 2;
   const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
   
-  // ============================================
-  // 📐 CANNON CONFIG - Centralized parameters
-  // All cannon-related values in ONE place for easy fine-tuning
-  // ============================================
-  const cannonConfig = {
-    // Dimensions
-    width: 70,
-    height: 100,
-    
-    // Pivot point (% from top of cannon image)
-    pivotYPercent: 0.85, // 85% from top = near base
-    
-    // Muzzle point (% from top of cannon image)
-    muzzleYPercent: 0.05, // 5% from top = near tip
-    
-    // Barrel length factor (how far muzzle is from pivot, as % of height)
-    barrelLengthFactor: 0.80,
-    
-    // Angle limits (degrees from vertical -90°)
-    // -165° to -15° means ±75° from straight up
-    angleMin: -165,
-    angleMax: -15,
-    
-    // Position in game area
-    positionTop: 25, // px from top of shooter area
-  };
-  
-  // Derived values from config
-  const muzzleDistance = cannonConfig.height * cannonConfig.barrelLengthFactor;
-  const pivotX = shooterX;
-  const pivotY = shooterY + cannonConfig.positionTop + (cannonConfig.height * cannonConfig.pivotYPercent);
-  
-  // Clamp angle to prevent extreme rotations
+  // Clamp angle to prevent extreme rotations (using CANNON_CONFIG)
   const clampedAngle = Math.max(
-    cannonConfig.angleMin + 90, 
-    Math.min(cannonConfig.angleMax + 90, shooterAngle + 90)
+    CANNON_CONFIG.angleMin + 90, 
+    Math.min(CANNON_CONFIG.angleMax + 90, shooterAngle + 90)
   );
-  
-  // ============================================
-  // 🔫 MUZZLE POINT CALCULATION (Unified)
-  // Used by BOTH trajectory preview AND bullet spawn
-  // Single source of truth for muzzle position
-  // ============================================
-  const calculateMuzzlePoint = useCallback((angle) => {
-    const angleRad = (angle * Math.PI) / 180;
-    return {
-      x: pivotX + Math.cos(angleRad) * muzzleDistance,
-      y: pivotY + Math.sin(angleRad) * muzzleDistance,
-    };
-  }, [pivotX, pivotY, muzzleDistance]);
   
   // 🎀 RENDER CANNON with fixed pivot rotation
   const renderToyCannon = () => {
