@@ -833,62 +833,56 @@ const BolleMagicheGame = () => {
     </div>
   );
   
-  // Render Poppiconni character
-  const renderPoppiconni = () => {
-    const moodStyles = {
-      idle: { scale: 1, rotate: 0 },
-      shooting: { scale: 0.95, rotate: -5 },
-      celebrating: { scale: 1.1, rotate: 5 },
-      combo: { scale: 1.15, rotate: 8 },
-    };
-    const style = moodStyles[poppiconniMood] || moodStyles.idle;
-    
+  // 🎀 RENDER TOY CANNON - Magical/infantile style inspired by Poppiconni image
+  const renderToyCannon = () => {
     return (
       <div 
-        className="relative transition-all duration-200"
-        style={{ 
-          transform: `scale(${style.scale}) rotate(${style.rotate}deg)`,
+        className="relative"
+        style={{
+          transform: `rotate(${shooterAngle + 90}deg)`,
+          transformOrigin: 'center bottom',
         }}
       >
-        {/* 🐘 POPPICONNI PLACEHOLDER */}
-        {/* ⚠️ NOTA: Questo è un placeholder. */}
-        {/* Per il personaggio definitivo, fornire asset ufficiali. */}
-        <div className="w-20 h-20 bg-gradient-to-br from-pink-200 via-pink-300 to-pink-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white relative overflow-hidden animate-breathe">
-          {/* Orecchie */}
-          <div className="absolute -left-2 top-1 w-6 h-8 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full transform -rotate-12" />
-          <div className="absolute -right-2 top-1 w-6 h-8 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full transform rotate-12" />
-          
-          {/* Face */}
-          <div className="relative z-10 flex flex-col items-center">
-            {/* Eyes */}
-            <div className="flex gap-3 mb-0.5">
-              <div className="w-2.5 h-3 bg-gray-800 rounded-full relative">
-                <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full" />
-              </div>
-              <div className="w-2.5 h-3 bg-gray-800 rounded-full relative">
-                <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full" />
-              </div>
+        {/* Cannon barrel - Pink/Cyan magical toy style */}
+        <div className="relative">
+          {/* Main barrel */}
+          <div 
+            className="w-10 h-20 rounded-t-2xl shadow-lg relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #f9a8d4 0%, #f472b6 50%, #ec4899 100%)',
+              border: '3px solid #fbcfe8',
+            }}
+          >
+            {/* Barrel stripes (candy-like) */}
+            <div className="absolute inset-0">
+              <div className="absolute top-2 left-0 right-0 h-2 bg-white/30 rounded-full mx-1" />
+              <div className="absolute top-8 left-0 right-0 h-1.5 bg-cyan-300/40 rounded-full mx-1" />
+              <div className="absolute top-14 left-0 right-0 h-1 bg-white/20 rounded-full mx-1" />
             </div>
-            {/* Trunk */}
-            <div className="w-3 h-4 bg-gradient-to-b from-pink-300 to-pink-400 rounded-b-full" />
-            {/* Smile based on mood */}
-            {(poppiconniMood === 'celebrating' || poppiconniMood === 'combo') && (
-              <div className="absolute -bottom-1 w-6 h-2 border-b-2 border-pink-600 rounded-b-full" />
-            )}
+            
+            {/* Stars decoration */}
+            <div className="absolute top-3 left-1 text-yellow-300 text-xs">★</div>
+            <div className="absolute top-10 right-1 text-cyan-200 text-xs">✦</div>
+            
+            {/* Barrel opening (top) - where bubble comes from */}
+            <div 
+              className="absolute -top-1 left-1/2 -translate-x-1/2 w-7 h-3 rounded-t-full"
+              style={{
+                background: 'radial-gradient(circle at 50% 100%, #67e8f9 0%, #22d3ee 100%)',
+                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(34,211,238,0.5)',
+              }}
+            />
           </div>
           
-          {/* Sparkles for celebration */}
-          {(poppiconniMood === 'celebrating' || poppiconniMood === 'combo') && (
-            <>
-              <div className="absolute -top-2 -right-2 text-yellow-400 animate-pulse">✨</div>
-              <div className="absolute -top-1 -left-3 text-yellow-400 animate-pulse" style={{ animationDelay: '0.2s' }}>⭐</div>
-            </>
-          )}
-        </div>
-        
-        {/* Label */}
-        <div className="text-center mt-1">
-          <span className="text-xs font-bold text-pink-600 bg-white/80 px-2 py-0.5 rounded-full">Poppi</span>
+          {/* Cannon base (decorative ring) */}
+          <div 
+            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-5 rounded-full"
+            style={{
+              background: 'linear-gradient(to bottom, #a5f3fc 0%, #67e8f9 50%, #22d3ee 100%)',
+              border: '2px solid #cffafe',
+              boxShadow: '0 2px 8px rgba(34,211,238,0.4)',
+            }}
+          />
         </div>
       </div>
     );
