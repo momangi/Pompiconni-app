@@ -60,8 +60,8 @@ const CANNON_CONFIG = {
   pivotOriginY: 0.85, // 85% from top = near base
   
   // Barrel length in pixels (distance from pivot to muzzle tip)
-  // This should match the visual length of the cannon barrel
-  barrelLengthPx: 80, // Fine-tuned for pixel-perfect muzzle alignment
+  // Adjusted for pixel-perfect alignment with cannon image tip
+  barrelLengthPx: 75, // Fine-tuned to match cannon visual
   
   // Angle limits (degrees from vertical -90°)
   // -165° to -15° means ±75° from straight up
