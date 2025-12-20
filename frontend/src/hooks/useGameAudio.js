@@ -189,7 +189,9 @@ export const useGameAudio = () => {
         gainNode.connect(ctx.destination);
         oscillator.start(currentTime);
         oscillator.stop(currentTime + config.duration + 0.01);
-      } catch (e) {}
+      } catch (e) {
+        // Silent fail
+      }
     } else {
       playSound('pop');
     }
@@ -228,7 +230,6 @@ export const useGameAudio = () => {
   return {
     // State
     isMuted,
-    isInitialized: isInitializedRef.current,
     
     // Methods
     initAudio,
