@@ -398,8 +398,29 @@ const BolleMagicheGame = () => {
     }
   }, [findConnected, popBubbles, findFloating, checkLevelComplete]);
   
-  // Attach bubble to grid
+  // Flag to prevent double-snap (guardrail)
+  const hasSnappedRef = useRef(false);
+  
+  // Attach bubble to grid - FIXED: removes projectile BEFORE processing matches
   const attachBubble = useCallback((row, col, color) => {
+    // Guardrail: prevent double-snap
+    if (hasSnappedRef.current) {
+      return;
+    }
+    hasSnappedRef.current = true;
+    
+    // FIRST: Remove projectile from flight state IMMEDIATELY
+    // This ensures the bullet is not rendered while we process
+    setShooting(false);
+    setBulletPos(null);
+    setBulletVel(null);
+    bulletVelRef.current = null;
+    
+    // 🎭 Poppiconni recoil animation
+    setPoppiconniMood('shooting');
+    setTimeout(() => setPoppiconniMood('idle'), 300);
+    
+    // THEN: Add bubble to grid and process matches
     setGrid(prevGrid => {
       // Clamp to valid position
       const clampedRow = Math.max(0, Math.min(row, GRID_ROWS - 1));
@@ -427,7 +448,7 @@ const BolleMagicheGame = () => {
         }
       }
       
-      // Add bubble to grid
+      // Add bubble to grid (SINGLE entity - the projectile is already gone)
       const newGrid = prevGrid.map(row => [...row]);
       if (!newGrid[targetRow][targetCol]) {
         newGrid[targetRow][targetCol] = {
@@ -436,24 +457,20 @@ const BolleMagicheGame = () => {
         };
       }
       
-      // Process matches after state update
+      // Process matches AFTER projectile is removed and grid is updated
+      // Use setTimeout to ensure React has flushed the state updates
       setTimeout(() => {
         processAfterPlacement(targetRow, targetCol, color, newGrid);
+        // Reset snap flag after processing is complete
+        hasSnappedRef.current = false;
       }, 50);
       
       return newGrid;
     });
     
-    // 🎭 Poppiconni recoil animation
-    setPoppiconniMood('shooting');
-    setTimeout(() => setPoppiconniMood('idle'), 300);
-    
-    // Next bubble
+    // Next bubble - prepare for next shot
     setCurrentBubble(nextBubble);
     setNextBubble(getRandomColor());
-    setShooting(false);
-    setBulletPos(null);
-    setBulletVel(null);
   }, [nextBubble, getRandomColor, processAfterPlacement]);
   
   // Calculate trajectory for preview
