@@ -575,6 +575,15 @@ const BolleMagicheGame = () => {
   }, [grid]);
   
   // ============================================
+  // 🔫 GAME DIMENSIONS & CANNON DERIVED VALUES (for calculations)
+  // ============================================
+  const gameWidthCalc = GRID_COLS * BUBBLE_SIZE;
+  const shooterXCalc = gameWidthCalc / 2;
+  const shooterYCalc = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
+  const pivotXCalc = shooterXCalc;
+  const pivotYCalc = shooterYCalc + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY);
+  
+  // ============================================
   // 🔫 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
   // Used by BOTH trajectory preview AND bullet spawn
   // DOM-based: works correctly on any viewport/resize
@@ -586,12 +595,10 @@ const BolleMagicheGame = () => {
     
     if (!gameArea || !cannonEl) {
       // Fallback to calculated values if refs not ready
-      const fallbackPivotX = shooterXCalc;
-      const fallbackPivotY = shooterYCalc + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY);
       const angleRad = (angle * Math.PI) / 180;
       return {
-        x: fallbackPivotX + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx,
-        y: fallbackPivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx,
+        x: pivotXCalc + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx,
+        y: pivotYCalc + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx,
       };
     }
     
@@ -611,7 +618,7 @@ const BolleMagicheGame = () => {
     const muzzleY = pivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx;
     
     return { x: muzzleX, y: muzzleY };
-  }, [shooterXCalc, shooterYCalc]);
+  }, [pivotXCalc, pivotYCalc]);
   
   // ============================================
   // 🔫 GAME AREA DIMENSIONS (for render)
