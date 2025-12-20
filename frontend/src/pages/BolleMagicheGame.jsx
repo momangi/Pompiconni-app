@@ -1299,9 +1299,13 @@ const BolleMagicheGame = () => {
         style={{ 
           width: gameWidth, 
           height: gameHeight,
+          touchAction: 'none', // Prevent browser touch gestures (scroll, zoom)
         }}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* 🌈 LEVEL BACKGROUND - Changes every 5 levels */}
         {/* FULL AREA coverage: behind everything (z-index: 0), no tiling */}
