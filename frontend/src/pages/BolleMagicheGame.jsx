@@ -689,6 +689,12 @@ const BolleMagicheGame = () => {
   const handleClick = useCallback(() => {
     if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
     
+    // 🎧 Initialize audio on first interaction (autoplay policy)
+    initAudio();
+    
+    // 🎵 Play shoot sound
+    playShoot();
+    
     // Use unified getMuzzlePoint (same function as trajectory preview)
     const muzzle = getMuzzlePoint(shooterAngle);
     
