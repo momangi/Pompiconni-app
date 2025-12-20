@@ -579,40 +579,75 @@ const BolleMagicheGame = () => {
   }, [grid]);
   
   // ============================================
-  // 🔫 GAME DIMENSIONS & CANNON DERIVED VALUES (for calculations)
+  // 🔫 GAME AREA DIMENSIONS (for layout/render)
   // ============================================
-  const gameWidthCalc = GRID_COLS * BUBBLE_SIZE;
-  const gameHeightCalc = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
-  const shooterXCalc = gameWidthCalc / 2;
-  const shooterYCalc = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
-  
-  // Pivot point calculation (where cannon rotates)
-  // Shooter area is at the bottom (gameHeight - 140 to gameHeight)
-  const shooterAreaTopCalc = gameHeightCalc - 140;
-  const pivotXCalc = shooterXCalc;
-  const pivotYCalc = shooterAreaTopCalc + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY);
+  const gameWidth = GRID_COLS * BUBBLE_SIZE;
+  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
+  const shooterX = gameWidth / 2;
+  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
   
   // ============================================
-  // 🔫 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
+  // 🎯 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
+  // DOM-BASED ONLY: Uses getBoundingClientRect()
   // Used by BOTH trajectory preview AND bullet spawn
-  // Calculates muzzle position based on cannon pivot and angle
+  // NO hardcoded offsets or alternative formulas allowed
   // ============================================
   const getMuzzlePoint = useCallback((angle) => {
-    // Calculate muzzle position using angle and barrel length from pivot point
+    const gameArea = gameRef.current;
+    const cannonEl = cannonRef.current;
+    
+    // Fallback if refs not ready (should not happen during gameplay)
+    if (!gameArea || !cannonEl) {
+      console.warn('⚠️ getMuzzlePoint: refs not ready, using fallback');
+      const fallbackPivotX = gameWidth / 2;
+      const fallbackPivotY = gameHeight - 140 + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY);
+      const angleRad = (angle * Math.PI) / 180;
+      return {
+        x: fallbackPivotX + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx,
+        y: fallbackPivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx,
+      };
+    }
+    
+    // ====== DOM-BASED CALCULATION ======
+    const gameRect = gameArea.getBoundingClientRect();
+    const cannonRect = cannonEl.getBoundingClientRect();
+    
+    // Calculate pivot in game area coordinates
+    const pivotX = (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX);
+    const pivotY = (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY);
+    
+    // Calculate muzzle from pivot using angle and barrel length
     const angleRad = (angle * Math.PI) / 180;
-    const muzzleX = pivotXCalc + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx;
-    const muzzleY = pivotYCalc + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx;
+    const muzzleX = pivotX + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx + CANNON_CONFIG.muzzleOffsetX;
+    const muzzleY = pivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx + CANNON_CONFIG.muzzleOffsetY;
     
     return { x: muzzleX, y: muzzleY };
-  }, [pivotXCalc, pivotYCalc]);
+  }, [gameWidth, gameHeight]);
   
   // ============================================
-  // 🔫 GAME AREA DIMENSIONS (for render - same values as *Calc)
+  // 🎯 PIVOT POINT FOR AIMING (DOM-based)
+  // Used for mouse angle calculation
   // ============================================
-  const gameWidth = gameWidthCalc;
-  const gameHeight = gameHeightCalc;
-  const shooterX = shooterXCalc;
-  const shooterY = shooterYCalc;
+  const getPivotPoint = useCallback(() => {
+    const gameArea = gameRef.current;
+    const cannonEl = cannonRef.current;
+    
+    if (!gameArea || !cannonEl) {
+      // Fallback
+      return {
+        x: gameWidth / 2,
+        y: gameHeight - 140 + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY)
+      };
+    }
+    
+    const gameRect = gameArea.getBoundingClientRect();
+    const cannonRect = cannonEl.getBoundingClientRect();
+    
+    return {
+      x: (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX),
+      y: (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)
+    };
+  }, [gameWidth, gameHeight]);
   
   // Handle mouse move for aiming (with angle clamping ±75° from vertical)
   const handleMouseMove = useCallback((e) => {
