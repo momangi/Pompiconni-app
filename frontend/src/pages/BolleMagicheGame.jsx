@@ -606,8 +606,9 @@ const BolleMagicheGame = () => {
   // ============================================
   // 🎯 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
   // 🔍 GET CURRENT ZOOM FACTOR from .game-container
-  // CSS zoom affects mouse coordinates differently than transform:scale
-  // Must be defined BEFORE getMuzzlePoint and getPivotPoint
+  // CSS zoom scales the visual output but getBoundingClientRect returns zoomed values
+  // Mouse events (clientX/Y) are in screen pixels, rect is in zoomed pixels
+  // Both are in the same coordinate system, so NO compensation needed for angle calculation
   const getZoomFactor = useCallback(() => {
     const container = document.querySelector('.game-container');
     if (!container) return 1;
@@ -619,8 +620,7 @@ const BolleMagicheGame = () => {
   // ============================================
   // DOM-BASED ONLY: Uses getBoundingClientRect()
   // Used by BOTH trajectory preview AND bullet spawn
-  // NO hardcoded offsets or alternative formulas allowed
-  // 🎯 ZOOM-COMPENSATED: Divides coords by CSS zoom factor
+  // Returns coordinates in BASE (unzoomed) game space for rendering
   // ============================================
   const getMuzzlePoint = useCallback((angle) => {
     const gameArea = gameRef.current;
@@ -638,18 +638,16 @@ const BolleMagicheGame = () => {
       };
     }
     
-    // Get zoom factor for compensation
     const zoom = getZoomFactor();
-    
-    // ====== DOM-BASED CALCULATION (ZOOM-COMPENSATED) ======
     const gameRect = gameArea.getBoundingClientRect();
     const cannonRect = cannonEl.getBoundingClientRect();
     
-    // Calculate pivot in game area coordinates, compensated for CSS zoom
+    // Convert from zoomed screen coords to base game coords by dividing by zoom
+    // This is needed because we render at base coords but getBoundingClientRect returns zoomed
     const pivotX = ((cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX)) / zoom;
     const pivotY = ((cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)) / zoom;
     
-    // Calculate muzzle from pivot using angle and barrel length
+    // Calculate muzzle from pivot using angle and barrel length (in base coords)
     const angleRad = (angle * Math.PI) / 180;
     const muzzleX = pivotX + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx + CANNON_CONFIG.muzzleOffsetX;
     const muzzleY = pivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx + CANNON_CONFIG.muzzleOffsetY;
@@ -658,48 +656,45 @@ const BolleMagicheGame = () => {
   }, [gameWidth, gameHeight, getZoomFactor]);
   
   // 🎯 PIVOT POINT FOR AIMING (DOM-based)
-  // Used for mouse angle calculation
+  // Returns pivot in ZOOMED screen coordinates for mouse angle calculation
   // ============================================
   const getPivotPoint = useCallback(() => {
     const gameArea = gameRef.current;
     const cannonEl = cannonRef.current;
     
     if (!gameArea || !cannonEl) {
-      // Fallback
+      // Fallback in base coords
       return {
         x: gameWidth / 2,
         y: gameHeight - 140 + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY)
       };
     }
     
-    const zoom = getZoomFactor();
     const gameRect = gameArea.getBoundingClientRect();
     const cannonRect = cannonEl.getBoundingClientRect();
     
-    // Compensate for CSS zoom in position calculations
+    // Return in ZOOMED screen coordinates (same as mouse clientX/Y relative to rect)
+    // NO zoom division here - we want screen coords to match mouse coords
     return {
-      x: ((cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX)) / zoom,
-      y: ((cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)) / zoom
+      x: (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX),
+      y: (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)
     };
-  }, [gameWidth, gameHeight, getZoomFactor]);
+  }, [gameWidth, gameHeight]);
   
   // Handle mouse move for aiming (with angle clamping ±75° from vertical)
-  // 🎯 ZOOM-COMPENSATED: Divides mouse coords by CSS zoom factor
+  // Mouse coords and pivot are BOTH in zoomed screen space - they match!
   const handleMouseMove = useCallback((e) => {
     if (isShooting || isPaused || gameOver || levelComplete) return;
     
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    // Get current zoom factor for compensation
-    const zoom = getZoomFactor();
-    
-    // Get pivot point (already zoom-compensated)
+    // Get pivot point in screen coordinates (zoomed)
     const pivot = getPivotPoint();
     
-    // Mouse coordinates relative to game area, compensated for CSS zoom
-    const mouseX = (e.clientX - rect.left) / zoom;
-    const mouseY = (e.clientY - rect.top) / zoom;
+    // Mouse coordinates relative to game area (also in zoomed screen coords)
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
     
     const dx = mouseX - pivot.x;
     const dy = mouseY - pivot.y;
@@ -711,7 +706,7 @@ const BolleMagicheGame = () => {
     
     setShooterAngle(angle);
     setIsAiming(true);
-  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor]);
+  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint]);
   
   // Handle click to shoot - spawns bullet at MUZZLE POINT (pixel-perfect with cannon tip)
   const handleClick = useCallback(() => {
