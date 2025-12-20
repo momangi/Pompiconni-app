@@ -3686,12 +3686,15 @@ async def get_public_games():
     
     # Add image URLs if exist
     for game in games:
+        # Cache busting with updatedAt timestamp
+        cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
+        
         if game.get('thumbnailFileId'):
-            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
         if game.get('cardImageFileId'):
-            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
         if game.get('pageImageFileId'):
-            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
+            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
     
     return games
 
@@ -3703,12 +3706,15 @@ async def get_public_game(slug: str):
     if not game:
         raise HTTPException(status_code=404, detail="Gioco non trovato")
     
+    # Cache busting with updatedAt timestamp
+    cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
+    
     if game.get('thumbnailFileId'):
-        game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+        game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
     if game.get('cardImageFileId'):
-        game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+        game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
     if game.get('pageImageFileId'):
-        game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
+        game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
     
     return game
 
