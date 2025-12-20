@@ -937,15 +937,6 @@ const BolleMagicheGame = () => {
     </div>
   );
   
-  // ============================================
-  // 🎯 GAME AREA DIMENSIONS (for render)
-  // Uses values from CANNON_CONFIG
-  // ============================================
-  const gameWidth = GRID_COLS * BUBBLE_SIZE;
-  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
-  const shooterX = gameWidth / 2;
-  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
-  
   // Clamp angle to prevent extreme rotations (using CANNON_CONFIG)
   const clampedAngle = Math.max(
     CANNON_CONFIG.angleMin + 90, 
