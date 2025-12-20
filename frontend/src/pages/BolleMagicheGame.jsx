@@ -903,8 +903,9 @@ const BolleMagicheGame = () => {
   // ============================================
   // 🔫 MUZZLE POINT CALCULATION (Unified)
   // Used by BOTH trajectory preview AND bullet spawn
+  // Single source of truth for muzzle position
   // ============================================
-  const calculateMuzzlePoint = (angle) => {
+  const calculateMuzzlePoint = useCallback((angle) => {
     const angleRad = (angle * Math.PI) / 180;
     return {
       x: pivotX + Math.cos(angleRad) * muzzleDistance,
