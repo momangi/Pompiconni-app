@@ -466,10 +466,12 @@ const BolleMagicheGame = () => {
         }, 300);
       }
     } else {
+      // 🎵 Play miss sound (no match found)
+      playMiss();
       setGrid(gridState);
       checkLevelComplete(gridState);
     }
-  }, [findConnected, popBubbles, findFloating, checkLevelComplete]);
+  }, [findConnected, popBubbles, findFloating, checkLevelComplete, playMiss]);
   
   // Flag to prevent double-snap (guardrail)
   const hasSnappedRef = useRef(false);
