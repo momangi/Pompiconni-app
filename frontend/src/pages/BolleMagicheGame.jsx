@@ -1134,33 +1134,20 @@ const BolleMagicheGame = () => {
 
       {/* 
         ============================================
-        🎮 GAME AREA - Responsive Container
+        🎮 GAME AREA - Fixed dimensions, responsive wrapper handles sizing
         ============================================
-        Uses aspect-ratio to maintain proportions while scaling.
-        Width is controlled by parent wrapper (game-wrapper class).
-        Internal elements use relative positioning.
       */}
       <div 
         ref={gameRef}
-        className="relative rounded-3xl shadow-2xl overflow-hidden cursor-crosshair game-wrapper w-full"
+        className="relative rounded-3xl shadow-2xl overflow-hidden cursor-crosshair game-wrapper"
         style={{ 
-          aspectRatio: `${baseWidth} / ${baseHeight}`,
-          maxWidth: 'inherit',
-          maxHeight: '78vh',
+          width: gameWidth, 
+          height: gameHeight,
+          maxWidth: '100%',
         }}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
       >
-        {/* Internal scaling container - maintains pixel-based layout */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            width: gameWidth,
-            height: gameHeight,
-            transform: 'scale(var(--game-scale, 1))',
-            transformOrigin: 'top left',
-          }}
-        >
         {/* 🌈 LEVEL BACKGROUND - Changes every 5 levels */}
         {/* FULL AREA coverage: behind everything (z-index: 0), no tiling */}
         {currentBackground?.backgroundImageUrl ? (
