@@ -655,8 +655,8 @@ const BolleMagicheGame = () => {
   const handleClick = useCallback(() => {
     if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
     
-    // Use unified calculateMuzzlePoint (same function as trajectory preview)
-    const muzzle = calculateMuzzlePoint(shooterAngle);
+    // Use unified getMuzzlePoint (same function as trajectory preview)
+    const muzzle = getMuzzlePoint(shooterAngle);
     
     // ============================================
     // 🛡️ DEV GUARDRAIL: Verify muzzle alignment
@@ -664,7 +664,7 @@ const BolleMagicheGame = () => {
     // ============================================
     if (process.env.NODE_ENV === 'development') {
       // Re-calculate to verify (should be identical)
-      const verifyMuzzle = calculateMuzzlePoint(shooterAngle);
+      const verifyMuzzle = getMuzzlePoint(shooterAngle);
       const distance = Math.sqrt(
         Math.pow(muzzle.x - verifyMuzzle.x, 2) + 
         Math.pow(muzzle.y - verifyMuzzle.y, 2)
@@ -688,7 +688,7 @@ const BolleMagicheGame = () => {
     setBulletVel({ vx, vy });
     setShooting(true);
     
-  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, calculateMuzzlePoint]);
+  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, getMuzzlePoint]);
   
   // Bullet animation loop - using ref for velocity to avoid stale closure issues
   const bulletVelRef = useRef(bulletVel);
