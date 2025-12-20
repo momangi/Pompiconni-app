@@ -3952,6 +3952,7 @@ async def upload_game_card_image(
 @api_router.get("/games/{slug}/card-image")
 async def get_game_card_image(slug: str):
     """Get card image for a game. Returns 204 No Content if no image exists."""
+    from bson import ObjectId
     game = await db.games.find_one({"slug": slug})
     
     # Return 204 No Content instead of 404 when image doesn't exist
@@ -3978,6 +3979,7 @@ async def delete_game_card_image(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Delete card image for game"""
+    from bson import ObjectId
     verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
