@@ -3742,7 +3742,7 @@ async def get_game_thumbnail(slug: str):
 @api_router.get("/admin/games")
 async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get all games for admin"""
-    verify_admin_token(credentials)
+    verify_token(credentials.credentials)
     games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
     
     for game in games:
@@ -3762,7 +3762,7 @@ async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(se
 @api_router.post("/admin/games")
 async def create_game(game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Create a new game"""
-    verify_admin_token(credentials)
+    verify_token(credentials.credentials)
     
     # Check slug uniqueness
     existing = await db.games.find_one({"slug": game_data.get('slug')})
@@ -3793,7 +3793,7 @@ async def create_game(game_data: dict, credentials: HTTPAuthorizationCredentials
 @api_router.put("/admin/games/{game_id}")
 async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Update a game"""
-    verify_admin_token(credentials)
+    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
@@ -3836,7 +3836,7 @@ async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizat
 async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Delete a game and all associated images"""
     from bson import ObjectId
-    verify_admin_token(credentials)
+    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
@@ -3871,7 +3871,7 @@ async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = 
 async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Upload game thumbnail"""
     from bson import ObjectId
-    verify_admin_token(credentials)
+    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
