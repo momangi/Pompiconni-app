@@ -349,12 +349,6 @@ const BolleMagicheGame = () => {
     setScore(prev => prev + basePoints + comboBonus);
     setComboCount(bubblesToPop.length);
     
-    // 🎭 Poppiconni celebrates combo!
-    if (bubblesToPop.length >= 4) {
-      
-      setTimeout(() => setPoppiconniMood('idle'), 1500);
-    }
-    
     // 💥 Trigger vibration effect - TUTTE le bolle vibrano!
     setIsVibrating(true);
     setTimeout(() => setIsVibrating(false), 800);
