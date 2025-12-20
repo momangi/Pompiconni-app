@@ -595,6 +595,68 @@ async def init_database():
             "createdAt": datetime.now(timezone.utc)
         })
         logger.info("Site settings initialized")
+    
+    # Initialize default games if not exist
+    games_count = await db.games.count_documents({})
+    if games_count == 0:
+        default_games = [
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "bolle-magiche",
+                "title": "Bolle Magiche",
+                "shortDescription": "Scoppia le bolle colorate con Poppiconni! Un gioco divertente per tutti.",
+                "longDescription": "Aiuta Poppiconni a scoppiare tutte le bolle colorate che fluttuano nel cielo! Un gioco semplice e divertente, perfetto per i più piccoli. Tocca le bolle per farle scoppiare e accumula punti. Attenzione: le bolle diventano sempre più veloci!",
+                "status": "available",
+                "ageRecommended": "3+",
+                "howToPlay": [
+                    "Tocca o clicca sulle bolle per farle scoppiare",
+                    "Accumula punti scoppiando più bolle possibili",
+                    "Non lasciare che le bolle raggiungano il fondo!"
+                ],
+                "thumbnailFileId": None,
+                "sortOrder": 1,
+                "createdAt": datetime.now(timezone.utc),
+                "updatedAt": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "puzzle-poppiconni",
+                "title": "Puzzle Poppiconni",
+                "shortDescription": "Ricomponi le immagini di Poppiconni in tanti puzzle colorati!",
+                "longDescription": "Metti alla prova le tue abilità con i puzzle di Poppiconni! Ricomponi le immagini delle avventure del nostro amico elefantino.",
+                "status": "coming_soon",
+                "ageRecommended": "4+",
+                "howToPlay": [
+                    "Trascina i pezzi nella posizione corretta",
+                    "Completa il puzzle per sbloccare nuove immagini",
+                    "Sfida te stesso con puzzle sempre più difficili!"
+                ],
+                "thumbnailFileId": None,
+                "sortOrder": 2,
+                "createdAt": datetime.now(timezone.utc),
+                "updatedAt": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "slug": "memory-poppiconni",
+                "title": "Memory Poppiconni",
+                "shortDescription": "Trova le coppie e allena la memoria con le carte di Poppiconni!",
+                "longDescription": "Allena la tua memoria con il gioco di carte Memory! Trova tutte le coppie delle carte con le immagini di Poppiconni.",
+                "status": "coming_soon",
+                "ageRecommended": "3+",
+                "howToPlay": [
+                    "Gira due carte alla volta",
+                    "Cerca di trovare le coppie uguali",
+                    "Completa il gioco con meno mosse possibili!"
+                ],
+                "thumbnailFileId": None,
+                "sortOrder": 3,
+                "createdAt": datetime.now(timezone.utc),
+                "updatedAt": datetime.now(timezone.utc)
+            }
+        ]
+        await db.games.insert_many(default_games)
+        logger.info("Default games initialized")
 
 @app.on_event("startup")
 async def startup_event():
