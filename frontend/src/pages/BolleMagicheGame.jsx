@@ -1075,25 +1075,34 @@ const BolleMagicheGame = () => {
           </div>
         ))}
         
-        {/* Trajectory preview - linea tratteggiata morbida */}
-        {showTrajectory && isAiming && !isShooting && currentBubble && (
-          <>
-            {calculateTrajectory(shooterAngle, shooterX, shooterY - 30).map((point, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full"
-                style={{
-                  left: point.x - 4,
-                  top: point.y - 4,
-                  width: 8,
-                  height: 8,
-                  background: `radial-gradient(circle, ${currentBubble.solid}60, ${currentBubble.solid}20)`,
-                  opacity: 1 - (i / 50) * 0.9
-                }}
-              />
-            ))}
-          </>
-        )}
+        {/* Trajectory preview - starts EXACTLY from cannon muzzle */}
+        {showTrajectory && isAiming && !isShooting && currentBubble && (() => {
+          // Calculate muzzle point for trajectory preview (SAME as handleClick)
+          const gameW = GRID_COLS * BUBBLE_SIZE;
+          const pivotX = gameW / 2;
+          const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50;
+          const cannonHeight = 100;
+          const muzzleDistance = cannonHeight * 0.80;
+          const angleRad = (shooterAngle * Math.PI) / 180;
+          const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
+          const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
+          
+          return calculateTrajectory(shooterAngle, muzzleX, muzzleY).map((point, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                left: point.x - 4,
+                top: point.y - 4,
+                width: 8,
+                height: 8,
+                background: `radial-gradient(circle, ${currentBubble.solid}70, ${currentBubble.solid}30)`,
+                opacity: 1 - (i / 60) * 0.85,
+                zIndex: 25,
+              }}
+            />
+          ));
+        })()}
         
         {/* Shooting bubble - z-index alto per essere visibile sopra Poppiconni */}
         {bulletPos && currentBubble && (
