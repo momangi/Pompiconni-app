@@ -1350,6 +1350,8 @@ const BolleMagicheGame = () => {
           )}
         </div>
       </div>
+      
+      </div> {/* Close game-container */}
 
       {/* Pause Overlay */}
       {isPaused && !gameOver && !levelComplete && (
