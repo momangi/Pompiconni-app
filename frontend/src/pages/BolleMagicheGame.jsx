@@ -958,9 +958,9 @@ const BolleMagicheGame = () => {
         <div 
           className="absolute pointer-events-none"
           style={{
-            left: -15,
+            left: -20,
             bottom: 0,
-            width: 200,
+            width: 230,  /* 200px + 15% = 230px */
             height: 'auto',
             zIndex: 5,
           }}
