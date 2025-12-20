@@ -4005,11 +4005,10 @@ async def delete_game_card_image(
 async def upload_game_page_image(
     game_id: str,
     file: UploadFile = File(...),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    email: str = Depends(verify_token)
 ):
     """Upload page background image for game (used in /giochi/:slug page)"""
     from bson import ObjectId
-    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
