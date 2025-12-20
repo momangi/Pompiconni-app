@@ -76,11 +76,37 @@ const BolleMagicheGame = () => {
   const [gameOver, setGameOver] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
   const [comboCount, setComboCount] = useState(0);
-  const [poppiconniMood, setPoppiconniMood] = useState('idle'); // idle, shooting, celebrating, combo
+  
+  // Level backgrounds state
+  const [levelBackgrounds, setLevelBackgrounds] = useState([]);
+  const [currentBackground, setCurrentBackground] = useState(null);
   
   const gameRef = useRef(null);
   const animationRef = useRef(null);
   const dropTimerRef = useRef(null);
+  
+  // Load level backgrounds on mount
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      try {
+        const backgrounds = await getLevelBackgrounds();
+        setLevelBackgrounds(backgrounds);
+      } catch (error) {
+        console.log('No level backgrounds configured');
+      }
+    };
+    fetchBackgrounds();
+  }, []);
+  
+  // Update current background based on level (changes every 5 levels)
+  useEffect(() => {
+    if (levelBackgrounds.length > 0) {
+      const bg = levelBackgrounds.find(
+        b => level >= b.levelRangeStart && level <= b.levelRangeEnd
+      );
+      setCurrentBackground(bg || null);
+    }
+  }, [level, levelBackgrounds]);
   
   // Get available colors based on level
   const getAvailableColors = useCallback(() => {
