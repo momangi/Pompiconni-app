@@ -1185,13 +1185,6 @@ const BolleMagicheGame = () => {
         </div>
       )}
 
-      {/* ⚠️ Asset Notice - Hidden in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-2 left-2 bg-yellow-100 text-yellow-800 text-xs px-3 py-1.5 rounded-lg shadow">
-          ⚠️ Poppiconni e cannone sono placeholder. Richiedere asset ufficiali.
-        </div>
-      )}
-
       <style>{`
         @keyframes vibrate {
           0%, 100% { transform: translate(0, 0); }
