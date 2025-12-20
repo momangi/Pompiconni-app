@@ -3854,6 +3854,221 @@ async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), cred
     return {"success": True, "thumbnailUrl": f"/api/games/{game['slug']}/thumbnail"}
 
 
+# ============== GAME LEVEL BACKGROUNDS (SFONDI LIVELLI) ==============
+
+@api_router.get("/games/bolle-magiche/level-backgrounds")
+async def get_level_backgrounds():
+    """Get all level backgrounds for Bolle Magiche (public)"""
+    backgrounds = await db.game_level_backgrounds.find(
+        {"gameSlug": "bolle-magiche"},
+        {"_id": 0}
+    ).sort("levelRangeStart", 1).to_list(50)
+    
+    # Add image URLs
+    for bg in backgrounds:
+        if bg.get('backgroundImageFileId'):
+            bg['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg['id']}/image"
+    
+    return backgrounds
+
+@api_router.get("/games/bolle-magiche/level-backgrounds/{bg_id}/image")
+async def get_level_background_image(bg_id: str):
+    """Serve level background image from GridFS"""
+    from bson import ObjectId
+    
+    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
+    if not bg or not bg.get('backgroundImageFileId'):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bg['backgroundImageFileId']))
+        content = await grid_out.read()
+        metadata = grid_out.metadata or {}
+        content_type = metadata.get('content_type', 'image/jpeg')
+        
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving level background image: {e}")
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+
+# --- ADMIN LEVEL BACKGROUNDS ---
+
+@api_router.get("/admin/games/bolle-magiche/level-backgrounds")
+async def admin_get_level_backgrounds(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Admin: Get all level backgrounds"""
+    verify_token(credentials.credentials)
+    
+    backgrounds = await db.game_level_backgrounds.find(
+        {"gameSlug": "bolle-magiche"},
+        {"_id": 0}
+    ).sort("levelRangeStart", 1).to_list(50)
+    
+    for bg in backgrounds:
+        if bg.get('backgroundImageFileId'):
+            bg['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg['id']}/image"
+    
+    return backgrounds
+
+@api_router.post("/admin/games/bolle-magiche/level-backgrounds")
+async def admin_create_level_background(
+    levelRangeStart: int = Form(...),
+    levelRangeEnd: int = Form(...),
+    backgroundOpacity: int = Form(30),
+    backgroundImage: UploadFile = File(None),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Admin: Create a new level background"""
+    verify_token(credentials.credentials)
+    
+    # Validate range
+    if levelRangeStart >= levelRangeEnd:
+        raise HTTPException(status_code=400, detail="levelRangeStart deve essere minore di levelRangeEnd")
+    
+    if levelRangeEnd - levelRangeStart != 4:
+        raise HTTPException(status_code=400, detail="Il range deve essere di 5 livelli (es. 1-5, 6-10)")
+    
+    # Check for overlapping ranges
+    existing = await db.game_level_backgrounds.find_one({
+        "gameSlug": "bolle-magiche",
+        "$or": [
+            {"levelRangeStart": {"$lte": levelRangeEnd, "$gte": levelRangeStart}},
+            {"levelRangeEnd": {"$lte": levelRangeEnd, "$gte": levelRangeStart}}
+        ]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Esiste già uno sfondo per questo range di livelli")
+    
+    new_bg = {
+        "id": str(uuid.uuid4()),
+        "gameSlug": "bolle-magiche",
+        "levelRangeStart": levelRangeStart,
+        "levelRangeEnd": levelRangeEnd,
+        "backgroundOpacity": backgroundOpacity,
+        "backgroundImageFileId": None,
+        "createdAt": datetime.now(timezone.utc),
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    # Upload image if provided
+    if backgroundImage:
+        content = await backgroundImage.read()
+        file_id = await gridfs_bucket.upload_from_stream(
+            f"level_bg_{levelRangeStart}_{levelRangeEnd}",
+            io.BytesIO(content),
+            metadata={"content_type": backgroundImage.content_type, "bg_id": new_bg["id"]}
+        )
+        new_bg["backgroundImageFileId"] = str(file_id)
+    
+    await db.game_level_backgrounds.insert_one(new_bg)
+    
+    result = {k: v for k, v in new_bg.items() if k != "_id"}
+    if result.get('backgroundImageFileId'):
+        result['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{result['id']}/image"
+    
+    return result
+
+@api_router.put("/admin/games/bolle-magiche/level-backgrounds/{bg_id}")
+async def admin_update_level_background(
+    bg_id: str,
+    levelRangeStart: int = Form(None),
+    levelRangeEnd: int = Form(None),
+    backgroundOpacity: int = Form(None),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Admin: Update level background settings"""
+    verify_token(credentials.credentials)
+    
+    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
+    if not bg:
+        raise HTTPException(status_code=404, detail="Sfondo non trovato")
+    
+    update_data = {"updatedAt": datetime.now(timezone.utc)}
+    
+    if levelRangeStart is not None:
+        update_data["levelRangeStart"] = levelRangeStart
+    if levelRangeEnd is not None:
+        update_data["levelRangeEnd"] = levelRangeEnd
+    if backgroundOpacity is not None:
+        update_data["backgroundOpacity"] = backgroundOpacity
+    
+    await db.game_level_backgrounds.update_one({"id": bg_id}, {"$set": update_data})
+    
+    updated = await db.game_level_backgrounds.find_one({"id": bg_id}, {"_id": 0})
+    if updated.get('backgroundImageFileId'):
+        updated['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg_id}/image"
+    
+    return updated
+
+@api_router.post("/admin/games/bolle-magiche/level-backgrounds/{bg_id}/image")
+async def admin_upload_level_background_image(
+    bg_id: str,
+    file: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Admin: Upload/replace level background image"""
+    from bson import ObjectId
+    
+    verify_token(credentials.credentials)
+    
+    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
+    if not bg:
+        raise HTTPException(status_code=404, detail="Sfondo non trovato")
+    
+    # Delete old image if exists
+    if bg.get('backgroundImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(bg['backgroundImageFileId']))
+        except Exception:
+            pass
+    
+    # Upload new image
+    content = await file.read()
+    file_id = await gridfs_bucket.upload_from_stream(
+        f"level_bg_{bg['levelRangeStart']}_{bg['levelRangeEnd']}",
+        io.BytesIO(content),
+        metadata={"content_type": file.content_type, "bg_id": bg_id}
+    )
+    
+    await db.game_level_backgrounds.update_one(
+        {"id": bg_id},
+        {"$set": {
+            "backgroundImageFileId": str(file_id),
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "backgroundImageUrl": f"/api/games/bolle-magiche/level-backgrounds/{bg_id}/image"}
+
+@api_router.delete("/admin/games/bolle-magiche/level-backgrounds/{bg_id}")
+async def admin_delete_level_background(
+    bg_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Admin: Delete a level background"""
+    from bson import ObjectId
+    
+    verify_token(credentials.credentials)
+    
+    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
+    if not bg:
+        raise HTTPException(status_code=404, detail="Sfondo non trovato")
+    
+    # Delete image from GridFS
+    if bg.get('backgroundImageFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(bg['backgroundImageFileId']))
+        except Exception:
+            pass
+    
+    await db.game_level_backgrounds.delete_one({"id": bg_id})
+    
+    return {"success": True}
+
+
 # ============== POSTER ENDPOINTS ==============
 
 # --- PUBLIC POSTER ENDPOINTS ---
