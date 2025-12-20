@@ -115,17 +115,29 @@ const GamesListPage = () => {
                   key={game.id} 
                   className="border-0 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group rounded-2xl"
                 >
-                  {/* Game Thumbnail */}
+                  {/* Game Thumbnail/Card Image */}
                   <div className="h-48 relative overflow-hidden bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100">
-                    {game.thumbnailUrl ? (
+                    {/* Card Background Image (with opacity) */}
+                    {game.cardImageUrl && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ 
+                          backgroundImage: `url(${BACKEND_URL}${game.cardImageUrl})`,
+                          opacity: (game.cardImageOpacity || 35) / 100
+                        }}
+                      />
+                    )}
+                    
+                    {/* Thumbnail overlay (if exists and no card image) */}
+                    {game.thumbnailUrl && !game.cardImageUrl ? (
                       <img 
                         src={`${BACKEND_URL}${game.thumbnailUrl}`}
                         alt={game.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        {/* Decorative bubbles for games without thumbnail */}
+                    ) : !game.cardImageUrl && (
+                      <div className="w-full h-full flex items-center justify-center relative">
+                        {/* Decorative bubbles for games without card image */}
                         <div className="absolute inset-0 overflow-hidden">
                           {[...Array(6)].map((_, i) => (
                             <div
@@ -149,7 +161,7 @@ const GamesListPage = () => {
                     )}
                     
                     {/* Status Badge */}
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 z-10">
                       {getStatusBadge(game.status)}
                     </div>
                   </div>
