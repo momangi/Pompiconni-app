@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Gamepad2, GripVertical, Upload, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, Gamepad2, Upload, Eye, EyeOff, ImageIcon, X } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -7,7 +7,12 @@ import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { getAdminGames, createGame, updateGame, deleteGame, uploadGameThumbnail } from '../../services/api';
+import { Slider } from '../../components/ui/slider';
+import { 
+  getAdminGames, createGame, updateGame, deleteGame, uploadGameThumbnail,
+  uploadGameCardImage, deleteGameCardImage,
+  uploadGamePageImage, deleteGamePageImage
+} from '../../services/api';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -18,6 +23,7 @@ const AdminGames = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [expandedGame, setExpandedGame] = useState(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -27,7 +33,9 @@ const AdminGames = () => {
     status: 'coming_soon',
     ageRecommended: '3+',
     howToPlay: ['', '', ''],
-    sortOrder: 0
+    sortOrder: 0,
+    cardImageOpacity: 35,
+    pageImageOpacity: 25
   });
 
   useEffect(() => {
@@ -40,12 +48,7 @@ const AdminGames = () => {
       setGames(data);
     } catch (error) {
       console.error('Error fetching games:', error);
-      // Fallback data
-      setGames([
-        { id: '1', slug: 'bolle-magiche', title: 'Bolle Magiche', shortDescription: 'Scoppia le bolle colorate!', status: 'available', sortOrder: 1 },
-        { id: '2', slug: 'puzzle-poppiconni', title: 'Puzzle Poppiconni', shortDescription: 'Ricomponi le immagini!', status: 'coming_soon', sortOrder: 2 },
-        { id: '3', slug: 'memory-poppiconni', title: 'Memory Poppiconni', shortDescription: 'Trova le coppie!', status: 'coming_soon', sortOrder: 3 }
-      ]);
+      setGames([]);
     } finally {
       setLoading(false);
     }
@@ -127,6 +130,84 @@ const AdminGames = () => {
     }
   };
 
+  // ============== CARD IMAGE HANDLERS ==============
+  const handleCardImageUpload = async (gameId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setUploading(true);
+    try {
+      await uploadGameCardImage(gameId, file);
+      toast.success('Immagine card caricata!');
+      fetchGames();
+    } catch (error) {
+      toast.error('Errore nel caricamento');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCardImageDelete = async (gameId) => {
+    if (!window.confirm('Rimuovere l\'immagine della card?')) return;
+    
+    try {
+      await deleteGameCardImage(gameId);
+      toast.success('Immagine card rimossa!');
+      fetchGames();
+    } catch (error) {
+      toast.error('Errore nella rimozione');
+    }
+  };
+
+  const handleCardOpacityChange = async (gameId, opacity) => {
+    try {
+      await updateGame(gameId, { cardImageOpacity: opacity });
+      // Update local state for live preview
+      setGames(prev => prev.map(g => g.id === gameId ? { ...g, cardImageOpacity: opacity } : g));
+    } catch (error) {
+      console.error('Error updating opacity:', error);
+    }
+  };
+
+  // ============== PAGE IMAGE HANDLERS ==============
+  const handlePageImageUpload = async (gameId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setUploading(true);
+    try {
+      await uploadGamePageImage(gameId, file);
+      toast.success('Immagine pagina caricata!');
+      fetchGames();
+    } catch (error) {
+      toast.error('Errore nel caricamento');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePageImageDelete = async (gameId) => {
+    if (!window.confirm('Rimuovere l\'immagine della pagina gioco?')) return;
+    
+    try {
+      await deleteGamePageImage(gameId);
+      toast.success('Immagine pagina rimossa!');
+      fetchGames();
+    } catch (error) {
+      toast.error('Errore nella rimozione');
+    }
+  };
+
+  const handlePageOpacityChange = async (gameId, opacity) => {
+    try {
+      await updateGame(gameId, { pageImageOpacity: opacity });
+      // Update local state for live preview
+      setGames(prev => prev.map(g => g.id === gameId ? { ...g, pageImageOpacity: opacity } : g));
+    } catch (error) {
+      console.error('Error updating opacity:', error);
+    }
+  };
+
   const handleEdit = (game) => {
     setEditingGame(game);
     setFormData({
@@ -136,8 +217,10 @@ const AdminGames = () => {
       longDescription: game.longDescription || '',
       status: game.status || 'coming_soon',
       ageRecommended: game.ageRecommended || '3+',
-      howToPlay: game.howToPlay || ['', '', ''],
-      sortOrder: game.sortOrder || 0
+      howToPlay: game.howToPlay?.length > 0 ? game.howToPlay : ['', '', ''],
+      sortOrder: game.sortOrder || 0,
+      cardImageOpacity: game.cardImageOpacity || 35,
+      pageImageOpacity: game.pageImageOpacity || 25
     });
     setIsAddOpen(true);
   };
@@ -151,7 +234,9 @@ const AdminGames = () => {
       status: 'coming_soon',
       ageRecommended: '3+',
       howToPlay: ['', '', ''],
-      sortOrder: 0
+      sortOrder: 0,
+      cardImageOpacity: 35,
+      pageImageOpacity: 25
     });
     setEditingGame(null);
     setIsAddOpen(false);
@@ -345,6 +430,15 @@ const AdminGames = () => {
                   
                   {/* Actions */}
                   <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setExpandedGame(expandedGame === game.id ? null : game.id)}
+                      className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                    >
+                      <ImageIcon className="w-4 h-4 mr-1" />
+                      Immagini
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(game)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -358,6 +452,175 @@ const AdminGames = () => {
                     </Button>
                   </div>
                 </div>
+                
+                {/* Expanded Image Settings */}
+                {expandedGame === game.id && (
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      
+                      {/* CARD IMAGE SECTION */}
+                      <div className="space-y-4 p-4 bg-purple-50/50 rounded-xl">
+                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-purple-500" />
+                          Immagine Card (/giochi)
+                        </h4>
+                        <p className="text-xs text-gray-500">Background per la card nella pagina lista giochi</p>
+                        
+                        {/* Preview */}
+                        <div 
+                          className="h-32 rounded-lg overflow-hidden relative"
+                          style={{ 
+                            background: game.cardImageUrl 
+                              ? `linear-gradient(rgba(255,255,255,${1 - (game.cardImageOpacity || 35)/100}), rgba(255,255,255,${1 - (game.cardImageOpacity || 35)/100})), url(${BACKEND_URL}${game.cardImageUrl})`
+                              : 'linear-gradient(135deg, #f3e8ff, #fce7f3)'
+                          }}
+                        >
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{ 
+                              backgroundImage: game.cardImageUrl ? `url(${BACKEND_URL}${game.cardImageUrl})` : 'none',
+                              opacity: (game.cardImageOpacity || 35) / 100
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-gray-600 font-medium text-sm bg-white/80 px-3 py-1 rounded-full">
+                              {game.cardImageUrl ? 'Anteprima Card' : 'Nessuna immagine'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Upload / Delete */}
+                        <div className="flex gap-2">
+                          <label className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full" asChild>
+                              <span>
+                                <Upload className="w-4 h-4 mr-2" />
+                                {game.cardImageUrl ? 'Cambia' : 'Carica'}
+                              </span>
+                            </Button>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleCardImageUpload(game.id, e)}
+                              disabled={uploading}
+                            />
+                          </label>
+                          {game.cardImageUrl && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-500 border-red-200 hover:bg-red-50"
+                              onClick={() => handleCardImageDelete(game.id)}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Rimuovi
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Opacity Slider */}
+                        {game.cardImageUrl && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Opacità</span>
+                              <span className="font-medium">{game.cardImageOpacity || 35}%</span>
+                            </div>
+                            <Slider
+                              value={[game.cardImageOpacity || 35]}
+                              onValueChange={([val]) => handleCardOpacityChange(game.id, val)}
+                              min={10}
+                              max={80}
+                              step={5}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* PAGE IMAGE SECTION */}
+                      <div className="space-y-4 p-4 bg-pink-50/50 rounded-xl">
+                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-pink-500" />
+                          Immagine Pagina (/giochi/:slug)
+                        </h4>
+                        <p className="text-xs text-gray-500">Background per la pagina dettaglio gioco</p>
+                        
+                        {/* Preview */}
+                        <div 
+                          className="h-32 rounded-lg overflow-hidden relative"
+                          style={{ 
+                            background: game.pageImageUrl 
+                              ? `linear-gradient(rgba(255,255,255,${1 - (game.pageImageOpacity || 25)/100}), rgba(255,255,255,${1 - (game.pageImageOpacity || 25)/100})), url(${BACKEND_URL}${game.pageImageUrl})`
+                              : 'linear-gradient(135deg, #fce7f3, #dbeafe)'
+                          }}
+                        >
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{ 
+                              backgroundImage: game.pageImageUrl ? `url(${BACKEND_URL}${game.pageImageUrl})` : 'none',
+                              opacity: (game.pageImageOpacity || 25) / 100
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-gray-600 font-medium text-sm bg-white/80 px-3 py-1 rounded-full">
+                              {game.pageImageUrl ? 'Anteprima Pagina' : 'Nessuna immagine'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Upload / Delete */}
+                        <div className="flex gap-2">
+                          <label className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full" asChild>
+                              <span>
+                                <Upload className="w-4 h-4 mr-2" />
+                                {game.pageImageUrl ? 'Cambia' : 'Carica'}
+                              </span>
+                            </Button>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handlePageImageUpload(game.id, e)}
+                              disabled={uploading}
+                            />
+                          </label>
+                          {game.pageImageUrl && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-500 border-red-200 hover:bg-red-50"
+                              onClick={() => handlePageImageDelete(game.id)}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Rimuovi
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Opacity Slider */}
+                        {game.pageImageUrl && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Opacità</span>
+                              <span className="font-medium">{game.pageImageOpacity || 25}%</span>
+                            </div>
+                            <Slider
+                              value={[game.pageImageOpacity || 25]}
+                              onValueChange={([val]) => handlePageOpacityChange(game.id, val)}
+                              min={10}
+                              max={80}
+                              step={5}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
