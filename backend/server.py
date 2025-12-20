@@ -4015,6 +4015,7 @@ async def upload_game_page_image(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Upload page background image for game (used in /giochi/:slug page)"""
+    from bson import ObjectId
     verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
@@ -4048,6 +4049,7 @@ async def upload_game_page_image(
 @api_router.get("/games/{slug}/page-image")
 async def get_game_page_image(slug: str):
     """Get page background image for a game. Returns 204 No Content if no image exists."""
+    from bson import ObjectId
     game = await db.games.find_one({"slug": slug})
     
     # Return 204 No Content instead of 404 when image doesn't exist
