@@ -699,7 +699,6 @@ const BolleMagicheGame = () => {
   useEffect(() => {
     if (!isShooting || !bulletPos || !bulletVel) return;
     
-    const gameWidth = GRID_COLS * BUBBLE_SIZE;
     const radius = BUBBLE_SIZE / 2;
     
     const animate = () => {
