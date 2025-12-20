@@ -494,37 +494,43 @@ const BolleMagicheGame = () => {
     setNextBubble(getRandomColor());
   }, [nextBubble, getRandomColor, processAfterPlacement]);
   
-  // Calculate trajectory for preview
-  // Calculate trajectory for preview - uses SAME logic as real physics
-  const calculateTrajectory = useCallback((angle, startX, startY) => {
+  // ============================================
+  // 🎯 UNIFIED TRAJECTORY CALCULATION
+  // Same logic for preview AND real shot
+  // ============================================
+  const calculateTrajectory = useCallback((angle, muzzleX, muzzleY) => {
     const points = [];
     const speed = 15;
     const radius = BUBBLE_SIZE / 2;
-    let x = startX;
-    let y = startY;
+    
+    // Start exactly at muzzle point
+    let x = muzzleX;
+    let y = muzzleY;
+    
+    // Velocity based on angle (angle in degrees, -90 = straight up)
     let vx = Math.cos(angle * Math.PI / 180) * speed;
     let vy = Math.sin(angle * Math.PI / 180) * speed;
     
-    const gameWidth = GRID_COLS * BUBBLE_SIZE;
+    const gameW = GRID_COLS * BUBBLE_SIZE;
     
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 60; i++) {
       points.push({ x, y });
       x += vx;
       y += vy;
       
-      // Wall bounce - SAME logic as real physics (clamp + absolute direction)
+      // Wall bounce with clamp (same as real physics)
       if (x < radius) {
         x = radius;
-        vx = Math.abs(vx); // Always positive (going right)
-      } else if (x > gameWidth - radius) {
-        x = gameWidth - radius;
-        vx = -Math.abs(vx); // Always negative (going left)
+        vx = Math.abs(vx);
+      } else if (x > gameW - radius) {
+        x = gameW - radius;
+        vx = -Math.abs(vx);
       }
       
-      // Stop at top or collision
+      // Stop at top
       if (y < radius) break;
       
-      // Check collision with grid
+      // Stop at grid collision
       const { row, col } = getGridPos(x, y);
       if (row >= 0 && row < GRID_ROWS && grid[row]?.[col]) {
         break;
@@ -534,7 +540,7 @@ const BolleMagicheGame = () => {
     return points;
   }, [grid]);
   
-  // Handle mouse move for aiming
+  // Handle mouse move for aiming (with angle clamping)
   const handleMouseMove = useCallback((e) => {
     if (isShooting || isPaused || gameOver || levelComplete) return;
     
