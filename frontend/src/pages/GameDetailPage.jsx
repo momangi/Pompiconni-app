@@ -108,8 +108,21 @@ const GameDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50/30 to-white">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-b from-pink-50/30 to-white relative">
+      {/* Page Background Image (if exists) */}
+      {game.pageImageUrl && (
+        <div 
+          className="fixed inset-0 bg-cover bg-center pointer-events-none"
+          style={{ 
+            backgroundImage: `url(${BACKEND_URL}${game.pageImageUrl})`,
+            opacity: (game.pageImageOpacity || 25) / 100,
+            zIndex: 0
+          }}
+        />
+      )}
+      
+      <div className="relative z-10">
+        <Navbar />
       
       {/* Back Button */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
