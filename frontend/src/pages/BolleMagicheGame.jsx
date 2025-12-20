@@ -586,39 +586,27 @@ const BolleMagicheGame = () => {
   // ============================================
   // 🔫 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
   // Used by BOTH trajectory preview AND bullet spawn
-  // DOM-based: works correctly on any viewport/resize
+  // Calculates muzzle position based on cannon pivot and angle
   // ============================================
   const getMuzzlePoint = useCallback((angle) => {
-    // Get DOM elements
-    const gameArea = gameRef.current;
-    const cannonEl = cannonRef.current;
+    // The cannon is positioned in the shooter area:
+    // - Shooter area starts at shooterY (gameHeight - 140 + 70 = bottom area)
+    // - Cannon top is at CANNON_CONFIG.positionTop from shooter area top
+    // - Cannon is centered horizontally at shooterX
     
-    if (!gameArea || !cannonEl) {
-      // Fallback to calculated values if refs not ready
-      const angleRad = (angle * Math.PI) / 180;
-      return {
-        x: pivotXCalc + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx,
-        y: pivotYCalc + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx,
-      };
-    }
+    // Pivot point in game area coordinates:
+    // The pivot is where the cannon rotates (85% down from cannon top)
+    const cannonTopY = gameHeight - 140; // shooter area top in game coordinates
+    const pivotX = shooterX; // centered horizontally
+    const pivotY = cannonTopY + CANNON_CONFIG.positionTop + (CANNON_CONFIG.height * CANNON_CONFIG.pivotOriginY);
     
-    // Get bounding rects
-    const gameRect = gameArea.getBoundingClientRect();
-    const cannonRect = cannonEl.getBoundingClientRect();
-    
-    // Calculate pivot in game area coordinates
-    // pivotX = center of cannon horizontally
-    // pivotY = 85% down from top of cannon (where it rotates)
-    const pivotX = (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX);
-    const pivotY = (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY);
-    
-    // Calculate muzzle point using angle and barrel length
+    // Calculate muzzle position using angle and barrel length
     const angleRad = (angle * Math.PI) / 180;
     const muzzleX = pivotX + Math.cos(angleRad) * CANNON_CONFIG.barrelLengthPx;
     const muzzleY = pivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx;
     
     return { x: muzzleX, y: muzzleY };
-  }, [pivotXCalc, pivotYCalc]);
+  }, [gameHeight, shooterX]);
   
   // ============================================
   // 🔫 GAME AREA DIMENSIONS (for render)
