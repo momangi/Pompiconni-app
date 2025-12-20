@@ -956,12 +956,13 @@ const BolleMagicheGame = () => {
   const renderToyCannon = () => {
     return (
       <div 
+        ref={cannonRef}
         className="relative"
         style={{
           width: CANNON_CONFIG.width,
           height: CANNON_CONFIG.height,
           // PIVOT-BASED ROTATION: transform-origin at base
-          transformOrigin: `50% ${CANNON_CONFIG.pivotYPercent * 100}%`,
+          transformOrigin: `50% ${CANNON_CONFIG.pivotOriginY * 100}%`,
           transform: `rotate(${clampedAngle}deg)`,
         }}
       >
