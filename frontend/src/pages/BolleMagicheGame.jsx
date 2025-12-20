@@ -656,11 +656,14 @@ const BolleMagicheGame = () => {
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
+    // Get pivot point from DOM
+    const pivot = getPivotPoint();
+    
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    const dx = mouseX - pivotXCalc;
-    const dy = mouseY - pivotYCalc;
+    const dx = mouseX - pivot.x;
+    const dy = mouseY - pivot.y;
     
     let angle = Math.atan2(dy, dx) * 180 / Math.PI;
     
@@ -669,7 +672,7 @@ const BolleMagicheGame = () => {
     
     setShooterAngle(angle);
     setIsAiming(true);
-  }, [isShooting, isPaused, gameOver, levelComplete, pivotXCalc, pivotYCalc]);
+  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint]);
   
   // Handle click to shoot - spawns bullet at MUZZLE POINT (pixel-perfect with cannon tip)
   const handleClick = useCallback(() => {
