@@ -3830,10 +3830,9 @@ async def update_game(game_id: str, game_data: dict, email: str = Depends(verify
 
 
 @api_router.delete("/admin/games/{game_id}")
-async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def delete_game(game_id: str, email: str = Depends(verify_token)):
     """Delete a game and all associated images"""
     from bson import ObjectId
-    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
