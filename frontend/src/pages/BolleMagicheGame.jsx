@@ -378,6 +378,10 @@ const BolleMagicheGame = () => {
   const popBubbles = useCallback((bubblesToPop, gridState) => {
     if (bubblesToPop.length < 3) return { newGrid: gridState, popped: false };
     
+    // 🎵 Play pop sound with combo multiplier
+    const comboMultiplier = bubblesToPop.length > 3 ? bubblesToPop.length / 3 : 1;
+    playPop(comboMultiplier);
+    
     // Add to popping animation
     const poppingData = bubblesToPop.map(({ row, col }) => ({
       ...getPixelPos(row, col),
@@ -403,7 +407,7 @@ const BolleMagicheGame = () => {
     setTimeout(() => setIsVibrating(false), 800);
     
     return { newGrid, popped: true };
-  }, []);
+  }, [playPop]);
   
   // Check if level is complete
   const checkLevelComplete = useCallback((gridState) => {
