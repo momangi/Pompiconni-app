@@ -1229,10 +1229,10 @@ const BolleMagicheGame = () => {
         </div>
         
         {/* 🎯 BOLLE UI - Layout ORIZZONTALE senza testo */}
-        {/* Posizionato nel game area con margine sufficiente dal bordo */}
+        {/* Abbassato di 25px, gap aumentato a 15px */}
         <div 
           className="absolute flex flex-row items-center" 
-          style={{ right: 35, bottom: 80, gap: '10px', zIndex: 25 }}
+          style={{ right: 35, bottom: 55, gap: '15px', zIndex: 25 }}
         >
           {/* Bolla ATTIVA - quella che verrà sparata ORA */}
           {currentBubble && !isShooting && (
