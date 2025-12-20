@@ -46,14 +46,14 @@ const SPECIAL_BUBBLES = {
   party: { name: 'party', extraSparkle: true, label: 'Festa' },
 };
 
-// ⏱️ DIFFICOLTÀ KIDS-FRIENDLY (tempi aumentati per livelli iniziali più semplici)
+// ⏱️ DIFFICOLTÀ KIDS-FRIENDLY (tempi molto lunghi per livelli semplici)
 const getDifficultySettings = (level) => {
-  if (level <= 3) return { dropInterval: 25000, colors: 3 }; // 25s, 3 colori - molto facile
-  if (level <= 6) return { dropInterval: 20000, colors: 4 }; // 20s, 4 colori - facile
-  if (level <= 9) return { dropInterval: 16000, colors: 5 }; // 16s, 5 colori
-  if (level <= 12) return { dropInterval: 13000, colors: 6 }; // 13s, 6 colori
-  if (level <= 15) return { dropInterval: 10000, colors: 7 }; // 10s, 7 colori
-  return { dropInterval: 8000, colors: 8 }; // 8s minimo, 8 colori (ARCOBALENO)
+  if (level <= 3) return { dropInterval: 35000, colors: 3 }; // 35s, 3 colori - MOLTO facile
+  if (level <= 6) return { dropInterval: 28000, colors: 4 }; // 28s, 4 colori - facile
+  if (level <= 9) return { dropInterval: 22000, colors: 5 }; // 22s, 5 colori
+  if (level <= 12) return { dropInterval: 18000, colors: 6 }; // 18s, 6 colori
+  if (level <= 15) return { dropInterval: 14000, colors: 7 }; // 14s, 7 colori
+  return { dropInterval: 10000, colors: 8 }; // 10s minimo, 8 colori (ARCOBALENO)
 };
 
 const BolleMagicheGame = () => {
