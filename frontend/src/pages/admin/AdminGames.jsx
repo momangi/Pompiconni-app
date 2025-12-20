@@ -160,10 +160,12 @@ const AdminGames = () => {
   };
 
   const handleCardOpacityChange = async (gameId, opacity) => {
+    // Clamp opacity 0-100
+    const clampedOpacity = Math.max(0, Math.min(100, opacity));
     try {
-      await updateGame(gameId, { cardImageOpacity: opacity });
+      await updateGame(gameId, { cardImageOpacity: clampedOpacity });
       // Update local state for live preview
-      setGames(prev => prev.map(g => g.id === gameId ? { ...g, cardImageOpacity: opacity } : g));
+      setGames(prev => prev.map(g => g.id === gameId ? { ...g, cardImageOpacity: clampedOpacity } : g));
     } catch (error) {
       console.error('Error updating opacity:', error);
     }
