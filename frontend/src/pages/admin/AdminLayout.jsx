@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Images, Wand2, LogOut, Home, Palette, Settings, BookOpen, FileText, Image as ImageIcon, Package } from 'lucide-react';
+import { LayoutDashboard, Images, Wand2, LogOut, Home, Palette, Settings, BookOpen, FileText, Image as ImageIcon, Package, Gamepad2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { isAuthenticated, adminLogout } from '../../services/api';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ const AdminLayout = () => {
     { path: '/admin/bundles', label: 'Bundle', icon: Package },
     { path: '/admin/themes', label: 'Temi', icon: Palette },
     { path: '/admin/books', label: 'Libri', icon: BookOpen },
+    { path: '/admin/games', label: 'Giochi', icon: Gamepad2 },
     { path: '/admin/generator', label: 'Generatore AI', icon: Wand2 },
     { path: '/admin/brand-kit', label: 'Brand Kit', icon: FileText },
     { path: '/admin/settings', label: 'Impostazioni', icon: Settings },
