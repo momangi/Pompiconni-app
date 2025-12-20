@@ -659,95 +659,140 @@ const BolleMagicheGame = () => {
     setBulletPos(null);
   };
   
-  // Render soap bubble with proper aesthetics + PALLINO CENTRALE per leggibilità colore
+  // 🫧 RENDER SOAP BUBBLE - REALISTIC "SOAP BUBBLE" EFFECT
+  // Reference: Real soap bubbles with transparency, iridescence, and white highlights
   const renderBubble = (color, x, y, size = BUBBLE_SIZE, shouldVibrate = false, key) => (
     <div
       key={key}
-      className={`absolute rounded-full transition-transform ${shouldVibrate ? 'animate-vibrate' : ''}`}
+      className={`absolute rounded-full ${shouldVibrate ? 'animate-vibrate' : ''}`}
       style={{
         left: x - size / 2,
         top: y - size / 2,
         width: size,
         height: size,
-        // 🫧 Estetica "bolla di sapone" MIGLIORATA: guscio trasparente/arcobaleno
+        // 🫧 SOAP FILM: Almost transparent with soft iridescence
         background: `
-          radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), transparent 40%),
-          radial-gradient(circle at 70% 70%, rgba(255,200,255,0.3), transparent 40%),
-          radial-gradient(circle at 50% 50%, ${color.main}, transparent 70%),
-          conic-gradient(from 0deg at 50% 50%, 
-            rgba(255,100,100,0.15), 
-            rgba(255,255,100,0.15), 
-            rgba(100,255,100,0.15), 
-            rgba(100,255,255,0.15), 
-            rgba(100,100,255,0.15), 
-            rgba(255,100,255,0.15), 
-            rgba(255,100,100,0.15)
-          )
+          radial-gradient(ellipse 120% 80% at 30% 25%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.3) 20%, transparent 50%),
+          radial-gradient(ellipse 60% 40% at 75% 80%, rgba(255,255,255,0.15) 0%, transparent 60%),
+          radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,220,255,0.08) 50%, rgba(255,0,255,0.06) 65%, rgba(255,255,0,0.05) 80%, transparent 100%),
+          linear-gradient(160deg, rgba(0,255,200,0.12) 0%, transparent 40%),
+          linear-gradient(200deg, rgba(255,100,255,0.10) 0%, transparent 50%),
+          linear-gradient(320deg, rgba(100,200,255,0.08) 0%, transparent 45%),
+          radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, rgba(200,230,255,0.05) 100%)
         `,
+        // Subtle outer glow and soft edge
         boxShadow: `
-          inset 0 0 ${size/2}px rgba(255,255,255,0.5),
-          inset ${size/6}px ${size/6}px ${size/3}px rgba(255,255,255,0.6),
-          inset -${size/10}px -${size/10}px ${size/4}px rgba(0,0,0,0.03),
-          0 0 ${size/2.5}px rgba(255,255,255,0.6),
-          0 0 ${size/4}px ${color.solid}40,
-          0 ${size/12}px ${size/6}px rgba(0,0,0,0.1)
+          inset 0 0 ${size * 0.4}px rgba(255,255,255,0.15),
+          inset 0 0 ${size * 0.15}px rgba(255,255,255,0.1),
+          0 0 ${size * 0.08}px rgba(255,255,255,0.4),
+          0 ${size * 0.03}px ${size * 0.06}px rgba(0,0,0,0.05)
         `,
-        // 🌈 BORDO IRIDESCENTE più evidente
-        border: `2px solid`,
-        borderImage: `linear-gradient(135deg, 
-          rgba(255,150,150,0.7), 
-          rgba(255,255,150,0.7), 
-          rgba(150,255,150,0.7), 
-          rgba(150,255,255,0.7), 
-          rgba(150,150,255,0.7), 
-          rgba(255,150,255,0.7)
-        ) 1`,
-        borderRadius: '50%',
+        // Very thin, subtle border - NOT colored
+        border: '1px solid rgba(255,255,255,0.25)',
+        // Smooth animation
+        transition: 'transform 0.1s ease-out',
       }}
     >
-      {/* 🎯 PALLINO CENTRALE - colore saturo per identificazione immediata */}
+      {/* 🌈 IRIDESCENT FILM - Flowing light effect */}
+      <div 
+        className="absolute inset-0 rounded-full overflow-hidden"
+        style={{
+          background: `
+            conic-gradient(from 45deg at 60% 40%,
+              rgba(0,255,255,0.12) 0deg,
+              rgba(0,255,150,0.10) 60deg,
+              rgba(255,255,0,0.08) 120deg,
+              rgba(255,150,0,0.10) 180deg,
+              rgba(255,0,150,0.12) 240deg,
+              rgba(150,0,255,0.10) 300deg,
+              rgba(0,255,255,0.12) 360deg
+            )
+          `,
+          opacity: 0.7,
+          mixBlendMode: 'screen',
+        }}
+      />
+      
+      {/* ✨ PRIMARY HIGHLIGHT - Bright white, top-left, oval shape */}
+      <div 
+        className="absolute"
+        style={{
+          width: '45%',
+          height: '30%',
+          top: '8%',
+          left: '10%',
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 30%, rgba(255,255,255,0.2) 60%, transparent 100%)',
+          borderRadius: '50%',
+          transform: 'rotate(-15deg)',
+          filter: 'blur(0.5px)',
+        }}
+      />
+      
+      {/* ✨ SECONDARY HIGHLIGHT - Smaller, softer */}
+      <div 
+        className="absolute"
+        style={{
+          width: '20%',
+          height: '12%',
+          top: '20%',
+          left: '55%',
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.5) 0%, transparent 100%)',
+          borderRadius: '50%',
+          transform: 'rotate(20deg)',
+        }}
+      />
+      
+      {/* ✨ BOTTOM REFLECTION - Very subtle */}
+      <div 
+        className="absolute"
+        style={{
+          width: '25%',
+          height: '15%',
+          bottom: '12%',
+          right: '15%',
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.25) 0%, transparent 100%)',
+          borderRadius: '50%',
+        }}
+      />
+      
+      {/* 🎯 COLOR NUCLEUS - Small saturated dot for gameplay identification */}
+      {/* 15-20% of bubble diameter, appears to float inside */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: '45%',
-          height: '45%',
+          width: '18%',
+          height: '18%',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: `radial-gradient(circle at 40% 40%, ${color.solid}, ${color.solid}dd)`,
+          background: `radial-gradient(circle at 35% 35%, 
+            ${color.solid}ff 0%, 
+            ${color.solid}ee 50%, 
+            ${color.solid}cc 100%
+          )`,
           boxShadow: `
-            inset 2px 2px 4px rgba(255,255,255,0.5),
-            inset -1px -1px 3px rgba(0,0,0,0.1),
-            0 0 8px ${color.solid}60
+            inset 1px 1px 2px rgba(255,255,255,0.6),
+            inset -0.5px -0.5px 1px rgba(0,0,0,0.15),
+            0 0 ${size * 0.12}px ${color.solid}80,
+            0 0 ${size * 0.06}px ${color.solid}40
           `,
         }}
       />
-      {/* Primary highlight (riflesso luce principale) - arcobaleno più visibile */}
+      
+      {/* 🌟 INNER EDGE IRIDESCENCE - Subtle color shift at edges */}
       <div 
-        className="absolute rounded-full"
+        className="absolute inset-1 rounded-full"
         style={{
-          width: '35%',
-          height: '25%',
-          top: '8%',
-          left: '12%',
-          background: `linear-gradient(135deg, 
-            rgba(255,255,255,0.95) 0%, 
-            rgba(255,200,200,0.4) 30%,
-            rgba(200,255,200,0.3) 60%,
-            transparent 100%
-          )`,
-          filter: 'blur(1px)',
-        }}
-      />
-      {/* Secondary highlight - iridescente */}
-      <div 
-        className="absolute rounded-full"
-        style={{
-          width: '15%',
-          height: '10%',
-          bottom: '18%',
-          right: '15%',
-          background: 'linear-gradient(45deg, rgba(255,200,255,0.6), rgba(200,255,255,0.5))',
+          background: `
+            radial-gradient(circle at 50% 50%, 
+              transparent 65%,
+              rgba(0,255,255,0.06) 75%,
+              rgba(255,0,255,0.05) 85%,
+              rgba(255,255,0,0.04) 95%,
+              transparent 100%
+            )
+          `,
+          pointerEvents: 'none',
         }}
       />
     </div>
