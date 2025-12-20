@@ -758,6 +758,97 @@ const BolleMagicheGame = () => {
     
   }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, getMuzzlePoint, initAudio, playShoot]);
   
+  // ============================================
+  // 📱 TOUCH CONTROLS FOR MOBILE
+  // Drag to aim, release to shoot
+  // ============================================
+  const [isTouchAiming, setIsTouchAiming] = useState(false);
+  
+  // Handle touch start - begin aiming
+  const handleTouchStart = useCallback((e) => {
+    if (isShooting || isPaused || gameOver || levelComplete) return;
+    
+    // Prevent default to avoid scrolling while playing
+    e.preventDefault();
+    
+    // Initialize audio on first touch (mobile autoplay policy)
+    initAudio();
+    
+    setIsTouchAiming(true);
+    
+    // Calculate initial angle from touch position
+    const touch = e.touches[0];
+    const rect = gameRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const zoom = getZoomFactor();
+    const pivot = getPivotPoint();
+    
+    const touchX = (touch.clientX - rect.left) / zoom;
+    const touchY = (touch.clientY - rect.top) / zoom;
+    
+    const dx = touchX - pivot.x;
+    const dy = touchY - pivot.y;
+    
+    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    angle = Math.max(CANNON_CONFIG.angleMin, Math.min(CANNON_CONFIG.angleMax, angle));
+    
+    setShooterAngle(angle);
+    setIsAiming(true);
+  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor, initAudio]);
+  
+  // Handle touch move - update aim angle
+  const handleTouchMove = useCallback((e) => {
+    if (!isTouchAiming || isShooting || isPaused || gameOver || levelComplete) return;
+    
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const rect = gameRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const zoom = getZoomFactor();
+    const pivot = getPivotPoint();
+    
+    const touchX = (touch.clientX - rect.left) / zoom;
+    const touchY = (touch.clientY - rect.top) / zoom;
+    
+    const dx = touchX - pivot.x;
+    const dy = touchY - pivot.y;
+    
+    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    angle = Math.max(CANNON_CONFIG.angleMin, Math.min(CANNON_CONFIG.angleMax, angle));
+    
+    setShooterAngle(angle);
+  }, [isTouchAiming, isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor]);
+  
+  // Handle touch end - SHOOT on release
+  const handleTouchEnd = useCallback((e) => {
+    if (!isTouchAiming) return;
+    
+    e.preventDefault();
+    setIsTouchAiming(false);
+    setIsAiming(false);
+    
+    // Don't shoot if game state prevents it
+    if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
+    
+    // 🎵 Play shoot sound
+    playShoot();
+    
+    // Get muzzle position and shoot
+    const muzzle = getMuzzlePoint(shooterAngle);
+    
+    const speed = 18;
+    const vx = Math.cos(shooterAngle * Math.PI / 180) * speed;
+    const vy = Math.sin(shooterAngle * Math.PI / 180) * speed;
+    
+    setBulletPos({ x: muzzle.x, y: muzzle.y });
+    setBulletVel({ vx, vy });
+    setShooting(true);
+    
+  }, [isTouchAiming, isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, getMuzzlePoint, playShoot]);
+  
   // Bullet animation loop - using ref for velocity to avoid stale closure issues
   const bulletVelRef = useRef(bulletVel);
   useEffect(() => {
