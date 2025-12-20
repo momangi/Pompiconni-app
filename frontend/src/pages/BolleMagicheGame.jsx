@@ -1190,19 +1190,19 @@ const BolleMagicheGame = () => {
           {/* Posizionato ben dentro l'area visibile, più in basso */}
           <div 
             className="absolute flex flex-row items-center" 
-            style={{ right: 8, top: 60, gap: '12px' }}
+            style={{ right: 10, top: 60, gap: '10px' }}
           >
-            {/* Bolla ATTIVA - quella che verrà sparata ORA (più grande, dominante) */}
+            {/* Bolla ATTIVA - quella che verrà sparata ORA */}
             {currentBubble && !isShooting && (
-              <div className="bg-white/70 backdrop-blur-sm rounded-full p-2 shadow-lg ring-2 ring-white/50">
-                {renderBubble(currentBubble, 26, 26, 48, false, 'current-active')}
+              <div className="bg-white/70 backdrop-blur-sm rounded-full p-1.5 shadow-lg ring-2 ring-white/50">
+                {renderBubble(currentBubble, 22, 22, 40, false, 'current-active')}
               </div>
             )}
             
-            {/* Bolla SUCCESSIVA - la prossima (più piccola, ~85% della prima) */}
+            {/* Bolla SUCCESSIVA - la prossima (più piccola) */}
             {nextBubble && (
-              <div className="bg-white/50 backdrop-blur-sm rounded-full p-1.5 shadow">
-                {renderBubble(nextBubble, 20, 20, 40, false, 'next-queue')}
+              <div className="bg-white/50 backdrop-blur-sm rounded-full p-1 shadow">
+                {renderBubble(nextBubble, 17, 17, 32, false, 'next-queue')}
               </div>
             )}
           </div>
