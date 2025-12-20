@@ -1200,9 +1200,10 @@ const BolleMagicheGame = () => {
           
           {/* 🎯 BOLLE UI - Layout ORIZZONTALE senza testo */}
           {/* Sinistra = Bolla attiva (più grande) | Destra = Bolla successiva (più piccola) */}
+          {/* Posizionato più in basso (+25px) con gap maggiore (16px) */}
           <div 
-            className="absolute flex flex-row items-center gap-3" 
-            style={{ right: 15, top: 25 }}
+            className="absolute flex flex-row items-center" 
+            style={{ right: 15, top: 50, gap: '16px' }}
           >
             {/* Bolla ATTIVA - quella che verrà sparata ORA (più grande, dominante) */}
             {currentBubble && !isShooting && (
