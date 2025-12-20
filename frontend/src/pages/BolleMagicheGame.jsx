@@ -1053,25 +1053,23 @@ const BolleMagicheGame = () => {
             {renderPoppiconni()}
           </div>
           
-          {/* 🎯 BOLLE NELLA COLONNA DESTRA - Attuale sopra, Prossima sotto */}
-          <div className="absolute flex flex-col items-center gap-2" style={{ right: 20, top: 10 }}>
-            {/* Bolla ATTUALE - più grande e in evidenza */}
+          {/* 🎯 BOLLE UI - Layout ORIZZONTALE senza testo */}
+          {/* Sinistra = Bolla attiva (più grande) | Destra = Bolla successiva (più piccola) */}
+          <div 
+            className="absolute flex flex-row items-center gap-3" 
+            style={{ right: 15, top: 25 }}
+          >
+            {/* Bolla ATTIVA - quella che verrà sparata ORA (più grande, dominante) */}
             {currentBubble && !isShooting && (
-              <div className="flex flex-col items-center">
-                <span className="text-xs text-purple-600 mb-1 font-bold uppercase tracking-wide">Spara</span>
-                <div className="bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg ring-2 ring-purple-300">
-                  {renderBubble(currentBubble, 24, 24, 44, false, 'current-right')}
-                </div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-full p-2 shadow-lg ring-2 ring-white/50">
+                {renderBubble(currentBubble, 26, 26, 48, false, 'current-active')}
               </div>
             )}
             
-            {/* Bolla PROSSIMA - più piccola sotto */}
+            {/* Bolla SUCCESSIVA - la prossima (più piccola, ~85% della prima) */}
             {nextBubble && (
-              <div className="flex flex-col items-center">
-                <span className="text-xs text-gray-400 mb-1 font-medium">Prossima</span>
-                <div className="bg-white/60 backdrop-blur-sm rounded-full p-1.5 shadow">
-                  {renderBubble(nextBubble, 16, 16, 28, false, 'next-right')}
-                </div>
+              <div className="bg-white/50 backdrop-blur-sm rounded-full p-1.5 shadow">
+                {renderBubble(nextBubble, 20, 20, 40, false, 'next-queue')}
               </div>
             )}
           </div>
