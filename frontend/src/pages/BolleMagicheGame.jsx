@@ -2,11 +2,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Pause, Play, Volume2, VolumeX, RotateCcw, Star, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { getLevelBackgrounds } from '../services/api';
 
 // ============================================
 // 🎮 BOLLE MAGICHE DI POPPICONNI
 // Arcade Bubble Puzzle – Game Design Ufficiale
 // ============================================
+
+// 🐘 URL IMMAGINE POPPICONNI UFFICIALE (fissa, non interattiva)
+const POPPICONNI_IMAGE_URL = "https://customer-assets.emergentagent.com/job_kids-gaming/artifacts/42512syc_POPPICONNI%20SPARABOLLE.png";
 
 // Constants
 const BUBBLE_SIZE = 44;
