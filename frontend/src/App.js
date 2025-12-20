@@ -16,6 +16,9 @@ import BookReaderPage from "./pages/BookReaderPage";
 import SearchPage from "./pages/SearchPage";
 import PostersPage from "./pages/PostersPage";
 import PosterDetailPage from "./pages/PosterDetailPage";
+import GamesListPage from "./pages/GamesListPage";
+import GameDetailPage from "./pages/GameDetailPage";
+import BolleMagicheGame from "./pages/BolleMagicheGame";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminPosters from "./pages/admin/AdminPosters";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -25,6 +28,7 @@ import AdminThemes from "./pages/admin/AdminThemes";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBooks from "./pages/admin/AdminBooks";
 import AdminBundles from "./pages/admin/AdminBundles";
+import AdminGames from "./pages/admin/AdminGames";
 import AdminSceneEditor from "./pages/admin/AdminSceneEditor";
 import AdminLogin from "./pages/admin/AdminLogin";
 import CookieBanner from "./components/CookieBanner";
@@ -44,6 +48,11 @@ function App() {
           <Route path="/download" element={<DownloadPage />} />
           <Route path="/poster" element={<PostersPage />} />
           <Route path="/poster/:posterId" element={<PosterDetailPage />} />
+          
+          {/* Games Routes */}
+          <Route path="/giochi" element={<GamesListPage />} />
+          <Route path="/giochi/:slug" element={<GameDetailPage />} />
+          <Route path="/giochi/bolle-magiche/play" element={<BolleMagicheGame />} />
           
           {/* Redirect old brand-kit URL to home */}
           <Route path="/brand-kit" element={<Navigate to="/" replace />} />
@@ -65,6 +74,7 @@ function App() {
             <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
             <Route path="posters" element={<AdminPosters />} />
             <Route path="bundles" element={<AdminBundles />} />
+            <Route path="games" element={<AdminGames />} />
             <Route path="brand-kit" element={<BrandKitPage />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
