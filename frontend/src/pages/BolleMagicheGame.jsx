@@ -400,10 +400,6 @@ const BolleMagicheGame = () => {
               // Bonus score for falling bubbles (extra reward!)
               setScore(prev => prev + floating.length * 25);
               
-              // 🎭 Extra celebration for falling bubbles!
-              
-              setTimeout(() => setPoppiconniMood('idle'), 1200);
-              
               // Clear falling animation
               setTimeout(() => {
                 setFallingBubbles([]);
