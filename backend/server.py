@@ -3789,9 +3789,8 @@ async def create_game(game_data: dict, email: str = Depends(verify_token)):
 
 
 @api_router.put("/admin/games/{game_id}")
-async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def update_game(game_id: str, game_data: dict, email: str = Depends(verify_token)):
     """Update a game"""
-    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
