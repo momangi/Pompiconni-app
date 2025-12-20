@@ -153,7 +153,7 @@ const BolleMagicheGame = () => {
     setNextBubble(getRandomColor());
     setGameOver(false);
     setLevelComplete(false);
-    setPoppiconniMood('idle');
+    
   }, [level, initializeGrid, getRandomColor]);
   
   // Drop timer - add new row periodically
@@ -179,7 +179,7 @@ const BolleMagicheGame = () => {
       // Check if bottom row has bubbles (game over)
       if (newGrid[GRID_ROWS - 1].some(b => b !== null)) {
         setGameOver(true);
-        setPoppiconniMood('idle'); // Poppiconni stays neutral, never sad
+         // Poppiconni stays neutral, never sad
         return prev;
       }
       
@@ -351,7 +351,7 @@ const BolleMagicheGame = () => {
     
     // 🎭 Poppiconni celebrates combo!
     if (bubblesToPop.length >= 4) {
-      setPoppiconniMood('combo');
+      
       setTimeout(() => setPoppiconniMood('idle'), 1500);
     }
     
@@ -367,7 +367,7 @@ const BolleMagicheGame = () => {
     const hasAnyBubble = gridState.some(row => row.some(b => b !== null));
     if (!hasAnyBubble) {
       setLevelComplete(true);
-      setPoppiconniMood('celebrating');
+      
     }
   }, []);
   
@@ -407,7 +407,7 @@ const BolleMagicheGame = () => {
               setScore(prev => prev + floating.length * 25);
               
               // 🎭 Extra celebration for falling bubbles!
-              setPoppiconniMood('celebrating');
+              
               setTimeout(() => setPoppiconniMood('idle'), 1200);
               
               // Clear falling animation
@@ -447,7 +447,7 @@ const BolleMagicheGame = () => {
     bulletVelRef.current = null;
     
     // 🎭 Poppiconni recoil animation
-    setPoppiconniMood('shooting');
+    
     setTimeout(() => setPoppiconniMood('idle'), 300);
     
     // THEN: Add bubble to grid and process matches
@@ -583,7 +583,7 @@ const BolleMagicheGame = () => {
     setBulletPos({ x: shooterX, y: shooterY });
     setBulletVel({ vx, vy });
     setShooting(true);
-    setPoppiconniMood('shooting');
+    
   }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete]);
   
   // Bullet animation loop - using ref for velocity to avoid stale closure issues
@@ -684,7 +684,7 @@ const BolleMagicheGame = () => {
     setGameOver(false);
     setLevelComplete(false);
     setComboCount(0);
-    setPoppiconniMood('idle');
+    
     setShooting(false);
     setBulletPos(null);
   };
