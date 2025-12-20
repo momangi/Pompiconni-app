@@ -3,17 +3,51 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Pause, Play, Volume2, VolumeX, RotateCcw, Star, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
+// ============================================
+// 🎮 BOLLE MAGICHE DI POPPICONNI
+// Arcade Bubble Puzzle – Game Design Ufficiale
+// ============================================
+
 // Constants
 const BUBBLE_SIZE = 44;
 const GRID_COLS = 11;
 const GRID_ROWS = 12;
+
+// 🌈 COLORI – PROGRESSIONE ARCOBALENO
+// Ordinati per progressione: partendo da 3 colori base
 const COLORS = [
-  { name: 'pink', main: 'rgba(236, 72, 153, 0.35)', highlight: 'rgba(255, 182, 193, 0.7)', solid: '#ec4899' },
-  { name: 'purple', main: 'rgba(147, 51, 234, 0.35)', highlight: 'rgba(216, 180, 254, 0.7)', solid: '#9333ea' },
-  { name: 'blue', main: 'rgba(59, 130, 246, 0.35)', highlight: 'rgba(147, 197, 253, 0.7)', solid: '#3b82f6' },
-  { name: 'green', main: 'rgba(16, 185, 129, 0.35)', highlight: 'rgba(110, 231, 183, 0.7)', solid: '#10b981' },
-  { name: 'amber', main: 'rgba(245, 158, 11, 0.35)', highlight: 'rgba(252, 211, 77, 0.7)', solid: '#f59e0b' },
+  // Livello 1-3: 3 colori base (Azzurro, Verde, Giallo chiaro)
+  { name: 'sky', main: 'rgba(56, 189, 248, 0.35)', highlight: 'rgba(186, 230, 253, 0.75)', solid: '#38bdf8', label: 'Azzurro' },
+  { name: 'green', main: 'rgba(74, 222, 128, 0.35)', highlight: 'rgba(187, 247, 208, 0.75)', solid: '#4ade80', label: 'Verde' },
+  { name: 'yellow', main: 'rgba(253, 224, 71, 0.35)', highlight: 'rgba(254, 249, 195, 0.75)', solid: '#fde047', label: 'Giallo' },
+  // Livello 4+: Rosa
+  { name: 'pink', main: 'rgba(244, 114, 182, 0.35)', highlight: 'rgba(251, 207, 232, 0.75)', solid: '#f472b6', label: 'Rosa' },
+  // Livello 7+: Viola
+  { name: 'purple', main: 'rgba(168, 85, 247, 0.35)', highlight: 'rgba(233, 213, 255, 0.75)', solid: '#a855f7', label: 'Viola' },
+  // Livello 10+: Arancione
+  { name: 'orange', main: 'rgba(251, 146, 60, 0.35)', highlight: 'rgba(254, 215, 170, 0.75)', solid: '#fb923c', label: 'Arancio' },
+  // Livello 13+: Rosso corallo
+  { name: 'coral', main: 'rgba(251, 113, 133, 0.35)', highlight: 'rgba(254, 205, 211, 0.75)', solid: '#fb7185', label: 'Corallo' },
+  // Livello 16+: Turchese (8 colori = ARCOBALENO COMPLETO)
+  { name: 'teal', main: 'rgba(45, 212, 191, 0.35)', highlight: 'rgba(153, 246, 228, 0.75)', solid: '#2dd4bf', label: 'Turchese' },
 ];
+
+// Bolle speciali (livelli avanzati)
+const SPECIAL_BUBBLES = {
+  rainbow: { name: 'rainbow', isJoker: true, label: 'Arcobaleno' },
+  light: { name: 'light', glow: true, label: 'Luce' },
+  party: { name: 'party', extraSparkle: true, label: 'Festa' },
+};
+
+// ⏱️ DIFFICOLTÀ KIDS-FRIENDLY
+const getDifficultySettings = (level) => {
+  if (level <= 3) return { dropInterval: 19000, colors: 3 }; // 18-20s, 3 colori
+  if (level <= 6) return { dropInterval: 15000, colors: 4 }; // 14-16s, 4 colori
+  if (level <= 9) return { dropInterval: 13000, colors: 5 }; // 12-14s, 5 colori
+  if (level <= 12) return { dropInterval: 11000, colors: 6 }; // 10-12s, 6 colori
+  if (level <= 15) return { dropInterval: 9000, colors: 7 }; // 8-10s, 7 colori
+  return { dropInterval: 8000, colors: 8 }; // 8s minimo, 8 colori (ARCOBALENO)
+};
 
 const BolleMagicheGame = () => {
   // Game state
@@ -30,13 +64,15 @@ const BolleMagicheGame = () => {
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [showTrajectory, setShowTrajectory] = useState(true);
   const [isVibrating, setIsVibrating] = useState(false);
   const [fallingBubbles, setFallingBubbles] = useState([]);
   const [poppingBubbles, setPoppingBubbles] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
+  const [comboCount, setComboCount] = useState(0);
+  const [poppiconniMood, setPoppiconniMood] = useState('idle'); // idle, shooting, celebrating, combo
   
   const gameRef = useRef(null);
   const animationRef = useRef(null);
@@ -44,8 +80,8 @@ const BolleMagicheGame = () => {
   
   // Get available colors based on level
   const getAvailableColors = useCallback(() => {
-    const numColors = Math.min(2 + Math.floor(level / 2), COLORS.length);
-    return COLORS.slice(0, numColors);
+    const { colors } = getDifficultySettings(level);
+    return COLORS.slice(0, colors);
   }, [level]);
   
   // Generate random bubble color
@@ -57,7 +93,7 @@ const BolleMagicheGame = () => {
   // Initialize grid for a level
   const initializeGrid = useCallback(() => {
     const newGrid = [];
-    const rowsToFill = 3 + Math.min(level, 5); // More rows as level increases
+    const rowsToFill = Math.min(3 + Math.floor(level / 3), 6); // Gradual increase
     
     for (let row = 0; row < GRID_ROWS; row++) {
       const gridRow = [];
@@ -85,16 +121,16 @@ const BolleMagicheGame = () => {
     setGrid(initializeGrid());
     setCurrentBubble(getRandomColor());
     setNextBubble(getRandomColor());
-    setScore(0);
     setGameOver(false);
     setLevelComplete(false);
+    setPoppiconniMood('idle');
   }, [level, initializeGrid, getRandomColor]);
   
   // Drop timer - add new row periodically
   useEffect(() => {
     if (isPaused || gameOver || levelComplete) return;
     
-    const dropInterval = Math.max(15000 - (level * 1000), 8000); // 15s to 8s based on level
+    const { dropInterval } = getDifficultySettings(level);
     
     dropTimerRef.current = setInterval(() => {
       addNewRow();
@@ -113,6 +149,7 @@ const BolleMagicheGame = () => {
       // Check if bottom row has bubbles (game over)
       if (newGrid[GRID_ROWS - 1].some(b => b !== null)) {
         setGameOver(true);
+        setPoppiconniMood('idle'); // Poppiconni stays neutral, never sad
         return prev;
       }
       
@@ -156,7 +193,7 @@ const BolleMagicheGame = () => {
   };
   
   // Find connected bubbles of same color
-  const findConnected = (startRow, startCol, targetColor, visited = new Set()) => {
+  const findConnected = useCallback((startRow, startCol, targetColor, gridState, visited = new Set()) => {
     const key = `${startRow}-${startCol}`;
     if (visited.has(key)) return [];
     
@@ -165,7 +202,7 @@ const BolleMagicheGame = () => {
     const maxCol = isOffsetRow ? GRID_COLS - 1 : GRID_COLS;
     if (startCol < 0 || startCol >= maxCol) return [];
     
-    const bubble = grid[startRow]?.[startCol];
+    const bubble = gridState[startRow]?.[startCol];
     if (!bubble || bubble.color.name !== targetColor.name) return [];
     
     visited.add(key);
@@ -174,11 +211,11 @@ const BolleMagicheGame = () => {
     // Get neighbors (hexagonal grid)
     const neighbors = getNeighbors(startRow, startCol);
     for (const { row, col } of neighbors) {
-      connected.push(...findConnected(row, col, targetColor, visited));
+      connected.push(...findConnected(row, col, targetColor, gridState, visited));
     }
     
     return connected;
-  };
+  }, []);
   
   // Get neighbor positions in hexagonal grid
   const getNeighbors = (row, col) => {
@@ -215,13 +252,13 @@ const BolleMagicheGame = () => {
   };
   
   // Find floating bubbles (not connected to top)
-  const findFloating = () => {
+  const findFloating = useCallback((gridState) => {
     const visited = new Set();
     const connected = new Set();
     
     // BFS from top row
     const queue = [];
-    const firstRow = grid[0];
+    const firstRow = gridState[0];
     firstRow.forEach((bubble, col) => {
       if (bubble) {
         queue.push({ row: 0, col });
@@ -238,7 +275,7 @@ const BolleMagicheGame = () => {
       const neighbors = getNeighbors(row, col);
       for (const { row: nr, col: nc } of neighbors) {
         const nKey = `${nr}-${nc}`;
-        if (!visited.has(nKey) && grid[nr]?.[nc]) {
+        if (!visited.has(nKey) && gridState[nr]?.[nc]) {
           connected.add(nKey);
           queue.push({ row: nr, col: nc });
         }
@@ -247,7 +284,7 @@ const BolleMagicheGame = () => {
     
     // Find all bubbles not in connected set
     const floating = [];
-    grid.forEach((row, rowIdx) => {
+    gridState.forEach((row, rowIdx) => {
       row.forEach((bubble, colIdx) => {
         if (bubble && !connected.has(`${rowIdx}-${colIdx}`)) {
           floating.push({ row: rowIdx, col: colIdx, bubble });
@@ -256,134 +293,160 @@ const BolleMagicheGame = () => {
     });
     
     return floating;
-  };
+  }, []);
   
   // Pop bubbles and handle chain reactions
-  const popBubbles = (bubblesToPop) => {
-    if (bubblesToPop.length < 3) return false;
+  const popBubbles = useCallback((bubblesToPop, gridState) => {
+    if (bubblesToPop.length < 3) return { newGrid: gridState, popped: false };
     
     // Add to popping animation
     const poppingData = bubblesToPop.map(({ row, col }) => ({
       ...getPixelPos(row, col),
-      color: grid[row][col].color,
-      id: grid[row][col].id
+      color: gridState[row][col].color,
+      id: gridState[row][col].id
     }));
     setPoppingBubbles(poppingData);
     
     // Remove from grid
-    setGrid(prev => {
-      const newGrid = prev.map(row => [...row]);
-      bubblesToPop.forEach(({ row, col }) => {
-        newGrid[row][col] = null;
-      });
-      return newGrid;
+    const newGrid = gridState.map(row => [...row]);
+    bubblesToPop.forEach(({ row, col }) => {
+      newGrid[row][col] = null;
     });
     
-    // Update score
-    setScore(prev => prev + bubblesToPop.length * 10);
+    // Update score - più bolle = più punti (combo feeling)
+    const basePoints = bubblesToPop.length * 10;
+    const comboBonus = bubblesToPop.length > 3 ? (bubblesToPop.length - 3) * 15 : 0;
+    setScore(prev => prev + basePoints + comboBonus);
+    setComboCount(bubblesToPop.length);
     
-    // Trigger vibration effect
+    // 🎭 Poppiconni celebrates combo!
+    if (bubblesToPop.length >= 4) {
+      setPoppiconniMood('combo');
+      setTimeout(() => setPoppiconniMood('idle'), 1500);
+    }
+    
+    // 💥 Trigger vibration effect - TUTTE le bolle vibrano!
     setIsVibrating(true);
     setTimeout(() => setIsVibrating(false), 800);
     
-    // Clear popping animation after delay
-    setTimeout(() => {
-      setPoppingBubbles([]);
-      
-      // Check for floating bubbles
-      setTimeout(() => {
-        const floating = findFloating();
-        if (floating.length > 0) {
-          // Add floating bubbles to falling animation
-          const fallingData = floating.map(({ row, col, bubble }) => ({
-            ...getPixelPos(row, col),
-            color: bubble.color,
-            id: bubble.id
-          }));
-          setFallingBubbles(fallingData);
-          
-          // Remove from grid
-          setGrid(prev => {
-            const newGrid = prev.map(row => [...row]);
-            floating.forEach(({ row, col }) => {
-              newGrid[row][col] = null;
-            });
-            return newGrid;
-          });
-          
-          // Bonus score for falling bubbles
-          setScore(prev => prev + floating.length * 20);
-          
-          // Clear falling animation
-          setTimeout(() => {
-            setFallingBubbles([]);
-            checkLevelComplete();
-          }, 600);
-        } else {
-          checkLevelComplete();
-        }
-      }, 100);
-    }, 300);
-    
-    return true;
-  };
+    return { newGrid, popped: true };
+  }, []);
   
   // Check if level is complete
-  const checkLevelComplete = () => {
-    setGrid(prev => {
-      const hasAnyBubble = prev.some(row => row.some(b => b !== null));
-      if (!hasAnyBubble) {
-        setLevelComplete(true);
+  const checkLevelComplete = useCallback((gridState) => {
+    const hasAnyBubble = gridState.some(row => row.some(b => b !== null));
+    if (!hasAnyBubble) {
+      setLevelComplete(true);
+      setPoppiconniMood('celebrating');
+    }
+  }, []);
+  
+  // Process after bubble placement
+  const processAfterPlacement = useCallback((targetRow, targetCol, color, gridState) => {
+    // Check for matches
+    const connected = findConnected(targetRow, targetCol, color, gridState);
+    
+    if (connected.length >= 3) {
+      const { newGrid, popped } = popBubbles(connected, gridState);
+      
+      if (popped) {
+        // Clear popping animation after delay, then check floating
+        setTimeout(() => {
+          setPoppingBubbles([]);
+          
+          // Check for floating bubbles
+          setTimeout(() => {
+            const floating = findFloating(newGrid);
+            if (floating.length > 0) {
+              // Add floating bubbles to falling animation
+              const fallingData = floating.map(({ row, col, bubble }) => ({
+                ...getPixelPos(row, col),
+                color: bubble.color,
+                id: bubble.id
+              }));
+              setFallingBubbles(fallingData);
+              
+              // Remove from grid
+              const finalGrid = newGrid.map(row => [...row]);
+              floating.forEach(({ row, col }) => {
+                finalGrid[row][col] = null;
+              });
+              setGrid(finalGrid);
+              
+              // Bonus score for falling bubbles (extra reward!)
+              setScore(prev => prev + floating.length * 25);
+              
+              // 🎭 Extra celebration for falling bubbles!
+              setPoppiconniMood('celebrating');
+              setTimeout(() => setPoppiconniMood('idle'), 1200);
+              
+              // Clear falling animation
+              setTimeout(() => {
+                setFallingBubbles([]);
+                checkLevelComplete(finalGrid);
+              }, 600);
+            } else {
+              setGrid(newGrid);
+              checkLevelComplete(newGrid);
+            }
+          }, 100);
+        }, 300);
       }
-      return prev;
-    });
-  };
+    } else {
+      setGrid(gridState);
+      checkLevelComplete(gridState);
+    }
+  }, [findConnected, popBubbles, findFloating, checkLevelComplete]);
   
   // Attach bubble to grid
-  const attachBubble = (row, col, color) => {
-    // Clamp to valid position
-    const isOffsetRow = row % 2 === 1;
-    const maxCol = isOffsetRow ? GRID_COLS - 1 : GRID_COLS;
-    const clampedCol = Math.max(0, Math.min(col, maxCol - 1));
-    const clampedRow = Math.max(0, Math.min(row, GRID_ROWS - 1));
-    
-    // Find empty spot near target
-    let targetRow = clampedRow;
-    let targetCol = clampedCol;
-    
-    // If spot is occupied, find nearest empty
-    if (grid[targetRow]?.[targetCol]) {
-      const neighbors = getNeighbors(targetRow, targetCol);
-      for (const { row: nr, col: nc } of neighbors) {
-        if (nr >= 0 && nr < GRID_ROWS && !grid[nr]?.[nc]) {
-          targetRow = nr;
-          targetCol = nc;
-          break;
+  const attachBubble = useCallback((row, col, color) => {
+    setGrid(prevGrid => {
+      // Clamp to valid position
+      const clampedRow = Math.max(0, Math.min(row, GRID_ROWS - 1));
+      const isOffsetRow = clampedRow % 2 === 1;
+      const maxCol = isOffsetRow ? GRID_COLS - 1 : GRID_COLS;
+      const clampedCol = Math.max(0, Math.min(col, maxCol - 1));
+      
+      // Find empty spot
+      let targetRow = clampedRow;
+      let targetCol = clampedCol;
+      
+      // If spot is occupied, find nearest empty
+      if (prevGrid[targetRow]?.[targetCol]) {
+        const neighbors = getNeighbors(targetRow, targetCol);
+        for (const { row: nr, col: nc } of neighbors) {
+          if (nr >= 0 && nr < GRID_ROWS) {
+            const nIsOffset = nr % 2 === 1;
+            const nMaxCol = nIsOffset ? GRID_COLS - 1 : GRID_COLS;
+            if (nc >= 0 && nc < nMaxCol && !prevGrid[nr]?.[nc]) {
+              targetRow = nr;
+              targetCol = nc;
+              break;
+            }
+          }
         }
       }
-    }
-    
-    // Add bubble to grid
-    setGrid(prev => {
-      const newGrid = prev.map(row => [...row]);
+      
+      // Add bubble to grid
+      const newGrid = prevGrid.map(row => [...row]);
       if (!newGrid[targetRow][targetCol]) {
         newGrid[targetRow][targetCol] = {
           color,
           id: `placed-${Date.now()}-${Math.random()}`
         };
       }
+      
+      // Process matches after state update
+      setTimeout(() => {
+        processAfterPlacement(targetRow, targetCol, color, newGrid);
+      }, 50);
+      
       return newGrid;
     });
     
-    // Check for matches
-    setTimeout(() => {
-      const connected = findConnected(targetRow, targetCol, color);
-      if (connected.length >= 3) {
-        popBubbles(connected);
-      } else {
-        checkLevelComplete();
-      }
-    }, 50);
+    // 🎭 Poppiconni recoil animation
+    setPoppiconniMood('shooting');
+    setTimeout(() => setPoppiconniMood('idle'), 300);
     
     // Next bubble
     setCurrentBubble(nextBubble);
@@ -391,7 +454,7 @@ const BolleMagicheGame = () => {
     setShooting(false);
     setBulletPos(null);
     setBulletVel(null);
-  };
+  }, [nextBubble, getRandomColor, processAfterPlacement]);
   
   // Calculate trajectory for preview
   const calculateTrajectory = useCallback((angle, startX, startY) => {
@@ -409,7 +472,7 @@ const BolleMagicheGame = () => {
       x += vx;
       y += vy;
       
-      // Wall bounce
+      // Wall bounce (physically correct: angle in = angle out)
       if (x < BUBBLE_SIZE / 2) {
         x = BUBBLE_SIZE / 2;
         vx = -vx;
@@ -471,6 +534,7 @@ const BolleMagicheGame = () => {
     setBulletPos({ x: shooterX, y: shooterY });
     setBulletVel({ vx, vy });
     setShooting(true);
+    setPoppiconniMood('shooting');
   }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete]);
   
   // Bullet animation loop
@@ -478,7 +542,6 @@ const BolleMagicheGame = () => {
     if (!isShooting || !bulletPos || !bulletVel) return;
     
     const gameWidth = GRID_COLS * BUBBLE_SIZE;
-    const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866;
     
     const animate = () => {
       setBulletPos(prev => {
@@ -486,22 +549,19 @@ const BolleMagicheGame = () => {
         
         let newX = prev.x + bulletVel.vx;
         let newY = prev.y + bulletVel.vy;
-        let newVx = bulletVel.vx;
         
         // Wall bounce
         if (newX < BUBBLE_SIZE / 2) {
           newX = BUBBLE_SIZE / 2;
-          newVx = -newVx;
           setBulletVel(v => ({ ...v, vx: -v.vx }));
         } else if (newX > gameWidth - BUBBLE_SIZE / 2) {
           newX = gameWidth - BUBBLE_SIZE / 2;
-          newVx = -newVx;
           setBulletVel(v => ({ ...v, vx: -v.vx }));
         }
         
         // Top collision
         if (newY < BUBBLE_SIZE / 2) {
-          const { row, col } = getGridPos(newX, BUBBLE_SIZE / 2);
+          const { col } = getGridPos(newX, BUBBLE_SIZE / 2);
           attachBubble(0, col, currentBubble);
           return null;
         }
@@ -531,12 +591,13 @@ const BolleMagicheGame = () => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [isShooting, bulletVel, currentBubble, grid]);
+  }, [isShooting, bulletVel, currentBubble, grid, attachBubble]);
   
   // Next level
   const nextLevel = () => {
     setLevel(prev => prev + 1);
     setLevelComplete(false);
+    setComboCount(0);
   };
   
   // Reset game
@@ -545,60 +606,138 @@ const BolleMagicheGame = () => {
     setScore(0);
     setGameOver(false);
     setLevelComplete(false);
-    setGrid(initializeGrid());
-    setCurrentBubble(getRandomColor());
-    setNextBubble(getRandomColor());
+    setComboCount(0);
+    setPoppiconniMood('idle');
     setShooting(false);
     setBulletPos(null);
   };
   
-  // Render bubble
-  const renderBubble = (color, x, y, size = BUBBLE_SIZE, isVibrating = false, key) => (
+  // Render soap bubble with proper aesthetics
+  const renderBubble = (color, x, y, size = BUBBLE_SIZE, shouldVibrate = false, key) => (
     <div
       key={key}
-      className={`absolute rounded-full ${isVibrating ? 'animate-vibrate' : ''}`}
+      className={`absolute rounded-full transition-transform ${shouldVibrate ? 'animate-vibrate' : ''}`}
       style={{
         left: x - size / 2,
         top: y - size / 2,
         width: size,
         height: size,
+        // 🫧 Estetica "bolla di sapone": trasparenza 25-40%, gradiente radiale, highlight, bordo iridescente
         background: `
-          radial-gradient(circle at 30% 30%, ${color.highlight}, transparent 50%),
-          radial-gradient(circle at 70% 70%, rgba(255,255,255,0.15), transparent 40%),
-          radial-gradient(circle at 50% 50%, ${color.main}, transparent 70%),
-          ${color.solid}22
+          radial-gradient(circle at 25% 25%, ${color.highlight}, transparent 45%),
+          radial-gradient(circle at 75% 75%, rgba(255,255,255,0.2), transparent 35%),
+          radial-gradient(circle at 50% 50%, ${color.main}, transparent 65%),
+          linear-gradient(135deg, ${color.solid}15, ${color.solid}30)
         `,
         boxShadow: `
-          inset 0 0 ${size/3}px rgba(255,255,255,0.5),
-          inset ${size/10}px ${size/10}px ${size/4}px rgba(255,255,255,0.4),
-          0 0 ${size/4}px rgba(255,255,255,0.3)
+          inset 0 0 ${size/2.5}px rgba(255,255,255,0.6),
+          inset ${size/8}px ${size/8}px ${size/3}px rgba(255,255,255,0.5),
+          inset -${size/12}px -${size/12}px ${size/4}px rgba(0,0,0,0.05),
+          0 0 ${size/3}px rgba(255,255,255,0.4),
+          0 ${size/15}px ${size/8}px rgba(0,0,0,0.08)
         `,
-        border: '1px solid rgba(255,255,255,0.4)',
+        border: `1.5px solid rgba(255,255,255,0.5)`,
       }}
     >
-      {/* Highlight */}
+      {/* Primary highlight (riflesso luce principale) */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: '35%',
-          height: '25%',
-          top: '12%',
-          left: '18%',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, transparent 100%)',
+          width: '40%',
+          height: '28%',
+          top: '10%',
+          left: '15%',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+          filter: 'blur(1px)',
+        }}
+      />
+      {/* Secondary highlight */}
+      <div 
+        className="absolute rounded-full"
+        style={{
+          width: '12%',
+          height: '8%',
+          bottom: '22%',
+          right: '18%',
+          background: 'rgba(255,255,255,0.5)',
         }}
       />
     </div>
   );
   
+  // Render Poppiconni character
+  const renderPoppiconni = () => {
+    const moodStyles = {
+      idle: { scale: 1, rotate: 0 },
+      shooting: { scale: 0.95, rotate: -5 },
+      celebrating: { scale: 1.1, rotate: 5 },
+      combo: { scale: 1.15, rotate: 8 },
+    };
+    const style = moodStyles[poppiconniMood] || moodStyles.idle;
+    
+    return (
+      <div 
+        className="relative transition-all duration-200"
+        style={{ 
+          transform: `scale(${style.scale}) rotate(${style.rotate}deg)`,
+        }}
+      >
+        {/* 🐘 POPPICONNI PLACEHOLDER */}
+        {/* ⚠️ NOTA: Questo è un placeholder. */}
+        {/* Per il personaggio definitivo, fornire asset ufficiali. */}
+        <div className="w-20 h-20 bg-gradient-to-br from-pink-200 via-pink-300 to-pink-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white relative overflow-hidden animate-breathe">
+          {/* Orecchie */}
+          <div className="absolute -left-2 top-1 w-6 h-8 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full transform -rotate-12" />
+          <div className="absolute -right-2 top-1 w-6 h-8 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full transform rotate-12" />
+          
+          {/* Face */}
+          <div className="relative z-10 flex flex-col items-center">
+            {/* Eyes */}
+            <div className="flex gap-3 mb-0.5">
+              <div className="w-2.5 h-3 bg-gray-800 rounded-full relative">
+                <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full" />
+              </div>
+              <div className="w-2.5 h-3 bg-gray-800 rounded-full relative">
+                <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full" />
+              </div>
+            </div>
+            {/* Trunk */}
+            <div className="w-3 h-4 bg-gradient-to-b from-pink-300 to-pink-400 rounded-b-full" />
+            {/* Smile based on mood */}
+            {(poppiconniMood === 'celebrating' || poppiconniMood === 'combo') && (
+              <div className="absolute -bottom-1 w-6 h-2 border-b-2 border-pink-600 rounded-b-full" />
+            )}
+          </div>
+          
+          {/* Sparkles for celebration */}
+          {(poppiconniMood === 'celebrating' || poppiconniMood === 'combo') && (
+            <>
+              <div className="absolute -top-2 -right-2 text-yellow-400 animate-pulse">✨</div>
+              <div className="absolute -top-1 -left-3 text-yellow-400 animate-pulse" style={{ animationDelay: '0.2s' }}>⭐</div>
+            </>
+          )}
+        </div>
+        
+        {/* Label */}
+        <div className="text-center mt-1">
+          <span className="text-xs font-bold text-pink-600 bg-white/80 px-2 py-0.5 rounded-full">Poppi</span>
+        </div>
+      </div>
+    );
+  };
+  
   const gameWidth = GRID_COLS * BUBBLE_SIZE;
-  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 120;
+  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
   const shooterX = gameWidth / 2;
-  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 60;
+  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
+  
+  // Get current difficulty info
+  const { colors: numColors } = getDifficultySettings(level);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center py-2">
       {/* Header */}
-      <div className="w-full max-w-lg px-4 py-3">
+      <div className="w-full max-w-lg px-4 py-2">
         <div className="flex items-center justify-between">
           <Link to="/giochi/bolle-magiche" className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-700" />
@@ -612,13 +751,19 @@ const BolleMagicheGame = () => {
               <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               <span className="text-sm font-bold text-gray-700">{score}</span>
             </div>
+            {/* Color indicator */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 shadow-lg flex items-center gap-0.5">
+              {COLORS.slice(0, numColors).map((c, i) => (
+                <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c.solid }} />
+              ))}
+            </div>
           </div>
           
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowTrajectory(!showTrajectory)}
               className={`p-2 backdrop-blur-sm rounded-full shadow-lg transition-colors ${showTrajectory ? 'bg-purple-100' : 'bg-white/80'}`}
-              title={showTrajectory ? "Nascondi traiettoria" : "Mostra traiettoria"}
+              title={showTrajectory ? "Nascondi mira" : "Mostra mira"}
             >
               {showTrajectory ? <Eye className="w-4 h-4 text-purple-600" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
             </button>
@@ -644,10 +789,19 @@ const BolleMagicheGame = () => {
         </div>
       </div>
 
+      {/* Combo indicator */}
+      {comboCount >= 4 && (
+        <div className="animate-combo-pop mb-2">
+          <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-5 py-1.5 rounded-full font-bold text-lg shadow-lg">
+            {comboCount}x COMBO! ✨
+          </div>
+        </div>
+      )}
+
       {/* Game Area */}
       <div 
         ref={gameRef}
-        className="relative bg-white/30 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden cursor-crosshair"
+        className="relative bg-white/40 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden cursor-crosshair"
         style={{ width: gameWidth, height: gameHeight }}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
@@ -668,7 +822,7 @@ const BolleMagicheGame = () => {
             className="absolute animate-pop pointer-events-none"
             style={{ left: bubble.x, top: bubble.y }}
           >
-            {[...Array(8)].map((_, i) => (
+            {[...Array(10)].map((_, i) => (
               <div
                 key={i}
                 className="absolute w-2 h-2 rounded-full animate-sparkle"
@@ -676,8 +830,8 @@ const BolleMagicheGame = () => {
                   left: 0,
                   top: 0,
                   background: bubble.color.solid,
-                  boxShadow: `0 0 6px ${bubble.color.solid}`,
-                  '--angle': `${i * 45}deg`,
+                  boxShadow: `0 0 8px ${bubble.color.solid}`,
+                  '--angle': `${i * 36}deg`,
                 }}
               />
             ))}
@@ -692,22 +846,25 @@ const BolleMagicheGame = () => {
             style={{ left: bubble.x - BUBBLE_SIZE/2, top: bubble.y - BUBBLE_SIZE/2 }}
           >
             {renderBubble(bubble.color, BUBBLE_SIZE/2, BUBBLE_SIZE/2, BUBBLE_SIZE, false, `falling-${bubble.id}`)}
+            {/* Sparkle when falling */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-yellow-400 text-xs animate-pulse">✦</div>
           </div>
         ))}
         
-        {/* Trajectory preview */}
+        {/* Trajectory preview - linea tratteggiata morbida */}
         {showTrajectory && isAiming && !isShooting && currentBubble && (
           <>
-            {calculateTrajectory(shooterAngle, shooterX, shooterY - 20).map((point, i) => (
+            {calculateTrajectory(shooterAngle, shooterX, shooterY - 30).map((point, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-white/60"
+                className="absolute rounded-full"
                 style={{
-                  left: point.x - 3,
-                  top: point.y - 3,
-                  width: 6,
-                  height: 6,
-                  opacity: 1 - (i / 50) * 0.8
+                  left: point.x - 4,
+                  top: point.y - 4,
+                  width: 8,
+                  height: 8,
+                  background: `radial-gradient(circle, ${currentBubble.solid}60, ${currentBubble.solid}20)`,
+                  opacity: 1 - (i / 50) * 0.9
                 }}
               />
             ))}
@@ -719,41 +876,57 @@ const BolleMagicheGame = () => {
         
         {/* Shooter area */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-pink-100/80 to-transparent"
+          className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-pink-100/90 via-pink-50/60 to-transparent"
         >
-          {/* Shooter */}
+          {/* 🚀 CANNONE DI POPPICONNI */}
           <div 
             className="absolute"
             style={{ 
-              left: shooterX - 35, 
-              top: 20,
-              transform: `rotate(${shooterAngle + 90}deg)`,
-              transformOrigin: '35px 35px'
+              left: shooterX - 40, 
+              top: 15,
             }}
           >
-            {/* Cannon */}
-            <div className="w-[70px] h-[70px] bg-gradient-to-br from-pink-200 to-pink-300 rounded-full flex items-center justify-center shadow-xl border-4 border-white relative">
-              {/* Cannon barrel */}
+            {/* Cannon barrel (rotates with aim) */}
+            <div 
+              className="absolute"
+              style={{
+                left: 40,
+                top: 40,
+                transform: `rotate(${shooterAngle + 90}deg)`,
+                transformOrigin: '0 0',
+              }}
+            >
+              {/* Barrel */}
               <div 
-                className="absolute w-4 h-12 bg-gradient-to-b from-pink-300 to-pink-400 rounded-full"
-                style={{ top: -30, left: '50%', transform: 'translateX(-50%)' }}
-              />
-              <div className="text-2xl">🐘</div>
+                className="w-5 h-14 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-600 rounded-t-lg shadow-lg"
+                style={{ 
+                  marginLeft: -10,
+                  marginTop: -50,
+                }}
+              >
+                {/* Barrel glow */}
+                <div className="absolute inset-x-1 top-1 h-2 bg-white/40 rounded-full" />
+              </div>
+              
+              {/* Current bubble in cannon */}
+              {currentBubble && !isShooting && (
+                <div style={{ marginLeft: -BUBBLE_SIZE/2 + 2, marginTop: -BUBBLE_SIZE - 45 }}>
+                  {renderBubble(currentBubble, BUBBLE_SIZE/2, BUBBLE_SIZE/2, BUBBLE_SIZE - 4, false, 'cannon-bubble')}
+                </div>
+              )}
             </div>
+            
+            {/* Poppiconni character */}
+            {renderPoppiconni()}
           </div>
           
-          {/* Current bubble preview */}
-          {currentBubble && !isShooting && (
-            <div className="absolute" style={{ left: shooterX - BUBBLE_SIZE/2, top: 20 }}>
-              {renderBubble(currentBubble, BUBBLE_SIZE/2, BUBBLE_SIZE/2, BUBBLE_SIZE, false, 'current')}
-            </div>
-          )}
-          
-          {/* Next bubble */}
+          {/* Next bubble preview */}
           {nextBubble && (
-            <div className="absolute flex flex-col items-center" style={{ left: shooterX + 60, top: 30 }}>
-              <span className="text-xs text-gray-500 mb-1">Prossima</span>
-              {renderBubble(nextBubble, 15, 15, 30, false, 'next')}
+            <div className="absolute flex flex-col items-center" style={{ left: shooterX + 70, top: 35 }}>
+              <span className="text-xs text-gray-500 mb-1 font-medium">Prossima</span>
+              <div className="bg-white/60 rounded-full p-1.5">
+                {renderBubble(nextBubble, 18, 18, 32, false, 'next')}
+              </div>
             </div>
           )}
         </div>
@@ -762,7 +935,8 @@ const BolleMagicheGame = () => {
       {/* Pause Overlay */}
       {isPaused && !gameOver && !levelComplete && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4 animate-scale-in">
+            <div className="text-4xl mb-3">⏸️</div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Pausa</h2>
             <p className="text-gray-600 mb-6">Livello {level} • Punteggio: {score}</p>
             <div className="space-y-3">
@@ -771,32 +945,7 @@ const BolleMagicheGame = () => {
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-xl py-5"
               >
                 <Play className="w-5 h-5 mr-2" />
-                Continua
-              </Button>
-              <Link to="/giochi/bolle-magiche">
-                <Button variant="outline" className="w-full rounded-xl py-5">
-                  Esci dal gioco
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Game Over Overlay */}
-      {gameOver && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Game Over</h2>
-            <p className="text-gray-600 mb-2">Livello raggiunto: {level}</p>
-            <p className="text-2xl font-bold text-purple-600 mb-6">Punteggio: {score}</p>
-            <div className="space-y-3">
-              <Button
-                onClick={resetGame}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-xl py-5"
-              >
-                <RotateCcw className="w-5 h-5 mr-2" />
-                Gioca ancora
+                Continua a giocare
               </Button>
               <Link to="/giochi/bolle-magiche">
                 <Button variant="outline" className="w-full rounded-xl py-5">
@@ -808,58 +957,132 @@ const BolleMagicheGame = () => {
         </div>
       )}
       
-      {/* Level Complete Overlay */}
+      {/* Game Over Overlay - Neutral, NOT punishing */}
+      {gameOver && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4 animate-scale-in">
+            <div className="text-5xl mb-3">🎮</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Fine partita!</h2>
+            <p className="text-gray-600 mb-1">Hai raggiunto il livello {level}</p>
+            <p className="text-3xl font-bold text-purple-600 mb-6">
+              <Star className="w-6 h-6 inline text-amber-500 fill-amber-500 mr-1" />
+              {score} punti
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={resetGame}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-xl py-5 text-lg"
+              >
+                🎈 Gioca ancora!
+              </Button>
+              <Link to="/giochi/bolle-magiche">
+                <Button variant="outline" className="w-full rounded-xl py-5">
+                  Torna al menu
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Level Complete Overlay - Celebration! */}
       {levelComplete && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4">
-            <div className="text-5xl mb-4">🎉</div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Livello Completato!</h2>
-            <p className="text-gray-600 mb-2">Livello {level} superato</p>
-            <p className="text-2xl font-bold text-purple-600 mb-6">Punteggio: {score}</p>
+          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm mx-4 animate-scale-in">
+            <div className="text-6xl mb-3 animate-bounce">🎉</div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Fantastico!</h2>
+            <p className="text-gray-600 mb-1">Livello {level} completato!</p>
+            <p className="text-3xl font-bold text-purple-600 mb-6">
+              <Star className="w-6 h-6 inline text-amber-500 fill-amber-500 mr-1" />
+              {score} punti
+            </p>
+            {level < 16 && (
+              <p className="text-sm text-gray-500 mb-4">
+                Prossimo livello: {getDifficultySettings(level + 1).colors} colori! 🌈
+              </p>
+            )}
             <Button
               onClick={nextLevel}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl py-5 text-lg"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl py-6 text-xl font-bold shadow-lg"
             >
-              Livello {level + 1} →
+              Livello {level + 1} → 🚀
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* ⚠️ Asset Notice - Hidden in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-2 left-2 bg-yellow-100 text-yellow-800 text-xs px-3 py-1.5 rounded-lg shadow">
+          ⚠️ Poppiconni e cannone sono placeholder. Richiedere asset ufficiali.
         </div>
       )}
 
       <style>{`
         @keyframes vibrate {
           0%, 100% { transform: translate(0, 0); }
-          20% { transform: translate(-2px, 1px); }
-          40% { transform: translate(2px, -1px); }
-          60% { transform: translate(-1px, 2px); }
-          80% { transform: translate(1px, -2px); }
+          10% { transform: translate(-2px, 1px); }
+          20% { transform: translate(2px, -1px); }
+          30% { transform: translate(-1px, 2px); }
+          40% { transform: translate(1px, -2px); }
+          50% { transform: translate(-2px, -1px); }
+          60% { transform: translate(2px, 1px); }
+          70% { transform: translate(-1px, -2px); }
+          80% { transform: translate(1px, 2px); }
+          90% { transform: translate(-2px, 1px); }
         }
         .animate-vibrate {
-          animation: vibrate 0.1s linear infinite;
+          animation: vibrate 0.08s linear infinite;
+        }
+        
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+        }
+        .animate-breathe {
+          animation: breathe 3s ease-in-out infinite;
         }
         
         @keyframes pop {
           0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1.8); opacity: 0; }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(0); opacity: 0; }
         }
         .animate-pop {
-          animation: pop 0.3s ease-out forwards;
+          animation: pop 0.35s ease-out forwards;
         }
         
         @keyframes sparkle {
-          0% { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0); opacity: 1; }
-          100% { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(50px); opacity: 0; }
+          0% { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) rotate(var(--angle)) translateX(55px) scale(0.5); opacity: 0; }
         }
         .animate-sparkle {
-          animation: sparkle 0.4s ease-out forwards;
+          animation: sparkle 0.45s ease-out forwards;
         }
         
         @keyframes fall {
-          0% { transform: translateY(0); opacity: 1; }
-          100% { transform: translateY(200px); opacity: 0; }
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(250px) rotate(15deg); opacity: 0; }
         }
         .animate-fall {
-          animation: fall 0.6s ease-in forwards;
+          animation: fall 0.7s ease-in forwards;
+        }
+        
+        @keyframes combo-pop {
+          0% { transform: scale(0.5); opacity: 0; }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-combo-pop {
+          animation: combo-pop 0.35s ease-out;
+        }
+        
+        @keyframes scale-in {
+          0% { transform: scale(0.9); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out;
         }
       `}</style>
     </div>
