@@ -3898,9 +3898,8 @@ async def get_level_background_image(bg_id: str):
 # --- ADMIN LEVEL BACKGROUNDS ---
 
 @api_router.get("/admin/games/bolle-magiche/level-backgrounds")
-async def admin_get_level_backgrounds(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def admin_get_level_backgrounds(user_id: str = Depends(verify_token)):
     """Admin: Get all level backgrounds"""
-    verify_token(credentials.credentials)
     
     backgrounds = await db.game_level_backgrounds.find(
         {"gameSlug": "bolle-magiche"},
@@ -3919,7 +3918,7 @@ async def admin_create_level_background(
     levelRangeEnd: int = Form(...),
     backgroundOpacity: int = Form(30),
     backgroundImage: UploadFile = File(None),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    user_id: str = Depends(verify_token)
 ):
     """Admin: Create a new level background"""
     verify_token(credentials.credentials)
