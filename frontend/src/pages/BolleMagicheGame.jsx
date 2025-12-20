@@ -1100,17 +1100,10 @@ const BolleMagicheGame = () => {
         
         {/* Trajectory preview - starts EXACTLY from cannon muzzle */}
         {showTrajectory && isAiming && !isShooting && currentBubble && (() => {
-          // Calculate muzzle point for trajectory preview (SAME as handleClick)
-          const gameW = GRID_COLS * BUBBLE_SIZE;
-          const pivotX = gameW / 2;
-          const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50;
-          const cannonHeight = 100;
-          const muzzleDistance = cannonHeight * 0.80;
-          const angleRad = (shooterAngle * Math.PI) / 180;
-          const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
-          const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
+          // Use unified calculateMuzzlePoint (same function as handleClick)
+          const muzzle = calculateMuzzlePoint(shooterAngle);
           
-          return calculateTrajectory(shooterAngle, muzzleX, muzzleY).map((point, i) => (
+          return calculateTrajectory(shooterAngle, muzzle.x, muzzle.y).map((point, i) => (
             <div
               key={i}
               className="absolute rounded-full pointer-events-none"
