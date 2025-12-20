@@ -1141,83 +1141,8 @@ const BolleMagicheGame = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 flex flex-col items-center justify-center py-4 px-4">
       
-      {/* 
-        ============================================
-        📐 RESPONSIVE STYLES - BREAKPOINTS
-        ============================================
-        Mobile (default): zoom ~1.0, fits screen width
-        Tablet (>=768px): zoom 1.1
-        Desktop (>=1024px): zoom 1.25-1.35
-        Large Desktop (>=1440px): zoom 1.4
-        
-        Using CSS zoom property (widely supported) instead of transform:scale
-        This maintains click coordinates and layout integrity.
-      */}
-      <style>{`
-        .game-container {
-          zoom: 1;
-        }
-        
-        @media (min-width: 768px) {
-          .game-container {
-            zoom: 1.05;
-          }
-        }
-        
-        @media (min-width: 1024px) {
-          .game-container {
-            zoom: 1.15;
-          }
-        }
-        
-        @media (min-width: 1024px) and (min-height: 800px) {
-          .game-container {
-            zoom: 1.25;
-          }
-        }
-        
-        @media (min-width: 1280px) and (min-height: 900px) {
-          .game-container {
-            zoom: 1.35;
-          }
-        }
-        
-        @media (min-width: 1536px) and (min-height: 900px) {
-          .game-container {
-            zoom: 1.45;
-          }
-        }
-        
-        /* Large monitors */
-        @media (min-width: 1920px) and (min-height: 1000px) {
-          .game-container {
-            zoom: 1.5;
-          }
-        }
-        
-        /* Prevent overflow on small mobile */
-        @media (max-width: 520px) {
-          .game-container {
-            zoom: 0.88;
-          }
-        }
-        
-        @media (max-width: 400px) {
-          .game-container {
-            zoom: 0.78;
-          }
-        }
-        
-        /* Very short screens (landscape mobile) */
-        @media (max-height: 600px) {
-          .game-container {
-            zoom: 0.7;
-          }
-        }
-      `}</style>
-      
-      {/* Game Container with responsive zoom */}
-      <div className="game-container flex flex-col items-center">
+      {/* Game Container - NO CSS ZOOM (causes mouse coordinate issues) */}
+      <div className="flex flex-col items-center">
         
         {/* Header - matches game width */}
         <div className="w-full px-2 py-2" style={{ width: baseWidth }}>
