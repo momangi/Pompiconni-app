@@ -3923,18 +3923,26 @@ async def upload_game_card_image(
 
 @api_router.get("/games/{slug}/card-image")
 async def get_game_card_image(slug: str):
-    """Get card image for a game"""
+    """Get card image for a game. Returns 204 No Content if no image exists."""
     game = await db.games.find_one({"slug": slug})
+    
+    # Return 204 No Content instead of 404 when image doesn't exist
     if not game or not game.get('cardImageFileId'):
-        raise HTTPException(status_code=404, detail="Card image not found")
+        return Response(status_code=204)
     
     try:
         grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['cardImageFileId']))
         content = await grid_out.read()
         content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
-        return StreamingResponse(io.BytesIO(content), media_type=content_type)
+        
+        # Cache control: allow caching but revalidate
+        headers = {
+            "Cache-Control": "public, max-age=3600, must-revalidate",
+            "ETag": f'"{game.get("cardImageFileId")}"'
+        }
+        return StreamingResponse(io.BytesIO(content), media_type=content_type, headers=headers)
     except Exception:
-        raise HTTPException(status_code=404, detail="Card image not found")
+        return Response(status_code=204)  # File missing from GridFS
 
 @api_router.delete("/admin/games/{game_id}/card-image")
 async def delete_game_card_image(
