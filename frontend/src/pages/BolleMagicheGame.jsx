@@ -996,27 +996,35 @@ const BolleMagicheGame = () => {
                 <div className="absolute inset-x-1 top-1 h-2 bg-white/40 rounded-full" />
               </div>
               
-              {/* Current bubble in cannon */}
-              {currentBubble && !isShooting && (
-                <div style={{ marginLeft: -BUBBLE_SIZE/2 + 2, marginTop: -BUBBLE_SIZE - 45 }}>
-                  {renderBubble(currentBubble, BUBBLE_SIZE/2, BUBBLE_SIZE/2, BUBBLE_SIZE - 4, false, 'cannon-bubble')}
-                </div>
-              )}
+              {/* RIMOSSA: bolla sotto il cannone - scarsa leggibilità */}
             </div>
             
             {/* Poppiconni character */}
             {renderPoppiconni()}
           </div>
           
-          {/* Next bubble preview */}
-          {nextBubble && (
-            <div className="absolute flex flex-col items-center" style={{ left: shooterX + 70, top: 35 }}>
-              <span className="text-xs text-gray-500 mb-1 font-medium">Prossima</span>
-              <div className="bg-white/60 rounded-full p-1.5">
-                {renderBubble(nextBubble, 18, 18, 32, false, 'next')}
+          {/* 🎯 BOLLE NELLA COLONNA DESTRA - Attuale sopra, Prossima sotto */}
+          <div className="absolute flex flex-col items-center gap-2" style={{ right: 20, top: 10 }}>
+            {/* Bolla ATTUALE - più grande e in evidenza */}
+            {currentBubble && !isShooting && (
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-purple-600 mb-1 font-bold uppercase tracking-wide">Spara</span>
+                <div className="bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg ring-2 ring-purple-300">
+                  {renderBubble(currentBubble, 24, 24, 44, false, 'current-right')}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+            
+            {/* Bolla PROSSIMA - più piccola sotto */}
+            {nextBubble && (
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-gray-400 mb-1 font-medium">Prossima</span>
+                <div className="bg-white/60 backdrop-blur-sm rounded-full p-1.5 shadow">
+                  {renderBubble(nextBubble, 16, 16, 28, false, 'next-right')}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
