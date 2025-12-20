@@ -241,6 +241,7 @@ const GameDetailPage = () => {
           </div>
         </div>
       </section>
+      </div>
 
       <Footer />
       
