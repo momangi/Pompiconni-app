@@ -1052,38 +1052,58 @@ const BolleMagicheGame = () => {
         
         @media (min-width: 768px) {
           .game-container {
-            zoom: 1.1;
+            zoom: 1.05;
           }
         }
         
         @media (min-width: 1024px) {
           .game-container {
-            zoom: 1.3;
+            zoom: 1.15;
           }
         }
         
-        @media (min-width: 1280px) {
+        @media (min-width: 1024px) and (min-height: 800px) {
           .game-container {
-            zoom: 1.4;
+            zoom: 1.25;
           }
         }
         
-        @media (min-width: 1536px) {
+        @media (min-width: 1280px) and (min-height: 900px) {
+          .game-container {
+            zoom: 1.35;
+          }
+        }
+        
+        @media (min-width: 1536px) and (min-height: 900px) {
           .game-container {
             zoom: 1.45;
           }
         }
         
-        /* Prevent overflow on mobile */
+        /* Large monitors */
+        @media (min-width: 1920px) and (min-height: 1000px) {
+          .game-container {
+            zoom: 1.5;
+          }
+        }
+        
+        /* Prevent overflow on small mobile */
         @media (max-width: 520px) {
           .game-container {
-            zoom: 0.85;
+            zoom: 0.88;
           }
         }
         
         @media (max-width: 400px) {
           .game-container {
-            zoom: 0.75;
+            zoom: 0.78;
+          }
+        }
+        
+        /* Very short screens (landscape mobile) */
+        @media (max-height: 600px) {
+          .game-container {
+            zoom: 0.7;
           }
         }
       `}</style>
