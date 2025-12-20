@@ -919,10 +919,10 @@ const BolleMagicheGame = () => {
       <div 
         className="relative"
         style={{
-          width: cannonConfig.width,
-          height: cannonConfig.height,
+          width: CANNON_CONFIG.width,
+          height: CANNON_CONFIG.height,
           // PIVOT-BASED ROTATION: transform-origin at base
-          transformOrigin: `50% ${cannonConfig.pivotYPercent * 100}%`,
+          transformOrigin: `50% ${CANNON_CONFIG.pivotYPercent * 100}%`,
           transform: `rotate(${clampedAngle}deg)`,
         }}
       >
