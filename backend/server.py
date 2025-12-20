@@ -3975,10 +3975,9 @@ async def admin_update_level_background(
     levelRangeStart: int = Form(None),
     levelRangeEnd: int = Form(None),
     backgroundOpacity: int = Form(None),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    user_id: str = Depends(verify_token)
 ):
     """Admin: Update level background settings"""
-    verify_token(credentials.credentials)
     
     bg = await db.game_level_backgrounds.find_one({"id": bg_id})
     if not bg:
