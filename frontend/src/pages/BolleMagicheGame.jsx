@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Pause, Play, Volume2, VolumeX, RotateCcw, Star, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { getLevelBackgrounds } from '../services/api';
+import { useGameAudio } from '../hooks/useGameAudio';
 
 // ============================================
 // 🎮 BOLLE MAGICHE DI POPPICONNI
