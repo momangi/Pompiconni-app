@@ -3759,9 +3759,8 @@ async def get_admin_games(email: str = Depends(verify_token)):
 
 
 @api_router.post("/admin/games")
-async def create_game(game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def create_game(game_data: dict, email: str = Depends(verify_token)):
     """Create a new game"""
-    verify_token(credentials.credentials)
     
     # Check slug uniqueness
     existing = await db.games.find_one({"slug": game_data.get('slug')})
