@@ -1146,12 +1146,12 @@ const BolleMagicheGame = () => {
           style={{ zIndex: 15 }}
         >
           {/* 🎀 CANNON with FIXED PIVOT at base */}
-          {/* Position: pivot point at shooterX, 35px from top of shooter area */}
+          {/* Position: pivot point at shooterX, positionTop from top of shooter area */}
           <div 
             className="absolute"
             style={{ 
-              left: shooterX - 35, // Center cannon (width 70 / 2)
-              top: 25, // Position pivot point higher
+              left: shooterX - (CANNON_CONFIG.width / 2), // Center cannon
+              top: CANNON_CONFIG.positionTop,
               zIndex: 20,
             }}
           >
