@@ -728,7 +728,7 @@ const BolleMagicheGame = () => {
     setBulletVel({ vx, vy });
     setShooting(true);
     
-  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, getMuzzlePoint]);
+  }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete, getMuzzlePoint, initAudio, playShoot]);
   
   // Bullet animation loop - using ref for velocity to avoid stale closure issues
   const bulletVelRef = useRef(bulletVel);
