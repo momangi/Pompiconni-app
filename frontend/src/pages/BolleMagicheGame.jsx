@@ -824,26 +824,60 @@ const BolleMagicheGame = () => {
     </div>
   );
   
-  // 🎀 RENDER OFFICIAL CANNON - Uses uploaded image
+  // ============================================
+  // 🎯 CANNON KINEMATICS - PIVOT-BASED ROTATION
+  // ============================================
+  
+  // Cannon dimensions (must match the actual image proportions)
+  const CANNON_WIDTH = 70;
+  const CANNON_HEIGHT = 100; // Approximate height based on aspect ratio
+  const CANNON_PIVOT_Y = 0.85; // Pivot point at 85% from top (near base)
+  const CANNON_MUZZLE_Y = 0.05; // Muzzle at 5% from top (near tip)
+  
+  // Clamp angle to prevent extreme rotations (-75° to +75° from vertical)
+  const clampedAngle = Math.max(-75, Math.min(75, shooterAngle + 90));
+  
+  // Calculate muzzle point (where trajectory/bullet originates)
+  // This must be pixel-perfect with the cannon's barrel tip
+  const calculateMuzzlePoint = useCallback(() => {
+    const pivotX = shooterX;
+    const pivotY = shooterY + 50; // Pivot position (base of cannon in game area)
+    
+    // Distance from pivot to muzzle
+    const muzzleDistance = CANNON_HEIGHT * (CANNON_PIVOT_Y - CANNON_MUZZLE_Y);
+    
+    // Convert angle to radians (shooterAngle is already in degrees, -90 = straight up)
+    const angleRad = (shooterAngle * Math.PI) / 180;
+    
+    // Calculate muzzle position based on rotation around pivot
+    const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
+    const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
+    
+    return { x: muzzleX, y: muzzleY };
+  }, [shooterAngle, shooterX, shooterY]);
+  
+  // 🎀 RENDER CANNON with fixed pivot rotation
   const renderToyCannon = () => {
     return (
       <div 
         className="relative"
         style={{
-          transform: `rotate(${shooterAngle + 90}deg)`,
-          transformOrigin: 'center bottom',
+          width: CANNON_WIDTH,
+          height: CANNON_HEIGHT,
+          // PIVOT-BASED ROTATION: transform-origin at base (85% from top)
+          transformOrigin: `50% ${CANNON_PIVOT_Y * 100}%`,
+          transform: `rotate(${clampedAngle}deg)`,
         }}
       >
-        {/* Official cannon image - 10% bigger */}
+        {/* Official cannon image */}
         <img 
           src={CANNON_IMAGE_URL}
           alt="Cannone"
           style={{
-            width: 70,  /* w-16 (64px) + 10% = ~70px */
-            height: 'auto',
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-            marginTop: -50,
-            marginLeft: -12,
           }}
         />
       </div>
