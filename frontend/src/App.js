@@ -76,6 +76,7 @@ function App() {
             <Route path="posters" element={<AdminPosters />} />
             <Route path="bundles" element={<AdminBundles />} />
             <Route path="games" element={<AdminGames />} />
+            <Route path="level-backgrounds" element={<AdminLevelBackgrounds />} />
             <Route path="brand-kit" element={<BrandKitPage />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
