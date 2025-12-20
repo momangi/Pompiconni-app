@@ -3910,11 +3910,10 @@ async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), emai
 async def upload_game_card_image(
     game_id: str,
     file: UploadFile = File(...),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    email: str = Depends(verify_token)
 ):
     """Upload card image for game (used in /giochi list page)"""
     from bson import ObjectId
-    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
