@@ -844,6 +844,12 @@ const BolleMagicheGame = () => {
   // 🎯 CANNON KINEMATICS - PIVOT-BASED ROTATION
   // ============================================
   
+  // Game dimensions (calculated once)
+  const gameWidth = GRID_COLS * BUBBLE_SIZE;
+  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
+  const shooterX = gameWidth / 2;
+  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
+  
   // Cannon dimensions (must match the actual image proportions)
   const CANNON_WIDTH = 70;
   const CANNON_HEIGHT = 100; // Approximate height based on aspect ratio
@@ -852,25 +858,6 @@ const BolleMagicheGame = () => {
   
   // Clamp angle to prevent extreme rotations (-75° to +75° from vertical)
   const clampedAngle = Math.max(-75, Math.min(75, shooterAngle + 90));
-  
-  // Calculate muzzle point (where trajectory/bullet originates)
-  // This must be pixel-perfect with the cannon's barrel tip
-  const calculateMuzzlePoint = useCallback(() => {
-    const pivotX = shooterX;
-    const pivotY = shooterY + 50; // Pivot position (base of cannon in game area)
-    
-    // Distance from pivot to muzzle
-    const muzzleDistance = CANNON_HEIGHT * (CANNON_PIVOT_Y - CANNON_MUZZLE_Y);
-    
-    // Convert angle to radians (shooterAngle is already in degrees, -90 = straight up)
-    const angleRad = (shooterAngle * Math.PI) / 180;
-    
-    // Calculate muzzle position based on rotation around pivot
-    const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
-    const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
-    
-    return { x: muzzleX, y: muzzleY };
-  }, [shooterAngle, shooterX, shooterY]);
   
   // 🎀 RENDER CANNON with fixed pivot rotation
   const renderToyCannon = () => {
@@ -899,11 +886,6 @@ const BolleMagicheGame = () => {
       </div>
     );
   };
-  
-  const gameWidth = GRID_COLS * BUBBLE_SIZE;
-  const gameHeight = GRID_ROWS * BUBBLE_SIZE * 0.866 + 140;
-  const shooterX = gameWidth / 2;
-  const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70;
   
   // Get current difficulty info
   const { colors: numColors } = getDifficultySettings(level);
