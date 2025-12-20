@@ -43,13 +43,13 @@ const SPECIAL_BUBBLES = {
   party: { name: 'party', extraSparkle: true, label: 'Festa' },
 };
 
-// ⏱️ DIFFICOLTÀ KIDS-FRIENDLY
+// ⏱️ DIFFICOLTÀ KIDS-FRIENDLY (tempi aumentati per livelli iniziali più semplici)
 const getDifficultySettings = (level) => {
-  if (level <= 3) return { dropInterval: 19000, colors: 3 }; // 18-20s, 3 colori
-  if (level <= 6) return { dropInterval: 15000, colors: 4 }; // 14-16s, 4 colori
-  if (level <= 9) return { dropInterval: 13000, colors: 5 }; // 12-14s, 5 colori
-  if (level <= 12) return { dropInterval: 11000, colors: 6 }; // 10-12s, 6 colori
-  if (level <= 15) return { dropInterval: 9000, colors: 7 }; // 8-10s, 7 colori
+  if (level <= 3) return { dropInterval: 25000, colors: 3 }; // 25s, 3 colori - molto facile
+  if (level <= 6) return { dropInterval: 20000, colors: 4 }; // 20s, 4 colori - facile
+  if (level <= 9) return { dropInterval: 16000, colors: 5 }; // 16s, 5 colori
+  if (level <= 12) return { dropInterval: 13000, colors: 6 }; // 13s, 6 colori
+  if (level <= 15) return { dropInterval: 10000, colors: 7 }; // 10s, 7 colori
   return { dropInterval: 8000, colors: 8 }; // 8s minimo, 8 colori (ARCOBALENO)
 };
 
