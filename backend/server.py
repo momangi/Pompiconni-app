@@ -3862,6 +3862,178 @@ async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), cred
     return {"success": True, "thumbnailUrl": f"/api/games/{game['slug']}/thumbnail"}
 
 
+# ============== GAME CARD IMAGE (for /giochi list page) ==============
+
+@api_router.post("/admin/games/{game_id}/card-image")
+async def upload_game_card_image(
+    game_id: str,
+    file: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Upload card image for game (used in /giochi list page)"""
+    verify_token(credentials.credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Delete old card image if exists
+    if game.get('cardImageFileId'):
+        try:
+            await fs.delete(ObjectId(game['cardImageFileId']))
+        except:
+            pass
+    
+    content = await file.read()
+    file_id = await fs.upload_from_stream(
+        f"game_card_{game_id}_{file.filename}",
+        io.BytesIO(content),
+        metadata={"content_type": file.content_type, "game_id": game_id, "type": "card"}
+    )
+    
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": {
+            "cardImageFileId": str(file_id),
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "cardImageUrl": f"/api/games/{game['slug']}/card-image"}
+
+@api_router.get("/games/{slug}/card-image")
+async def get_game_card_image(slug: str):
+    """Get card image for a game"""
+    game = await db.games.find_one({"slug": slug})
+    if not game or not game.get('cardImageFileId'):
+        raise HTTPException(status_code=404, detail="Card image not found")
+    
+    try:
+        grid_out = await fs.open_download_stream(ObjectId(game['cardImageFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
+        return Response(content=content, media_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Card image not found")
+
+@api_router.delete("/admin/games/{game_id}/card-image")
+async def delete_game_card_image(
+    game_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Delete card image for game"""
+    verify_token(credentials.credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Delete from GridFS
+    if game.get('cardImageFileId'):
+        try:
+            await fs.delete(ObjectId(game['cardImageFileId']))
+        except:
+            pass
+    
+    # Clear DB fields (set to null)
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": {
+            "cardImageFileId": None,
+            "cardImageUrl": None,
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "message": "Card image removed"}
+
+
+# ============== GAME PAGE IMAGE (for /giochi/:slug detail page) ==============
+
+@api_router.post("/admin/games/{game_id}/page-image")
+async def upload_game_page_image(
+    game_id: str,
+    file: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Upload page background image for game (used in /giochi/:slug page)"""
+    verify_token(credentials.credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Delete old page image if exists
+    if game.get('pageImageFileId'):
+        try:
+            await fs.delete(ObjectId(game['pageImageFileId']))
+        except:
+            pass
+    
+    content = await file.read()
+    file_id = await fs.upload_from_stream(
+        f"game_page_{game_id}_{file.filename}",
+        io.BytesIO(content),
+        metadata={"content_type": file.content_type, "game_id": game_id, "type": "page"}
+    )
+    
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": {
+            "pageImageFileId": str(file_id),
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "pageImageUrl": f"/api/games/{game['slug']}/page-image"}
+
+@api_router.get("/games/{slug}/page-image")
+async def get_game_page_image(slug: str):
+    """Get page background image for a game"""
+    game = await db.games.find_one({"slug": slug})
+    if not game or not game.get('pageImageFileId'):
+        raise HTTPException(status_code=404, detail="Page image not found")
+    
+    try:
+        grid_out = await fs.open_download_stream(ObjectId(game['pageImageFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
+        return Response(content=content, media_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Page image not found")
+
+@api_router.delete("/admin/games/{game_id}/page-image")
+async def delete_game_page_image(
+    game_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Delete page background image for game"""
+    verify_token(credentials.credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Delete from GridFS
+    if game.get('pageImageFileId'):
+        try:
+            await fs.delete(ObjectId(game['pageImageFileId']))
+        except:
+            pass
+    
+    # Clear DB fields (set to null)
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": {
+            "pageImageFileId": None,
+            "pageImageUrl": None,
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "message": "Page image removed"}
+
+
 # ============== GAME LEVEL BACKGROUNDS (SFONDI LIVELLI) ==============
 
 @api_router.get("/games/bolle-magiche/level-backgrounds")
