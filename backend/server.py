@@ -3684,10 +3684,14 @@ async def get_public_games():
     """Get all games for public display"""
     games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
     
-    # Add thumbnail URL if exists
+    # Add image URLs if exist
     for game in games:
         if game.get('thumbnailFileId'):
             game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+        if game.get('cardImageFileId'):
+            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+        if game.get('pageImageFileId'):
+            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
     
     return games
 
@@ -3701,6 +3705,10 @@ async def get_public_game(slug: str):
     
     if game.get('thumbnailFileId'):
         game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+    if game.get('cardImageFileId'):
+        game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+    if game.get('pageImageFileId'):
+        game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
     
     return game
 
@@ -3734,6 +3742,10 @@ async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(se
     for game in games:
         if game.get('thumbnailFileId'):
             game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+        if game.get('cardImageFileId'):
+            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+        if game.get('pageImageFileId'):
+            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
     
     return games
 
