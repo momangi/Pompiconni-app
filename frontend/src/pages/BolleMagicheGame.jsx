@@ -537,31 +537,57 @@ const BolleMagicheGame = () => {
     setPoppiconniMood('shooting');
   }, [isShooting, isPaused, currentBubble, shooterAngle, gameOver, levelComplete]);
   
-  // Bullet animation loop
+  // Bullet animation loop - using ref for velocity to avoid stale closure issues
+  const bulletVelRef = useRef(bulletVel);
+  useEffect(() => {
+    bulletVelRef.current = bulletVel;
+  }, [bulletVel]);
+  
   useEffect(() => {
     if (!isShooting || !bulletPos || !bulletVel) return;
     
     const gameWidth = GRID_COLS * BUBBLE_SIZE;
+    const radius = BUBBLE_SIZE / 2;
     
     const animate = () => {
+      // Guardrail: check velocity ref is valid
+      const vel = bulletVelRef.current;
+      if (!vel || typeof vel.vx !== 'number' || typeof vel.vy !== 'number') {
+        // Safety fallback - stop animation
+        setShooting(false);
+        setBulletPos(null);
+        return;
+      }
+      
       setBulletPos(prev => {
         if (!prev) return null;
         
-        let newX = prev.x + bulletVel.vx;
-        let newY = prev.y + bulletVel.vy;
+        let newX = prev.x + vel.vx;
+        let newY = prev.y + vel.vy;
+        let newVx = vel.vx;
         
-        // Wall bounce
-        if (newX < BUBBLE_SIZE / 2) {
-          newX = BUBBLE_SIZE / 2;
-          setBulletVel(v => ({ ...v, vx: -v.vx }));
-        } else if (newX > gameWidth - BUBBLE_SIZE / 2) {
-          newX = gameWidth - BUBBLE_SIZE / 2;
-          setBulletVel(v => ({ ...v, vx: -v.vx }));
+        // Wall bounce - clamp position AND reflect velocity in ONE step
+        // Left wall
+        if (newX < radius) {
+          newX = radius;
+          newVx = Math.abs(vel.vx); // Always positive (going right)
+        } 
+        // Right wall
+        else if (newX > gameWidth - radius) {
+          newX = gameWidth - radius;
+          newVx = -Math.abs(vel.vx); // Always negative (going left)
         }
         
-        // Top collision
-        if (newY < BUBBLE_SIZE / 2) {
-          const { col } = getGridPos(newX, BUBBLE_SIZE / 2);
+        // Update velocity if it changed (only update once per bounce)
+        if (newVx !== vel.vx) {
+          const updatedVel = { vx: newVx, vy: vel.vy };
+          bulletVelRef.current = updatedVel;
+          setBulletVel(updatedVel);
+        }
+        
+        // Top collision - attach bubble
+        if (newY < radius) {
+          const { col } = getGridPos(newX, radius);
           attachBubble(0, col, currentBubble);
           return null;
         }
