@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen, Search, Image as ImageIcon } from 'lucide-react';
+import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen, Search, Image as ImageIcon, Gamepad2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
@@ -24,6 +24,7 @@ const Navbar = () => {
     { href: '/galleria', label: 'Galleria', icon: Images },
     { href: '/poster', label: 'Poster', icon: ImageIcon },
     { href: '/libri', label: 'Libri', icon: BookOpen },
+    { href: '/giochi', label: 'Giochi', icon: Gamepad2 },
     { href: '/download', label: 'Download', icon: Download },
   ];
 
