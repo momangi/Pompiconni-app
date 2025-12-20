@@ -1156,16 +1156,16 @@ const BolleMagicheGame = () => {
 
       {/* 
         ============================================
-        🎮 GAME AREA - Fixed dimensions, responsive wrapper handles sizing
+        🎮 GAME AREA - Fixed pixel dimensions
+        Scaling handled by parent's CSS zoom
         ============================================
       */}
       <div 
         ref={gameRef}
-        className="relative rounded-3xl shadow-2xl overflow-hidden cursor-crosshair game-wrapper"
+        className="relative rounded-3xl shadow-2xl overflow-hidden cursor-crosshair"
         style={{ 
           width: gameWidth, 
           height: gameHeight,
-          maxWidth: '100%',
         }}
         onMouseMove={handleMouseMove}
         onClick={handleClick}
