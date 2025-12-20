@@ -1071,8 +1071,12 @@ const BolleMagicheGame = () => {
           </>
         )}
         
-        {/* Shooting bubble */}
-        {bulletPos && currentBubble && renderBubble(currentBubble, bulletPos.x, bulletPos.y, BUBBLE_SIZE, false, 'bullet')}
+        {/* Shooting bubble - z-index alto per essere visibile sopra Poppiconni */}
+        {bulletPos && currentBubble && (
+          <div style={{ position: 'absolute', zIndex: 30, left: 0, top: 0 }}>
+            {renderBubble(currentBubble, bulletPos.x, bulletPos.y, BUBBLE_SIZE, false, 'bullet')}
+          </div>
+        )}
         
         {/* Shooter area - semi-transparent gradient */}
         <div 
