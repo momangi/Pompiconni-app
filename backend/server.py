@@ -3799,6 +3799,10 @@ async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizat
         "ageRecommended": game_data.get('ageRecommended', game.get('ageRecommended', '3+')),
         "howToPlay": game_data.get('howToPlay', game.get('howToPlay', [])),
         "sortOrder": game_data.get('sortOrder', game.get('sortOrder', 0)),
+        # Card image opacity (0-100)
+        "cardImageOpacity": game_data.get('cardImageOpacity', game.get('cardImageOpacity', 35)),
+        # Page image opacity (0-100)
+        "pageImageOpacity": game_data.get('pageImageOpacity', game.get('pageImageOpacity', 25)),
         "updatedAt": datetime.now(timezone.utc)
     }
     
@@ -3807,6 +3811,10 @@ async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizat
     updated_game = await db.games.find_one({"id": game_id}, {"_id": 0})
     if updated_game.get('thumbnailFileId'):
         updated_game['thumbnailUrl'] = f"/api/games/{updated_game['slug']}/thumbnail"
+    if updated_game.get('cardImageFileId'):
+        updated_game['cardImageUrl'] = f"/api/games/{updated_game['slug']}/card-image"
+    if updated_game.get('pageImageFileId'):
+        updated_game['pageImageUrl'] = f"/api/games/{updated_game['slug']}/page-image"
     
     return updated_game
 
