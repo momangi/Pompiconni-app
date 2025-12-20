@@ -1080,45 +1080,19 @@ const BolleMagicheGame = () => {
         {/* Shooting bubble */}
         {bulletPos && currentBubble && renderBubble(currentBubble, bulletPos.x, bulletPos.y, BUBBLE_SIZE, false, 'bullet')}
         
-        {/* Shooter area */}
+        {/* Shooter area - semi-transparent gradient */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-pink-100/90 via-pink-50/60 to-transparent"
+          className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-pink-100/70 via-pink-50/40 to-transparent"
         >
-          {/* 🚀 CANNONE DI POPPICONNI */}
+          {/* 🎀 TOY CANNON - Central, magical/infantile style */}
           <div 
             className="absolute"
             style={{ 
-              left: shooterX - 40, 
-              top: 15,
+              left: shooterX - 20, 
+              top: 20,
             }}
           >
-            {/* Cannon barrel (rotates with aim) */}
-            <div 
-              className="absolute"
-              style={{
-                left: 40,
-                top: 40,
-                transform: `rotate(${shooterAngle + 90}deg)`,
-                transformOrigin: '0 0',
-              }}
-            >
-              {/* Barrel */}
-              <div 
-                className="w-5 h-14 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-600 rounded-t-lg shadow-lg"
-                style={{ 
-                  marginLeft: -10,
-                  marginTop: -50,
-                }}
-              >
-                {/* Barrel glow */}
-                <div className="absolute inset-x-1 top-1 h-2 bg-white/40 rounded-full" />
-              </div>
-              
-              {/* RIMOSSA: bolla sotto il cannone - scarsa leggibilità */}
-            </div>
-            
-            {/* Poppiconni character */}
-            {renderPoppiconni()}
+            {renderToyCannon()}
           </div>
           
           {/* 🎯 BOLLE UI - Layout ORIZZONTALE senza testo */}
