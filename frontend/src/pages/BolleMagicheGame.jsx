@@ -776,11 +776,11 @@ const BolleMagicheGame = () => {
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    const zoom = getZoomFactor();
+    // Pivot in screen coords (zoomed), touch also in screen coords - they match!
     const pivot = getPivotPoint();
     
-    const touchX = (touch.clientX - rect.left) / zoom;
-    const touchY = (touch.clientY - rect.top) / zoom;
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
     
     const dx = touchX - pivot.x;
     const dy = touchY - pivot.y;
@@ -790,7 +790,7 @@ const BolleMagicheGame = () => {
     
     setShooterAngle(angle);
     setIsAiming(true);
-  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor, initAudio]);
+  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint, initAudio]);
   
   // Handle touch move - update aim angle
   const handleTouchMove = useCallback((e) => {
@@ -802,11 +802,11 @@ const BolleMagicheGame = () => {
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    const zoom = getZoomFactor();
+    // Pivot in screen coords (zoomed), touch also in screen coords - they match!
     const pivot = getPivotPoint();
     
-    const touchX = (touch.clientX - rect.left) / zoom;
-    const touchY = (touch.clientY - rect.top) / zoom;
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
     
     const dx = touchX - pivot.x;
     const dy = touchY - pivot.y;
@@ -815,7 +815,7 @@ const BolleMagicheGame = () => {
     angle = Math.max(CANNON_CONFIG.angleMin, Math.min(CANNON_CONFIG.angleMax, angle));
     
     setShooterAngle(angle);
-  }, [isTouchAiming, isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor]);
+  }, [isTouchAiming, isShooting, isPaused, gameOver, levelComplete, getPivotPoint]);
   
   // Handle touch end - SHOOT on release
   const handleTouchEnd = useCallback((e) => {
