@@ -817,7 +817,7 @@ const BolleMagicheGame = () => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [isShooting, bulletVel, currentBubble, grid, attachBubble]);
+  }, [isShooting, bulletVel, currentBubble, grid, attachBubble, playBounce]);
   
   // Next level
   const nextLevel = () => {
