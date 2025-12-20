@@ -3581,6 +3581,192 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
         "message": "Generazione in corso o non trovata"
     }
 
+# ============== GAMES ENDPOINTS ==============
+
+# --- PUBLIC GAMES ENDPOINTS ---
+
+@api_router.get("/games")
+async def get_public_games():
+    """Get all games for public display"""
+    games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
+    
+    # Add thumbnail URL if exists
+    for game in games:
+        if game.get('thumbnailFileId'):
+            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+    
+    return games
+
+
+@api_router.get("/games/{slug}")
+async def get_public_game(slug: str):
+    """Get a single game by slug"""
+    game = await db.games.find_one({"slug": slug}, {"_id": 0})
+    if not game:
+        raise HTTPException(status_code=404, detail="Gioco non trovato")
+    
+    if game.get('thumbnailFileId'):
+        game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+    
+    return game
+
+
+@api_router.get("/games/{slug}/thumbnail")
+async def get_game_thumbnail(slug: str):
+    """Get game thumbnail image"""
+    from bson import ObjectId
+    
+    game = await db.games.find_one({"slug": slug})
+    if not game or not game.get('thumbnailFileId'):
+        raise HTTPException(status_code=404, detail="Thumbnail non trovata")
+    
+    try:
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['thumbnailFileId']))
+        content = await grid_out.read()
+        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
+        return StreamingResponse(io.BytesIO(content), media_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+
+
+# --- ADMIN GAMES ENDPOINTS ---
+
+@api_router.get("/admin/games")
+async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get all games for admin"""
+    verify_admin_token(credentials)
+    games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
+    
+    for game in games:
+        if game.get('thumbnailFileId'):
+            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+    
+    return games
+
+
+@api_router.post("/admin/games")
+async def create_game(game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Create a new game"""
+    verify_admin_token(credentials)
+    
+    # Check slug uniqueness
+    existing = await db.games.find_one({"slug": game_data.get('slug')})
+    if existing:
+        raise HTTPException(status_code=400, detail="Slug già esistente")
+    
+    game = {
+        "id": str(uuid.uuid4()),
+        "slug": game_data.get('slug'),
+        "title": game_data.get('title'),
+        "shortDescription": game_data.get('shortDescription', ''),
+        "longDescription": game_data.get('longDescription', ''),
+        "status": game_data.get('status', 'coming_soon'),
+        "ageRecommended": game_data.get('ageRecommended', '3+'),
+        "howToPlay": game_data.get('howToPlay', []),
+        "thumbnailFileId": None,
+        "sortOrder": game_data.get('sortOrder', 0),
+        "createdAt": datetime.now(timezone.utc),
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    await db.games.insert_one(game)
+    del game['_id'] if '_id' in game else None
+    return game
+
+
+@api_router.put("/admin/games/{game_id}")
+async def update_game(game_id: str, game_data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Update a game"""
+    verify_admin_token(credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Gioco non trovato")
+    
+    update_data = {
+        "title": game_data.get('title', game['title']),
+        "slug": game_data.get('slug', game['slug']),
+        "shortDescription": game_data.get('shortDescription', game.get('shortDescription', '')),
+        "longDescription": game_data.get('longDescription', game.get('longDescription', '')),
+        "status": game_data.get('status', game.get('status', 'coming_soon')),
+        "ageRecommended": game_data.get('ageRecommended', game.get('ageRecommended', '3+')),
+        "howToPlay": game_data.get('howToPlay', game.get('howToPlay', [])),
+        "sortOrder": game_data.get('sortOrder', game.get('sortOrder', 0)),
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    await db.games.update_one({"id": game_id}, {"$set": update_data})
+    
+    updated_game = await db.games.find_one({"id": game_id}, {"_id": 0})
+    if updated_game.get('thumbnailFileId'):
+        updated_game['thumbnailUrl'] = f"/api/games/{updated_game['slug']}/thumbnail"
+    
+    return updated_game
+
+
+@api_router.delete("/admin/games/{game_id}")
+async def delete_game(game_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Delete a game"""
+    from bson import ObjectId
+    verify_admin_token(credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Gioco non trovato")
+    
+    # Delete thumbnail if exists
+    if game.get('thumbnailFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(game['thumbnailFileId']))
+        except:
+            pass
+    
+    await db.games.delete_one({"id": game_id})
+    return {"message": "Gioco eliminato"}
+
+
+@api_router.post("/admin/games/{game_id}/thumbnail")
+async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Upload game thumbnail"""
+    from bson import ObjectId
+    verify_admin_token(credentials)
+    
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Gioco non trovato")
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Tipo file non supportato")
+    
+    content = await file.read()
+    
+    # Delete old thumbnail if exists
+    if game.get('thumbnailFileId'):
+        try:
+            await gridfs_bucket.delete(ObjectId(game['thumbnailFileId']))
+        except:
+            pass
+    
+    # Upload new thumbnail
+    file_id = await gridfs_bucket.upload_from_stream(
+        f"game_thumbnail_{game['slug']}",
+        io.BytesIO(content),
+        metadata={"content_type": file.content_type, "game_id": game_id}
+    )
+    
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": {
+            "thumbnailFileId": str(file_id),
+            "updatedAt": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "thumbnailUrl": f"/api/games/{game['slug']}/thumbnail"}
+
+
 # ============== POSTER ENDPOINTS ==============
 
 # --- PUBLIC POSTER ENDPOINTS ---
