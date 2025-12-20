@@ -3746,12 +3746,15 @@ async def get_admin_games(credentials: HTTPAuthorizationCredentials = Depends(se
     games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
     
     for game in games:
+        # Cache busting with updatedAt timestamp
+        cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
+        
         if game.get('thumbnailFileId'):
-            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail"
+            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
         if game.get('cardImageFileId'):
-            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image"
+            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
         if game.get('pageImageFileId'):
-            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image"
+            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
     
     return games
 
