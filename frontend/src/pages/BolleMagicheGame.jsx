@@ -605,9 +605,22 @@ const BolleMagicheGame = () => {
   
   // ============================================
   // 🎯 MUZZLE POINT CALCULATION - SINGLE SOURCE OF TRUTH
+  // 🔍 GET CURRENT ZOOM FACTOR from .game-container
+  // CSS zoom affects mouse coordinates differently than transform:scale
+  // Must be defined BEFORE getMuzzlePoint and getPivotPoint
+  const getZoomFactor = useCallback(() => {
+    const container = document.querySelector('.game-container');
+    if (!container) return 1;
+    
+    const computedZoom = window.getComputedStyle(container).zoom;
+    return parseFloat(computedZoom) || 1;
+  }, []);
+  
+  // ============================================
   // DOM-BASED ONLY: Uses getBoundingClientRect()
   // Used by BOTH trajectory preview AND bullet spawn
   // NO hardcoded offsets or alternative formulas allowed
+  // 🎯 ZOOM-COMPENSATED: Divides coords by CSS zoom factor
   // ============================================
   const getMuzzlePoint = useCallback((angle) => {
     const gameArea = gameRef.current;
@@ -625,13 +638,16 @@ const BolleMagicheGame = () => {
       };
     }
     
-    // ====== DOM-BASED CALCULATION ======
+    // Get zoom factor for compensation
+    const zoom = getZoomFactor();
+    
+    // ====== DOM-BASED CALCULATION (ZOOM-COMPENSATED) ======
     const gameRect = gameArea.getBoundingClientRect();
     const cannonRect = cannonEl.getBoundingClientRect();
     
-    // Calculate pivot in game area coordinates
-    const pivotX = (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX);
-    const pivotY = (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY);
+    // Calculate pivot in game area coordinates, compensated for CSS zoom
+    const pivotX = ((cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX)) / zoom;
+    const pivotY = ((cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)) / zoom;
     
     // Calculate muzzle from pivot using angle and barrel length
     const angleRad = (angle * Math.PI) / 180;
@@ -639,18 +655,7 @@ const BolleMagicheGame = () => {
     const muzzleY = pivotY + Math.sin(angleRad) * CANNON_CONFIG.barrelLengthPx + CANNON_CONFIG.muzzleOffsetY;
     
     return { x: muzzleX, y: muzzleY };
-  }, [gameWidth, gameHeight]);
-  
-  // ============================================
-  // 🔍 GET CURRENT ZOOM FACTOR from .game-container
-  // CSS zoom affects mouse coordinates differently than transform:scale
-  const getZoomFactor = useCallback(() => {
-    const container = document.querySelector('.game-container');
-    if (!container) return 1;
-    
-    const computedZoom = window.getComputedStyle(container).zoom;
-    return parseFloat(computedZoom) || 1;
-  }, []);
+  }, [gameWidth, gameHeight, getZoomFactor]);
   
   // 🎯 PIVOT POINT FOR AIMING (DOM-based)
   // Used for mouse angle calculation
