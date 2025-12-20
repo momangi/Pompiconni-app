@@ -619,6 +619,38 @@ export const uploadGameThumbnail = async (gameId, file) => {
   return response.data;
 };
 
+// ============== GAME CARD IMAGE (for /giochi list page) ==============
+
+export const uploadGameCardImage = async (gameId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/games/${gameId}/card-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const deleteGameCardImage = async (gameId) => {
+  const response = await api.delete(`/admin/games/${gameId}/card-image`);
+  return response.data;
+};
+
+// ============== GAME PAGE IMAGE (for /giochi/:slug detail page) ==============
+
+export const uploadGamePageImage = async (gameId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/games/${gameId}/page-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const deleteGamePageImage = async (gameId) => {
+  const response = await api.delete(`/admin/games/${gameId}/page-image`);
+  return response.data;
+};
+
 // ============== GAME LEVEL BACKGROUNDS ==============
 
 export const getLevelBackgrounds = async () => {
