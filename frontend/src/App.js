@@ -29,6 +29,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBooks from "./pages/admin/AdminBooks";
 import AdminBundles from "./pages/admin/AdminBundles";
 import AdminGames from "./pages/admin/AdminGames";
+import AdminLevelBackgrounds from "./pages/admin/AdminLevelBackgrounds";
 import AdminSceneEditor from "./pages/admin/AdminSceneEditor";
 import AdminLogin from "./pages/admin/AdminLogin";
 import CookieBanner from "./components/CookieBanner";
