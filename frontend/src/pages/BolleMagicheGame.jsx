@@ -640,6 +640,7 @@ const BolleMagicheGame = () => {
   
   // Next level
   const nextLevel = () => {
+    hasSnappedRef.current = false; // Reset snap guard
     setLevel(prev => prev + 1);
     setLevelComplete(false);
     setComboCount(0);
@@ -647,6 +648,7 @@ const BolleMagicheGame = () => {
   
   // Reset game
   const resetGame = () => {
+    hasSnappedRef.current = false; // Reset snap guard
     setLevel(1);
     setScore(0);
     setGameOver(false);
