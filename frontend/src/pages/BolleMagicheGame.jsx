@@ -115,6 +115,7 @@ const BolleMagicheGame = () => {
   const [currentBackground, setCurrentBackground] = useState(null);
   
   const gameRef = useRef(null);
+  const cannonRef = useRef(null);
   const animationRef = useRef(null);
   const dropTimerRef = useRef(null);
   
