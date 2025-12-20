@@ -834,15 +834,16 @@ const BolleMagicheGame = () => {
           transformOrigin: 'center bottom',
         }}
       >
-        {/* Official cannon image */}
+        {/* Official cannon image - 10% bigger */}
         <img 
           src={CANNON_IMAGE_URL}
           alt="Cannone"
-          className="w-16 h-auto"
           style={{
+            width: 70,  /* w-16 (64px) + 10% = ~70px */
+            height: 'auto',
             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-            marginTop: -60,
-            marginLeft: -8,
+            marginTop: -50,
+            marginLeft: -12,
           }}
         />
       </div>
