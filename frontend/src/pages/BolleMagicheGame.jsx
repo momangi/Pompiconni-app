@@ -1042,8 +1042,9 @@ const BolleMagicheGame = () => {
               {showTrajectory ? <Eye className="w-4 h-4 text-purple-600" /> : <EyeOff className="w-4 h-4 text-gray-500" />}
             </button>
             <button
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={toggleMute}
               className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors"
+              title={isMuted ? "Attiva audio" : "Disattiva audio"}
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-gray-500" /> : <Volume2 className="w-4 h-4 text-gray-700" />}
             </button>
