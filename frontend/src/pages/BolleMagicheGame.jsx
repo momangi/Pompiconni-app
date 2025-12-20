@@ -755,27 +755,32 @@ const BolleMagicheGame = () => {
         }}
       />
       
-      {/* 🎯 COLOR NUCLEUS - Small saturated dot for gameplay identification */}
-      {/* 15-20% of bubble diameter, appears to float inside */}
+      {/* 🎯 COLOR NUCLEUS - 70% diameter with radial gradient fade */}
+      {/* Center = saturated color → Edges = transparent (floating in air effect) */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: '18%',
-          height: '18%',
+          width: '70%',
+          height: '70%',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: `radial-gradient(circle at 35% 35%, 
-            ${color.solid}ff 0%, 
-            ${color.solid}ee 50%, 
-            ${color.solid}cc 100%
+          // Radial gradient: intense center → soft fade to transparent
+          background: `radial-gradient(circle at 50% 50%, 
+            ${color.solid}ee 0%, 
+            ${color.solid}cc 25%, 
+            ${color.solid}99 45%, 
+            ${color.solid}55 65%, 
+            ${color.solid}22 85%, 
+            transparent 100%
           )`,
+          // Subtle inner glow for depth
           boxShadow: `
-            inset 1px 1px 2px rgba(255,255,255,0.6),
-            inset -0.5px -0.5px 1px rgba(0,0,0,0.15),
-            0 0 ${size * 0.12}px ${color.solid}80,
-            0 0 ${size * 0.06}px ${color.solid}40
+            inset 0 0 ${size * 0.08}px rgba(255,255,255,0.3),
+            0 0 ${size * 0.15}px ${color.solid}40
           `,
+          // Blend with soap film
+          mixBlendMode: 'normal',
         }}
       />
       
