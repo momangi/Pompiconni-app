@@ -3970,11 +3970,10 @@ async def get_game_card_image(slug: str):
 @api_router.delete("/admin/games/{game_id}/card-image")
 async def delete_game_card_image(
     game_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    email: str = Depends(verify_token)
 ):
     """Delete card image for game"""
     from bson import ObjectId
-    verify_token(credentials.credentials)
     
     game = await db.games.find_one({"id": game_id})
     if not game:
