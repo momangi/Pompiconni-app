@@ -566,19 +566,28 @@ const BolleMagicheGame = () => {
     setIsAiming(true);
   }, [isShooting, isPaused, gameOver, levelComplete]);
   
-  // Handle click to shoot - spawns bullet at muzzle point
+  // Handle click to shoot - spawns bullet at MUZZLE POINT (pixel-perfect with cannon tip)
   const handleClick = useCallback(() => {
     if (isShooting || isPaused || !currentBubble || gameOver || levelComplete) return;
     
-    const gameWidth = GRID_COLS * BUBBLE_SIZE;
-    const shooterX = gameWidth / 2;
-    const shooterY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 40;
+    const gameW = GRID_COLS * BUBBLE_SIZE;
+    const pivotX = gameW / 2;
+    const pivotY = GRID_ROWS * BUBBLE_SIZE * 0.866 + 70 + 50;
+    
+    // Calculate muzzle point based on cannon rotation
+    const cannonHeight = 100;
+    const muzzleDistance = cannonHeight * 0.80; // Distance from pivot to muzzle
+    const angleRad = (shooterAngle * Math.PI) / 180;
+    
+    const muzzleX = pivotX + Math.cos(angleRad) * muzzleDistance;
+    const muzzleY = pivotY + Math.sin(angleRad) * muzzleDistance;
     
     const speed = 18;
     const vx = Math.cos(shooterAngle * Math.PI / 180) * speed;
     const vy = Math.sin(shooterAngle * Math.PI / 180) * speed;
     
-    setBulletPos({ x: shooterX, y: shooterY });
+    // Spawn bullet at muzzle point
+    setBulletPos({ x: muzzleX, y: muzzleY });
     setBulletVel({ vx, vy });
     setShooting(true);
     
