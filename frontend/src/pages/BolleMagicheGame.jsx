@@ -12,6 +12,9 @@ import { getLevelBackgrounds } from '../services/api';
 // 🐘 URL IMMAGINE POPPICONNI UFFICIALE (fissa, non interattiva)
 const POPPICONNI_IMAGE_URL = "https://customer-assets.emergentagent.com/job_kids-gaming/artifacts/pbiw74iv_POPPICONNI%20EMERGENT.png";
 
+// 🎀 URL IMMAGINE CANNONE UFFICIALE
+const CANNON_IMAGE_URL = "https://customer-assets.emergentagent.com/job_kids-gaming/artifacts/oi77jaaf_CANNONE.png";
+
 // Constants
 const BUBBLE_SIZE = 44;
 const GRID_COLS = 11;
