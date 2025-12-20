@@ -201,10 +201,12 @@ const AdminGames = () => {
   };
 
   const handlePageOpacityChange = async (gameId, opacity) => {
+    // Clamp opacity 0-100
+    const clampedOpacity = Math.max(0, Math.min(100, opacity));
     try {
-      await updateGame(gameId, { pageImageOpacity: opacity });
+      await updateGame(gameId, { pageImageOpacity: clampedOpacity });
       // Update local state for live preview
-      setGames(prev => prev.map(g => g.id === gameId ? { ...g, pageImageOpacity: opacity } : g));
+      setGames(prev => prev.map(g => g.id === gameId ? { ...g, pageImageOpacity: clampedOpacity } : g));
     } catch (error) {
       console.error('Error updating opacity:', error);
     }
