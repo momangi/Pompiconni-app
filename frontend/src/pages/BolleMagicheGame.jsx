@@ -911,7 +911,7 @@ const BolleMagicheGame = () => {
       x: pivotX + Math.cos(angleRad) * muzzleDistance,
       y: pivotY + Math.sin(angleRad) * muzzleDistance,
     };
-  };
+  }, [pivotX, pivotY, muzzleDistance]);
   
   // 🎀 RENDER CANNON with fixed pivot rotation
   const renderToyCannon = () => {
