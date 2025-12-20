@@ -1056,12 +1056,12 @@ const BolleMagicheGame = () => {
         <div 
           className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-pink-100/70 via-pink-50/40 to-transparent"
         >
-          {/* 🎀 TOY CANNON - Central, magical/infantile style */}
+          {/* 🎀 TOY CANNON - Central, positioned at bottom */}
           <div 
             className="absolute"
             style={{ 
-              left: shooterX - 20, 
-              top: 20,
+              left: shooterX - 22, 
+              top: 50,  /* Spostato più in basso */
             }}
           >
             {renderToyCannon()}
