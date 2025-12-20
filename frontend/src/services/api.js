@@ -619,4 +619,44 @@ export const uploadGameThumbnail = async (gameId, file) => {
   return response.data;
 };
 
+// ============== GAME LEVEL BACKGROUNDS ==============
+
+export const getLevelBackgrounds = async () => {
+  const response = await api.get('/games/bolle-magiche/level-backgrounds');
+  return response.data;
+};
+
+export const adminGetLevelBackgrounds = async () => {
+  const response = await api.get('/admin/games/bolle-magiche/level-backgrounds');
+  return response.data;
+};
+
+export const adminCreateLevelBackground = async (formData) => {
+  const response = await api.post('/admin/games/bolle-magiche/level-backgrounds', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const adminUpdateLevelBackground = async (bgId, formData) => {
+  const response = await api.put(`/admin/games/bolle-magiche/level-backgrounds/${bgId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const adminUploadLevelBackgroundImage = async (bgId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/admin/games/bolle-magiche/level-backgrounds/${bgId}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const adminDeleteLevelBackground = async (bgId) => {
+  const response = await api.delete(`/admin/games/bolle-magiche/level-backgrounds/${bgId}`);
+  return response.data;
+};
+
 export default api;
