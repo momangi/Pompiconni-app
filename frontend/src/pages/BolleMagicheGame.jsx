@@ -544,10 +544,13 @@ const BolleMagicheGame = () => {
     
     const gameW = GRID_COLS * BUBBLE_SIZE;
     
+    // Apply spacing factor from config
+    const spacingFactor = CANNON_CONFIG.trajectoryDotSpacing;
+    
     for (let i = 0; i < 60; i++) {
       points.push({ x, y });
-      x += vx;
-      y += vy;
+      x += vx * spacingFactor;
+      y += vy * spacingFactor;
       
       // Wall bounce with clamp (same as real physics)
       if (x < radius) {
