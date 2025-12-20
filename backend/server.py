@@ -3900,12 +3900,12 @@ async def upload_game_card_image(
     # Delete old card image if exists
     if game.get('cardImageFileId'):
         try:
-            await fs.delete(ObjectId(game['cardImageFileId']))
-        except:
+            await gridfs_bucket.delete(ObjectId(game['cardImageFileId']))
+        except Exception:
             pass
     
     content = await file.read()
-    file_id = await fs.upload_from_stream(
+    file_id = await gridfs_bucket.upload_from_stream(
         f"game_card_{game_id}_{file.filename}",
         io.BytesIO(content),
         metadata={"content_type": file.content_type, "game_id": game_id, "type": "card"}
@@ -3929,11 +3929,11 @@ async def get_game_card_image(slug: str):
         raise HTTPException(status_code=404, detail="Card image not found")
     
     try:
-        grid_out = await fs.open_download_stream(ObjectId(game['cardImageFileId']))
+        grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['cardImageFileId']))
         content = await grid_out.read()
         content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
-        return Response(content=content, media_type=content_type)
-    except Exception as e:
+        return StreamingResponse(io.BytesIO(content), media_type=content_type)
+    except Exception:
         raise HTTPException(status_code=404, detail="Card image not found")
 
 @api_router.delete("/admin/games/{game_id}/card-image")
@@ -3951,8 +3951,8 @@ async def delete_game_card_image(
     # Delete from GridFS
     if game.get('cardImageFileId'):
         try:
-            await fs.delete(ObjectId(game['cardImageFileId']))
-        except:
+            await gridfs_bucket.delete(ObjectId(game['cardImageFileId']))
+        except Exception:
             pass
     
     # Clear DB fields (set to null)
