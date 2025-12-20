@@ -642,6 +642,16 @@ const BolleMagicheGame = () => {
   }, [gameWidth, gameHeight]);
   
   // ============================================
+  // 🔍 GET CURRENT ZOOM FACTOR from .game-container
+  // CSS zoom affects mouse coordinates differently than transform:scale
+  const getZoomFactor = useCallback(() => {
+    const container = document.querySelector('.game-container');
+    if (!container) return 1;
+    
+    const computedZoom = window.getComputedStyle(container).zoom;
+    return parseFloat(computedZoom) || 1;
+  }, []);
+  
   // 🎯 PIVOT POINT FOR AIMING (DOM-based)
   // Used for mouse angle calculation
   // ============================================
@@ -657,27 +667,34 @@ const BolleMagicheGame = () => {
       };
     }
     
+    const zoom = getZoomFactor();
     const gameRect = gameArea.getBoundingClientRect();
     const cannonRect = cannonEl.getBoundingClientRect();
     
+    // Compensate for CSS zoom in position calculations
     return {
-      x: (cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX),
-      y: (cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)
+      x: ((cannonRect.left - gameRect.left) + (cannonRect.width * CANNON_CONFIG.pivotOriginX)) / zoom,
+      y: ((cannonRect.top - gameRect.top) + (cannonRect.height * CANNON_CONFIG.pivotOriginY)) / zoom
     };
-  }, [gameWidth, gameHeight]);
+  }, [gameWidth, gameHeight, getZoomFactor]);
   
   // Handle mouse move for aiming (with angle clamping ±75° from vertical)
+  // 🎯 ZOOM-COMPENSATED: Divides mouse coords by CSS zoom factor
   const handleMouseMove = useCallback((e) => {
     if (isShooting || isPaused || gameOver || levelComplete) return;
     
     const rect = gameRef.current?.getBoundingClientRect();
     if (!rect) return;
     
-    // Get pivot point from DOM
+    // Get current zoom factor for compensation
+    const zoom = getZoomFactor();
+    
+    // Get pivot point (already zoom-compensated)
     const pivot = getPivotPoint();
     
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    // Mouse coordinates relative to game area, compensated for CSS zoom
+    const mouseX = (e.clientX - rect.left) / zoom;
+    const mouseY = (e.clientY - rect.top) / zoom;
     
     const dx = mouseX - pivot.x;
     const dy = mouseY - pivot.y;
@@ -689,7 +706,7 @@ const BolleMagicheGame = () => {
     
     setShooterAngle(angle);
     setIsAiming(true);
-  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint]);
+  }, [isShooting, isPaused, gameOver, levelComplete, getPivotPoint, getZoomFactor]);
   
   // Handle click to shoot - spawns bullet at MUZZLE POINT (pixel-perfect with cannon tip)
   const handleClick = useCallback(() => {
