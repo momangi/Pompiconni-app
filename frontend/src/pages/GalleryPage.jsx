@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SEO from '../components/SEO';
 import { getThemes } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -28,6 +29,11 @@ const GalleryPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Galleria disegni da colorare"
+        description="Esplora la galleria di disegni da colorare di Poppiconni: temi come la fattoria, lo zoo, i mestieri e tante altre avventure per bambini."
+        canonical="https://poppiconni.it/galleria"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-b from-pink-50 to-white py-16">
