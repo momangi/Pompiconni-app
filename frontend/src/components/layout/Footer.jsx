@@ -76,6 +76,7 @@ const Footer = () => {
               <li><Link to="/galleria" className="text-gray-600 hover:text-pink-500 transition-colors">Galleria</Link></li>
               <li><Link to="/poster" className="text-gray-600 hover:text-pink-500 transition-colors">Poster</Link></li>
               <li><Link to="/libri" className="text-gray-600 hover:text-pink-500 transition-colors">Libri</Link></li>
+              <li><Link to="/giochi" className="text-gray-600 hover:text-pink-500 transition-colors">Giochi</Link></li>
               <li><Link to="/download" className="text-gray-600 hover:text-pink-500 transition-colors">Download</Link></li>
             </ul>
           </div>
@@ -88,6 +89,8 @@ const Footer = () => {
               <li><Link to="/galleria/fattoria" className="text-gray-600 hover:text-pink-500 transition-colors">La Fattoria</Link></li>
               <li><Link to="/galleria/zoo" className="text-gray-600 hover:text-pink-500 transition-colors">Lo Zoo</Link></li>
               <li><Link to="/galleria/stagioni" className="text-gray-600 hover:text-pink-500 transition-colors">Le Stagioni</Link></li>
+              <li><Link to="/galleria/sport" className="text-gray-600 hover:text-pink-500 transition-colors">Lo Sport</Link></li>
+              <li><Link to="/galleria/vita-quotidiana" className="text-gray-600 hover:text-pink-500 transition-colors">Vita Quotidiana</Link></li>
             </ul>
           </div>
         </div>
