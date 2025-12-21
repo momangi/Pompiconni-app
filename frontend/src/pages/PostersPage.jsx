@@ -104,7 +104,7 @@ const PostersPage = () => {
                     {poster.imageUrl ? (
                       <img 
                         src={`${BACKEND_URL}${poster.imageUrl}`}
-                        alt={poster.title}
+                        alt={`Poster illustrato per bambini ${poster.title} – Poppiconni`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
