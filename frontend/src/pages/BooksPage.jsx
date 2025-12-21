@@ -106,7 +106,7 @@ const BooksPage = () => {
                     {book.coverImageFileId ? (
                       <img 
                         src={`${BACKEND_URL}/api/books/${book.id}/cover`}
-                        alt={book.title}
+                        alt={`Libro illustrato per bambini ${book.title} – Poppiconni`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
