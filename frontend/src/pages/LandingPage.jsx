@@ -477,7 +477,7 @@ const LandingPage = () => {
                     {bundle.backgroundImageUrl && (
                       <img 
                         src={`${BACKEND_URL}${bundle.backgroundImageUrl}`}
-                        alt=""
+                        alt={`Bundle ${bundle.name} - Libro da colorare Poppiconni`}
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{ 
                           filter: `blur(${bundleBlurPx}px)`,
