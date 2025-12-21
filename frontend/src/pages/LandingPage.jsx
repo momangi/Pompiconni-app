@@ -388,10 +388,11 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-              Scopri i <span className="gradient-text">Temi</span>
+              Scopri i temi da colorare
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Poppiconni ti aspetta in tante avventure diverse. Scegli il tuo tema preferito!
+              Mestieri, animali, stagioni e tante storie illustrate da colorare.
+              Ogni tema è pensato per accompagnare i bambini in un mondo diverso.
             </p>
           </div>
           
