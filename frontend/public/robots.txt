@@ -1,0 +1,15 @@
+# Robots.txt per Poppiconni
+# https://poppiconni.it
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://poppiconni.it/sitemap.xml
+
+# Blocca pagine admin
+Disallow: /admin
+Disallow: /admin/
+
+# Blocca API
+Disallow: /api/
