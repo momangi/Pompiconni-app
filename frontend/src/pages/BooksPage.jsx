@@ -49,8 +49,8 @@ const BooksPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <SEO 
-        title="Libri illustrati per bambini"
-        description="Scopri i libri illustrati di Poppiconni: storie da colorare, avventure educative e tanto divertimento per i più piccoli."
+        title="Libri illustrati e da colorare per bambini"
+        description="Scopri i libri illustrati di Poppiconni: storie da leggere e tavole da colorare per bambini. Libri creativi in PDF, in arrivo."
         canonical="https://poppiconni.it/libri"
       />
       <Navbar />
@@ -59,14 +59,26 @@ const BooksPage = () => {
       <section className="py-16 bg-gradient-to-b from-pink-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
+            {/* H1 SEO invisibile */}
+            <h1 className="sr-only">Libri illustrati e da colorare per bambini – Poppiconni</h1>
+            
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-pink-200 to-blue-200 rounded-3xl mb-6">
               <BookOpen className="w-10 h-10 text-pink-500" />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
+            
+            {/* Titolo visivo (non heading) */}
+            <p className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
               Libri <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-blue-400">Poppiconni</span>
-            </h1>
+            </p>
+            
+            {/* H2 visibile */}
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">
+              Libri illustrati da leggere e colorare insieme
+            </h2>
+            
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Storie illustrate da leggere e colorare insieme al tuo unicorno preferito!
+              Storie illustrate pensate per accompagnare i bambini nella lettura e nel gioco creativo. 
+              Ogni libro Poppiconni unisce racconto, fantasia e tavole da colorare per un'esperienza completa e divertente.
             </p>
           </div>
         </div>
