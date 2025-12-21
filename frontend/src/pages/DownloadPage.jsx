@@ -202,8 +202,11 @@ const DownloadPage = () => {
       <section className="py-16 bg-gradient-to-b from-white to-pink-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Bundle & <span className="gradient-text">Pacchetti</span></h2>
-            <p className="text-gray-600 max-w-xl mx-auto">Risparmia con i nostri pacchetti completi! PDF pronti per la stampa in formato A4.</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Bundle di disegni da colorare stampabili – PDF A4</h2>
+            <p className="text-gray-600 max-w-xl mx-auto">
+              Risparmia con i pacchetti completi di disegni da colorare per bambini. 
+              Ogni bundle contiene PDF pronti per la stampa in formato A4, perfetti per ore di divertimento creativo.
+            </p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
