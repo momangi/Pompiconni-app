@@ -252,21 +252,24 @@ const DownloadPage = () => {
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">Come funziona?</h3>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Come scaricare e stampare i disegni da colorare</h2>
+            <p className="text-gray-600 mb-6">
+              Scaricare i disegni da colorare di Poppiconni è facilissimo! Segui questi tre semplici passaggi per stampare le tavole in PDF.
+            </p>
             <div className="grid sm:grid-cols-3 gap-6">
               <div>
                 <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3"><span className="text-xl font-bold text-pink-500">1</span></div>
-                <h4 className="font-semibold text-gray-800 mb-2">Scegli</h4>
-                <p className="text-sm text-gray-600">Seleziona la tavola o il bundle che preferisci</p>
+                <p className="font-semibold text-gray-800 mb-2">Scegli</p>
+                <p className="text-sm text-gray-600">Seleziona il disegno o il bundle che preferisci</p>
               </div>
               <div>
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"><span className="text-xl font-bold text-blue-500">2</span></div>
-                <h4 className="font-semibold text-gray-800 mb-2">Scarica</h4>
+                <p className="font-semibold text-gray-800 mb-2">Scarica</p>
                 <p className="text-sm text-gray-600">Ricevi il PDF direttamente sul tuo dispositivo</p>
               </div>
               <div>
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3"><span className="text-xl font-bold text-green-500">3</span></div>
-                <h4 className="font-semibold text-gray-800 mb-2">Stampa e Colora!</h4>
+                <p className="font-semibold text-gray-800 mb-2">Stampa e Colora!</p>
                 <p className="text-sm text-gray-600">Stampa in formato A4 e inizia a colorare</p>
               </div>
             </div>
