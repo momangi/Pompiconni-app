@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SEO from '../components/SEO';
 import { getBundles, getIllustrations, downloadIllustration, checkDownloadStatus, getSiteSettings } from '../services/api';
 import { toast } from 'sonner';
 
