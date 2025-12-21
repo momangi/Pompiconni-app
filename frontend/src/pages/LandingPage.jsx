@@ -226,10 +226,10 @@ const LandingPage = () => {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                  <p className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Heart className="w-6 h-6 text-pink-300" />
                     {characterImages.dolce?.title || 'Dolce'}
-                  </h3>
+                  </p>
                   <p className="text-white/90 text-sm line-clamp-2">
                     {characterImages.dolce?.shortDescription || 'Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza'}
                   </p>
