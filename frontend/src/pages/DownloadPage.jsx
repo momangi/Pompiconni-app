@@ -98,20 +98,32 @@ const DownloadPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Disegni da colorare per bambini da scaricare"
+        description="Scarica gratis disegni da colorare per bambini in PDF stampabili. Tavole gratuite e bundle completi di Poppiconni pronti per la stampa in formato A4."
+        canonical="https://poppiconni.it/download"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-b from-green-50 to-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
+            {/* H1 SEO invisibile */}
+            <h1 className="sr-only">Disegni da colorare per bambini da scaricare – PDF stampabili Poppiconni</h1>
+            
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full mb-6">
               <Download className="w-4 h-4 text-green-600" />
               <span className="text-sm font-medium text-green-700">Download Center</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
+            
+            {/* Titolo visivo (non heading) */}
+            <p className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
               <span className="gradient-text">Scarica</span> le Tavole
-            </h1>
+            </p>
+            
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tavole gratuite e bundle completi pronti per la stampa in formato PDF A4
+              Disegni da colorare per bambini pronti da scaricare e stampare. 
+              Tavole gratuite e bundle completi in formato PDF A4, perfetti per far divertire i più piccoli.
             </p>
           </div>
         </div>
@@ -121,8 +133,8 @@ const DownloadPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Tavole Gratuite</h2>
-              <p className="text-gray-600">{freeIllustrations.length} tavole disponibili gratis</p>
+              <h2 className="text-2xl font-bold text-gray-800">Tavole da colorare gratuite in PDF per bambini</h2>
+              <p className="text-gray-600">{freeIllustrations.length} disegni disponibili gratis, pronti da scaricare e stampare</p>
             </div>
             <Badge variant="secondary" className="bg-green-100 text-green-700 px-4 py-2">
               <Star className="w-4 h-4 mr-1" />100% Gratis
@@ -139,6 +151,12 @@ const DownloadPage = () => {
                 </div>
               ))}
             </div>
+          ) : freeIllustrations.length === 0 ? (
+            <div className="text-center py-12 bg-green-50 rounded-2xl">
+              <FileText className="w-16 h-16 text-green-200 mx-auto mb-4" />
+              <p className="text-xl font-semibold text-gray-600 mb-2">Nuove tavole gratuite in arrivo!</p>
+              <p className="text-gray-500">Stiamo preparando nuovi disegni da colorare per bambini. Torna presto!</p>
+            </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {freeIllustrations.slice(0, 8).map((illustration) => (
@@ -147,7 +165,7 @@ const DownloadPage = () => {
                     <div className="h-32 bg-green-50 rounded-lg flex items-center justify-center mb-4">
                       <FileText className="w-12 h-12 text-green-300" />
                     </div>
-                    <h3 className="font-semibold text-gray-800 mb-1 truncate">{illustration.title}</h3>
+                    <p className="font-semibold text-gray-800 mb-1 truncate">{illustration.title}</p>
                     <p className="text-sm text-gray-500 mb-4 truncate">{illustration.description}</p>
                     <Button 
                       className="w-full bg-green-500 hover:bg-green-600" 
