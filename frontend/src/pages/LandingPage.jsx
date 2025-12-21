@@ -456,9 +456,11 @@ const LandingPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-                <span className="gradient-text">Download</span> & Bundle
+                Download e libri da colorare Poppiconni
               </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">Scarica le tavole gratuite o scegli un pacchetto completo!</p>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Scarica le tavole gratuite oppure scegli un libro da colorare completo in PDF, pronto da stampare.
+              </p>
             </div>
             
             {/* Grid layout for ≤4, horizontal scroll for >4 */}
