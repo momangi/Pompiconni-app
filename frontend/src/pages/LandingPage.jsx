@@ -95,6 +95,11 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Disegni da colorare per bambini"
+        description="Poppiconni è un mondo creativo per bambini con disegni da colorare, libri illustrati e giochi educativi. Scopri l'unicorno più dolce del web!"
+        canonical="https://poppiconni.it/"
+      />
       <Navbar />
       
       {/* Hero Section */}
