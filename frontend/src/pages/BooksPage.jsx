@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SEO from '../components/SEO';
 import { getBooks, getSiteSettings } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
