@@ -134,7 +134,7 @@ const BooksPage = () => {
                   </div>
                   
                   <CardContent className="p-5">
-                    <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-1">{book.title}</h3>
+                    <p className="font-bold text-lg text-gray-800 mb-2 line-clamp-1">{book.title}</p>
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">{book.description}</p>
                     
                     <div className="flex items-center justify-between">
