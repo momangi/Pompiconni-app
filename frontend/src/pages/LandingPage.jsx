@@ -515,7 +515,7 @@ const LandingPage = () => {
                           {bundle.badgeText}
                         </span>
                       )}
-                      <h3 className="text-lg font-bold text-gray-800 mb-2">{bundle.title}</h3>
+                      <p className="text-lg font-bold text-gray-800 mb-2">{bundle.title}</p>
                       <p className="text-sm text-gray-600 mb-4">{bundle.subtitle}</p>
                       <p className="text-3xl font-bold text-pink-500 mb-4">
                         {bundle.isFree ? 'Gratis' : `€${bundle.price}`}
