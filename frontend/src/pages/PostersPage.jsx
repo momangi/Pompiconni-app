@@ -173,9 +173,9 @@ const PostersPage = () => {
         {posters.length > 0 && (
           <div className="mt-16 text-center">
             <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              <p className="text-2xl font-bold text-gray-800 mb-2">
                 🎨 Stampa e Incornicia!
-              </h3>
+              </p>
               <p className="text-gray-600 mb-4">
                 I nostri poster sono ottimizzati per la stampa in formato A4 e A3. 
                 Scarica, stampa e regala un sorriso alla cameretta!
