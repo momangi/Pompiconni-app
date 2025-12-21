@@ -30,23 +30,39 @@ const PostersPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 via-white to-blue-50">
+      <SEO 
+        title="Poster illustrati per bambini"
+        description="Bellissimi poster illustrati per bambini, a colori e pronti da stampare. Perfetti per decorare la cameretta con le avventure di Poppiconni."
+        canonical="https://poppiconni.it/poster"
+      />
       <Navbar />
       
       <main className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
+          {/* H1 SEO invisibile */}
+          <h1 className="sr-only">Poster per bambini stampabili – Illustrazioni Poppiconni</h1>
+          
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 px-4 py-2 rounded-full mb-4">
             <Sparkles className="w-4 h-4 text-pink-500" />
             <span className="text-sm font-medium text-pink-600">Illustrazioni a colori</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          
+          {/* Titolo visivo (non heading) */}
+          <p className="text-4xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
               Poster Poppiconni
             </span>
-          </h1>
+          </p>
+          
+          {/* H2 visibile */}
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">
+            Poster illustrati per decorare la cameretta dei bambini
+          </h2>
+          
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Bellissimi poster a colori pronti da stampare e incorniciare. 
-            Perfetti per decorare la cameretta dei tuoi bambini!
+            Bellissimi poster illustrati per bambini, a colori e pronti da stampare. 
+            Perfetti per decorare la cameretta con le avventure di Poppiconni, in formato PDF ad alta risoluzione.
           </p>
         </div>
 
@@ -57,7 +73,7 @@ const PostersPage = () => {
             <span className="text-xl font-bold">PDF Stampabile – Ideale da Incorniciare</span>
           </div>
           <p className="text-pink-100">
-            Ogni poster è in alta risoluzione, pronto per la stampa professionale
+            Ogni poster Poppiconni è disponibile in PDF ad alta risoluzione, ideale per la stampa professionale e per essere incorniciato.
           </p>
         </div>
 
