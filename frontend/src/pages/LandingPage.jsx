@@ -436,7 +436,7 @@ const LandingPage = () => {
                     <BookOpen className="w-16 h-16 text-gray-600 group-hover:scale-110 transition-transform duration-300 relative z-10" />
                   </div>
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{theme.name}</h3>
+                    <p className="text-xl font-bold text-gray-800 mb-2">{theme.name}</p>
                     <p className="text-gray-600 text-sm mb-4">{theme.description}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">{theme.illustrationCount} tavole</span>
