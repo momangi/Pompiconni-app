@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { getPublicPosters } from '../services/api';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SEO from '../components/SEO';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
