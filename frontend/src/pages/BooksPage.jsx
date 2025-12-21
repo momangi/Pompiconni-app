@@ -169,11 +169,11 @@ const BooksPage = () => {
       <section className="py-16 bg-gradient-to-b from-white to-pink-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Ogni libro è un&apos;avventura!
+            Ogni libro è un'avventura creativa
           </h2>
           <p className="text-gray-600 mb-8">
-            Leggi le storie di Poppiconni e poi colora le scene: ogni pagina ha una versione 
-            colorata per la lettura e una versione in bianco e nero da colorare!
+            Leggi le storie di Poppiconni e poi colora le scene: ogni pagina è pensata per stimolare 
+            immaginazione, concentrazione e creatività nei bambini.
           </p>
           <div className="flex flex-wrap justify-center gap-6">
             <div className="flex items-center gap-2 text-gray-600">
