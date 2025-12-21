@@ -90,8 +90,12 @@ const BooksPage = () => {
           {books.length === 0 ? (
             <div className="text-center py-20">
               <Book className="w-20 h-20 text-gray-200 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-gray-400 mb-2">Prossimamente...</h2>
-              <p className="text-gray-400">I libri di Poppiconni stanno arrivando!</p>
+              <p className="text-2xl font-bold text-gray-400 mb-2">Prossimamente...</p>
+              <p className="text-gray-500 max-w-lg mx-auto">
+                I primi libri illustrati di Poppiconni sono in arrivo! 
+                Racconti dolci e avventurosi, con una versione a colori per la lettura 
+                e una versione in bianco e nero da colorare.
+              </p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
