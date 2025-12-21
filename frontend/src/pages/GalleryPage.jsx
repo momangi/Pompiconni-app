@@ -84,7 +84,7 @@ const GalleryPage = () => {
                       {theme.backgroundImageUrl && (
                         <img 
                           src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
-                          alt=""
+                          alt={`Disegni da colorare tema ${theme.name} - Poppiconni`}
                           className="absolute inset-0 w-full h-full object-cover"
                           style={{ 
                             filter: `blur(${themeBlurPx}px)`,
