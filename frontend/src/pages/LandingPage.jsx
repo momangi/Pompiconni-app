@@ -284,10 +284,10 @@ const LandingPage = () => {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                  <p className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-300" />
                     {characterImages.impacciato?.title || 'Impacciato'}
-                  </h3>
+                  </p>
                   <p className="text-white/90 text-sm line-clamp-2">
                     {characterImages.impacciato?.shortDescription || 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione'}
                   </p>
