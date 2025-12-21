@@ -127,8 +127,8 @@ const LandingPage = () => {
               </p>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl">
-                Un unicorno dolce, simpatico e leggermente impacciato che ti accompagnerà 
-                in tante avventure da colorare. Scopri i mestieri, la fattoria, lo zoo e tanto altro!
+                Un unicorno dolce, simpatico e un po' impacciato che accompagna i bambini in tante avventure da colorare.
+                Disegni, libri illustrati e tavole creative per divertirsi, imparare e dare spazio alla fantasia.
               </p>
               
               <div className="flex flex-wrap gap-4">
