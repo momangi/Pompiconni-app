@@ -87,7 +87,7 @@ const PostersPage = () => {
           <Card className="border-2 border-dashed border-pink-200 bg-pink-50/50">
             <CardContent className="py-16 text-center">
               <ImageIcon className="w-16 h-16 mx-auto text-pink-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-700 mb-2">Poster in arrivo!</h3>
+              <p className="text-xl font-bold text-gray-700 mb-2">Poster in arrivo!</p>
               <p className="text-gray-500">
                 Stiamo preparando una collezione speciale di poster per te.
               </p>
