@@ -112,15 +112,19 @@ const LandingPage = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-left">
+              {/* H1 SEO - visivamente discreto ma semanticamente corretto */}
+              <h1 className="sr-only">Disegni da colorare per bambini – Il mondo di Poppiconni</h1>
+              
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-pink-100 rounded-full mb-6">
                 <Sparkles className="w-4 h-4 text-pink-500" />
                 <span className="text-sm font-medium text-pink-600">Libri da colorare per bambini</span>
               </div>
               
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
-                Disegni da colorare per bambini –{' '}
-                <span className="gradient-text">Il mondo di Poppiconni</span>
-              </h1>
+              {/* Headline narrativa - cuore emozionale del brand */}
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+                Ciao, sono{' '}
+                <span className="gradient-text">Poppiconni!</span>
+              </p>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl">
                 Un unicorno dolce, simpatico e leggermente impacciato che ti accompagnerà 
@@ -152,8 +156,8 @@ const LandingPage = () => {
                   <p className="text-gray-500">Temi diversi</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-green-400">3-9</p>
-                  <p className="text-gray-500">Anni età</p>
+                  <p className="text-3xl font-bold text-green-400">∞</p>
+                  <p className="text-gray-500 text-sm">Per tutte le età</p>
                 </div>
               </div>
             </div>
