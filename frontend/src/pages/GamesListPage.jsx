@@ -68,6 +68,11 @@ const GamesListPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50/30 to-white">
+      <SEO 
+        title="Giochi educativi per bambini"
+        description="Scopri i giochi educativi di Poppiconni: Bolle Magiche, Puzzle e tante altre avventure divertenti per bambini di tutte le età."
+        canonical="https://poppiconni.it/giochi"
+      />
       <Navbar />
       
       {/* Hero Section */}
