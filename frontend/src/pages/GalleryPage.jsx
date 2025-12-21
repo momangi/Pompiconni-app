@@ -113,7 +113,7 @@ const GalleryPage = () => {
                       </div>
                     </div>
                     <CardContent className="p-6">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-3">{theme.name}</h3>
+                      <p className="text-2xl font-bold text-gray-800 mb-3">{theme.name}</p>
                       <p className="text-gray-600 mb-4">{theme.description}</p>
                       <div className="flex items-center text-pink-500 font-medium group-hover:text-pink-600">
                         <span>Scopri le tavole</span>
