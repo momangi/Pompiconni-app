@@ -133,9 +133,9 @@ const PostersPage = () => {
                   </div>
 
                   <CardContent className="p-5">
-                    <h3 className="font-bold text-lg text-gray-800 mb-2 group-hover:text-pink-500 transition-colors">
+                    <p className="font-bold text-lg text-gray-800 mb-2 group-hover:text-pink-500 transition-colors">
                       {poster.title}
-                    </h3>
+                    </p>
                     {poster.description && (
                       <p className="text-sm text-gray-500 line-clamp-2 mb-4">
                         {poster.description}
