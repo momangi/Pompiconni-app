@@ -39,11 +39,15 @@ const GalleryPage = () => {
       <section className="bg-gradient-to-b from-pink-50 to-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
+            {/* H1 SEO invisibile */}
+            <h1 className="sr-only">Galleria di disegni da colorare per bambini – Temi Poppiconni</h1>
+            
+            {/* Titolo visivo */}
+            <p className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
               <span className="gradient-text">Galleria</span> Tematica
-            </h1>
+            </p>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Esplora tutti i temi disponibili e scopri le avventure di Poppiconni!
+              Esplora tutti i temi disponibili e scopri le avventure di Poppiconni con tanti disegni da colorare pensati per bambini.
             </p>
           </div>
         </div>
