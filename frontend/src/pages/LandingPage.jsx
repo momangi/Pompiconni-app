@@ -406,7 +406,7 @@ const LandingPage = () => {
                     {theme.backgroundImageUrl && (
                       <img 
                         src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
-                        alt=""
+                        alt={`Tema ${theme.name} - Disegni da colorare Poppiconni`}
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{ 
                           filter: `blur(${themeBlurPx}px)`,
