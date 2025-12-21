@@ -358,9 +358,9 @@ const LandingPage = () => {
                 <span className="font-semibold capitalize">{characterImages[expandedTrait]?.title || expandedTrait}</span>
               </div>
 
-              <h3 className="text-3xl font-bold text-gray-800 mb-4">
+              <p className="text-3xl font-bold text-gray-800 mb-4">
                 Poppiconni è {characterImages[expandedTrait]?.title || expandedTrait}
-              </h3>
+              </p>
 
               <p className="text-lg text-gray-600 leading-relaxed mb-6">
                 {characterImages[expandedTrait]?.longDescription || (
