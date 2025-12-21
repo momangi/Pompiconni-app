@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SEO from '../components/SEO';
 import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings, getCharacterImages } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
