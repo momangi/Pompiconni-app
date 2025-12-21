@@ -48,6 +48,11 @@ const BooksPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Libri illustrati per bambini"
+        description="Scopri i libri illustrati di Poppiconni: storie da colorare, avventure educative e tanto divertimento per i più piccoli."
+        canonical="https://poppiconni.it/libri"
+      />
       <Navbar />
       
       {/* Hero Section */}
