@@ -1,24 +1,70 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="description" content="A product of emergent.sh" />
-        <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-        <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-        <title>Emergent | Fullstack App</title>
+        <meta name="theme-color" content="#EC4899" />
+        <meta name="description" content="Poppiconni è un mondo creativo per bambini con disegni da colorare, libri illustrati e giochi educativi. Scopri l'unicorno più dolce del web!" />
+        
+        <!-- SEO Meta Tags -->
+        <meta name="keywords" content="disegni da colorare, bambini, unicorno, libri illustrati, giochi educativi, Poppiconni, colorare gratis" />
+        <meta name="author" content="Poppiconni" />
+        <meta name="robots" content="index, follow" />
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://poppiconni.it/" />
+        <meta property="og:title" content="Poppiconni – Disegni da colorare per bambini" />
+        <meta property="og:description" content="Poppiconni è un mondo creativo per bambini con disegni da colorare, libri illustrati e giochi educativi." />
+        <meta property="og:site_name" content="Poppiconni" />
+        <meta property="og:locale" content="it_IT" />
+        
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Poppiconni – Disegni da colorare per bambini" />
+        <meta name="twitter:description" content="Poppiconni è un mondo creativo per bambini con disegni da colorare, libri illustrati e giochi educativi." />
+        
+        <!-- Canonical URL -->
+        <link rel="canonical" href="https://poppiconni.it/" />
+        
+        <!-- Apple Mobile Web App -->
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Poppiconni" />
+        
+        <!-- Structured Data JSON-LD -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Poppiconni",
+            "url": "https://poppiconni.it",
+            "logo": "https://poppiconni.it/logo.png",
+            "description": "Poppiconni è un brand creativo per bambini specializzato in disegni da colorare, libri illustrati e giochi educativi.",
+            "foundingDate": "2024",
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "url": "https://poppiconni.it/contatti"
+            }
+        }
+        </script>
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Poppiconni",
+            "url": "https://poppiconni.it",
+            "description": "Disegni da colorare per bambini – Il mondo di Poppiconni",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://poppiconni.it/cerca?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+            }
+        }
+        </script>
+        
+        <title>Poppiconni – Disegni da colorare per bambini</title>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>
     <body>
