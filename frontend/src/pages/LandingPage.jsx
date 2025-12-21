@@ -112,8 +112,8 @@ const LandingPage = () => {
               </div>
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
-                Ciao, sono{' '}
-                <span className="gradient-text">Poppiconni!</span>
+                Disegni da colorare per bambini –{' '}
+                <span className="gradient-text">Il mondo di Poppiconni</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl">
