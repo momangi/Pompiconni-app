@@ -343,7 +343,6 @@ class PoppiconniGenerateRequest(BaseModel):
     save_to_gallery: bool = True  # Auto-save to illustrations
     theme_id: Optional[str] = None  # Optional theme for categorization
     reference_image_base64: Optional[str] = None  # Direct reference image upload (base64)
-    use_base_prompt: bool = True  # Whether to include base prompt in generation
 
 class PoppiconniGenerateResponse(BaseModel):
     """Response from Poppiconni Multi-AI Pipeline"""
@@ -351,8 +350,6 @@ class PoppiconniGenerateResponse(BaseModel):
     generation_id: str
     status: str
     optimized_prompt: Optional[str] = None
-    final_prompt: Optional[str] = None  # Complete composed prompt for debug
-    base_prompt_version: Optional[int] = None  # Version of base prompt used
     qc_passed: bool = False
     confidence_score: float = 0.0
     qc_issues: List[str] = []
@@ -361,38 +358,6 @@ class PoppiconniGenerateResponse(BaseModel):
     illustration_id: Optional[str] = None
     message: str = ""
     retry_count: int = 0
-
-# ============== AI PROMPT CONFIG MODELS ==============
-
-class AiPromptConfigBase(BaseModel):
-    """Base model for AI Prompt Configuration (Global Brand Rules)"""
-    base_prompt: str  # The global brand/style rules
-    is_active: bool = True
-    is_locked: bool = False  # If locked, cannot be modified without unlocking
-
-class AiPromptConfigCreate(AiPromptConfigBase):
-    pass
-
-class AiPromptConfigUpdate(BaseModel):
-    base_prompt: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_locked: Optional[bool] = None
-
-class AiPromptConfig(AiPromptConfigBase):
-    id: str
-    version: int
-    created_at: datetime
-    updated_at: datetime
-    updated_by: Optional[str] = None
-
-class AiPromptConfigHistory(BaseModel):
-    """Historical record of prompt config changes"""
-    id: str
-    config_id: str
-    version: int
-    base_prompt: str
-    changed_at: datetime
-    changed_by: Optional[str] = None
 
 # ============== POSTER MODELS ==============
 
