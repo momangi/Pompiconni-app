@@ -62,7 +62,7 @@ const PostersPage = () => {
           
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Bellissimi poster illustrati per bambini, a colori e pronti da stampare. 
-            Perfetti per decorare la cameretta con le avventure di Poppiconni, in formato PDF ad alta risoluzione.
+            Perfetti per decorare la cameretta con le avventure del mondo di Poppiconni, in formato PDF ad alta risoluzione.
           </p>
         </div>
 
