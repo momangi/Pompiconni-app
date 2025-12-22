@@ -127,7 +127,7 @@ const LandingPage = () => {
               </p>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl">
-                Benvenuto nel mondo di Poppiconni, un universo illustrato pensato per far sognare, divertire e stimolare la creatività dei bambini.
+                Benvenuto nel mondo di Poppiconni, un universo illustrato pensato per far sognare, divertire e stimolare la creatività dei bambini attraverso disegni da colorare, libri illustrati e tavole creative.
                 Qui vivono Conni, l'unicorno dolce e un po' impacciato che accompagna i bambini in tante avventure da colorare, e Poppi, il barattolo di popcorn che compare sempre accanto alle storie come presenza inseparabile.
                 Disegni, libri illustrati e tavole creative per divertirsi, imparare e dare spazio alla fantasia.
               </p>
