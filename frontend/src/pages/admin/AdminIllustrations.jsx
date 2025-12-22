@@ -45,7 +45,7 @@ const AdminIllustrations = () => {
   const fetchData = async () => {
     try {
       const [illustrationsData, themesData] = await Promise.all([
-        getIllustrations(),
+        getAdminIllustrations(),
         getThemes()
       ]);
       setIllustrations(illustrationsData);
@@ -61,8 +61,29 @@ const AdminIllustrations = () => {
   const filteredIllustrations = illustrations.filter(i => {
     const matchesSearch = i.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTheme = filterTheme === 'all' || i.themeId === filterTheme;
-    return matchesSearch && matchesTheme;
+    const matchesPublished = filterPublished === 'all' || 
+      (filterPublished === 'published' && i.isPublished) ||
+      (filterPublished === 'draft' && !i.isPublished);
+    return matchesSearch && matchesTheme && matchesPublished;
   });
+
+  const handleTogglePublish = async (illustration) => {
+    setTogglingPublish(prev => ({ ...prev, [illustration.id]: true }));
+    try {
+      const result = await toggleIllustrationPublish(illustration.id);
+      setIllustrations(prev => prev.map(i => 
+        i.id === illustration.id 
+          ? { ...i, isPublished: result.isPublished, publishedAt: result.publishedAt }
+          : i
+      ));
+      toast.success(result.isPublished ? 'Illustrazione pubblicata!' : 'Illustrazione messa in bozza');
+    } catch (error) {
+      console.error('Toggle publish error:', error);
+      toast.error('Errore nel cambio stato');
+    } finally {
+      setTogglingPublish(prev => ({ ...prev, [illustration.id]: false }));
+    }
+  };
 
   // Upload file directly to an existing illustration via GridFS
   const handleAttachFile = async (illustrationId, file, type) => {
