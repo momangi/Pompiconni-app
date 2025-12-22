@@ -725,6 +725,14 @@ async def startup_event():
         # Index might already exist
         logger.debug(f"TTL index creation: {str(e)}")
     
+    # Migrate existing illustrations: set isPublished=True if field missing
+    migration_result = await db.illustrations.update_many(
+        {"isPublished": {"$exists": False}},
+        {"$set": {"isPublished": True, "publishedAt": datetime.now(timezone.utc)}}
+    )
+    if migration_result.modified_count > 0:
+        logger.info(f"Migrated {migration_result.modified_count} illustrations to published status")
+    
     logger.info("Database initialized")
 
 # ============== PUBLIC ENDPOINTS ==============
