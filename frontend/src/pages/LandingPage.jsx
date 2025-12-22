@@ -393,8 +393,8 @@ const LandingPage = () => {
               Scopri i temi da colorare
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Mestieri, animali, stagioni e tante storie illustrate da colorare.
-              Ogni tema è pensato per accompagnare i bambini in un mondo diverso.
+              Mestieri, animali, stagioni e tante storie illustrate da colorare, ambientate nel mondo di Poppiconni.
+              Ogni tema accompagna i bambini in una nuova avventura insieme a Poppi e Conni.
             </p>
           </div>
           
