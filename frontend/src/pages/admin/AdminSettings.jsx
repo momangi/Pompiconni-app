@@ -258,6 +258,19 @@ const AdminSettings = () => {
     }
   };
 
+  // Legal Info Handler
+  const handleLegalInfoSave = async () => {
+    setLegalSaving(true);
+    try {
+      await updateAdminSettings(legalInfo);
+      toast.success('Informazioni legali salvate!');
+    } catch (error) {
+      toast.error('Errore durante il salvataggio');
+    } finally {
+      setLegalSaving(false);
+    }
+  };
+
   const handleTextChange = (trait, field, value) => {
     setCharacterTexts(prev => ({
       ...prev,
