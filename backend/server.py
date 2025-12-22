@@ -1364,6 +1364,8 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
     illust_dict['downloadCount'] = 0
     illust_dict['pdfFileId'] = None
     illust_dict['imageFileId'] = None
+    illust_dict['isPublished'] = False  # New illustrations start as draft
+    illust_dict['publishedAt'] = None
     illust_dict['createdAt'] = datetime.now(timezone.utc)
     illust_dict['updatedAt'] = datetime.now(timezone.utc)
     await db.illustrations.insert_one(illust_dict)
@@ -1377,6 +1379,57 @@ async def create_illustration(illustration: IllustrationCreate, email: str = Dep
     # Remove MongoDB _id field to avoid serialization issues
     illust_dict.pop('_id', None)
     return illust_dict
+
+@admin_router.get("/illustrations")
+async def get_admin_illustrations(themeId: Optional[str] = None, isPublished: Optional[bool] = None, email: str = Depends(verify_token)):
+    """Admin endpoint: get all illustrations including drafts, with optional filters"""
+    query = {}
+    if themeId:
+        query["themeId"] = themeId
+    if isPublished is not None:
+        query["isPublished"] = isPublished
+    
+    illustrations = await db.illustrations.find(query).to_list(1000)
+    
+    # Get real download counts from download_events
+    download_counts = {}
+    pipeline = [{"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}}]
+    events = await db.download_events.aggregate(pipeline).to_list(1000)
+    for e in events:
+        download_counts[e["_id"]] = e["count"]
+    
+    for i in illustrations:
+        i['_id'] = str(i.get('_id', ''))
+        i['downloadCount'] = download_counts.get(i['id'], 0)
+    
+    return illustrations
+
+@admin_router.put("/illustrations/{illustration_id}/publish")
+async def toggle_illustration_publish(illustration_id: str, email: str = Depends(verify_token)):
+    """Toggle the published status of an illustration"""
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    current_status = illust.get('isPublished', False)
+    new_status = not current_status
+    
+    update_data = {
+        "isPublished": new_status,
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    
+    # Set publishedAt only when publishing for the first time
+    if new_status and not illust.get('publishedAt'):
+        update_data["publishedAt"] = datetime.now(timezone.utc)
+    
+    await db.illustrations.update_one({"id": illustration_id}, {"$set": update_data})
+    
+    return {
+        "success": True,
+        "isPublished": new_status,
+        "publishedAt": update_data.get("publishedAt", illust.get('publishedAt'))
+    }
 
 @admin_router.put("/illustrations/{illustration_id}")
 async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
