@@ -2394,21 +2394,35 @@ async def admin_get_settings(email: str = Depends(verify_token)):
     return settings
 
 @admin_router.put("/settings")
-async def admin_update_settings(settings: SiteSettings, email: str = Depends(verify_token)):
+async def admin_update_settings(settings: SiteSettingsUpdate, email: str = Depends(verify_token)):
     """Update site settings"""
     update_data = {
-        "show_reviews": settings.show_reviews,
         "updatedAt": datetime.now(timezone.utc)
     }
+    # Add show_reviews if provided
+    if settings.show_reviews is not None:
+        update_data["show_reviews"] = settings.show_reviews
     # Add legal fields if provided
-    if settings.legal_name is not None:
-        update_data["legal_name"] = settings.legal_name
-    if settings.legal_city is not None:
-        update_data["legal_city"] = settings.legal_city
+    if settings.legal_company_name is not None:
+        update_data["legal_company_name"] = settings.legal_company_name
+    if settings.show_legal_company_name is not None:
+        update_data["show_legal_company_name"] = settings.show_legal_company_name
+    if settings.legal_address is not None:
+        update_data["legal_address"] = settings.legal_address
+    if settings.show_legal_address is not None:
+        update_data["show_legal_address"] = settings.show_legal_address
+    if settings.legal_vat_number is not None:
+        update_data["legal_vat_number"] = settings.legal_vat_number
+    if settings.show_legal_vat_number is not None:
+        update_data["show_legal_vat_number"] = settings.show_legal_vat_number
     if settings.legal_email is not None:
         update_data["legal_email"] = settings.legal_email
-    if settings.legal_note is not None:
-        update_data["legal_note"] = settings.legal_note
+    if settings.show_legal_email is not None:
+        update_data["show_legal_email"] = settings.show_legal_email
+    if settings.legal_pec_email is not None:
+        update_data["legal_pec_email"] = settings.legal_pec_email
+    if settings.show_legal_pec_email is not None:
+        update_data["show_legal_pec_email"] = settings.show_legal_pec_email
     
     await db.site_settings.update_one(
         {"id": "global"},
