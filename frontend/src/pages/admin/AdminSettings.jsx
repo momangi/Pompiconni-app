@@ -745,6 +745,163 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
 
+        {/* Legal Contact Info Section */}
+        <Card className="lg:col-span-2 border-2 border-indigo-100">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-indigo-500" />
+              Informazioni Legali (Contatti)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Gestisci le informazioni di contatto legali mostrate nella pagina &quot;Contatti Legali&quot;. 
+              Usa i checkbox per scegliere quali campi mostrare pubblicamente.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Company Name */}
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    Nome Azienda / Titolare
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show_company"
+                      checked={legalInfo.show_legal_company_name}
+                      onCheckedChange={(checked) => setLegalInfo(prev => ({ ...prev, show_legal_company_name: checked }))}
+                    />
+                    <label htmlFor="show_company" className="text-xs text-gray-500">Mostra</label>
+                  </div>
+                </div>
+                <Input
+                  value={legalInfo.legal_company_name}
+                  onChange={(e) => setLegalInfo(prev => ({ ...prev, legal_company_name: e.target.value }))}
+                  placeholder="es. Matteo Calipa – Poppiconni Project"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    Indirizzo
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show_address"
+                      checked={legalInfo.show_legal_address}
+                      onCheckedChange={(checked) => setLegalInfo(prev => ({ ...prev, show_legal_address: checked }))}
+                    />
+                    <label htmlFor="show_address" className="text-xs text-gray-500">Mostra</label>
+                  </div>
+                </div>
+                <Input
+                  value={legalInfo.legal_address}
+                  onChange={(e) => setLegalInfo(prev => ({ ...prev, legal_address: e.target.value }))}
+                  placeholder="es. Ventimiglia (IM), Italia"
+                />
+              </div>
+
+              {/* VAT Number */}
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    Partita IVA
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show_vat"
+                      checked={legalInfo.show_legal_vat_number}
+                      onCheckedChange={(checked) => setLegalInfo(prev => ({ ...prev, show_legal_vat_number: checked }))}
+                    />
+                    <label htmlFor="show_vat" className="text-xs text-gray-500">Mostra</label>
+                  </div>
+                </div>
+                <Input
+                  value={legalInfo.legal_vat_number}
+                  onChange={(e) => setLegalInfo(prev => ({ ...prev, legal_vat_number: e.target.value }))}
+                  placeholder="es. IT12345678901"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    Email
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show_email"
+                      checked={legalInfo.show_legal_email}
+                      onCheckedChange={(checked) => setLegalInfo(prev => ({ ...prev, show_legal_email: checked }))}
+                    />
+                    <label htmlFor="show_email" className="text-xs text-gray-500">Mostra</label>
+                  </div>
+                </div>
+                <Input
+                  type="email"
+                  value={legalInfo.legal_email}
+                  onChange={(e) => setLegalInfo(prev => ({ ...prev, legal_email: e.target.value }))}
+                  placeholder="es. info@poppiconni.it"
+                />
+              </div>
+
+              {/* PEC Email */}
+              <div className="space-y-2 p-4 bg-gray-50 rounded-lg md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    PEC (Posta Elettronica Certificata)
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show_pec"
+                      checked={legalInfo.show_legal_pec_email}
+                      onCheckedChange={(checked) => setLegalInfo(prev => ({ ...prev, show_legal_pec_email: checked }))}
+                    />
+                    <label htmlFor="show_pec" className="text-xs text-gray-500">Mostra</label>
+                  </div>
+                </div>
+                <Input
+                  type="email"
+                  value={legalInfo.legal_pec_email}
+                  onChange={(e) => setLegalInfo(prev => ({ ...prev, legal_pec_email: e.target.value }))}
+                  placeholder="es. poppiconni@pec.it"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleLegalInfoSave}
+              disabled={legalSaving}
+              className="bg-indigo-500 hover:bg-indigo-600"
+            >
+              {legalSaving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Salvataggio...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Informazioni Legali
+                </>
+              )}
+            </Button>
+
+            <p className="text-xs text-gray-400">
+              I campi verranno mostrati nella pagina &quot;Contatti Legali&quot; solo se hanno un valore e il checkbox &quot;Mostra&quot; è attivo.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Preview Link */}
         <Card className="lg:col-span-2 border-2 border-green-100">
           <CardContent className="p-6">
