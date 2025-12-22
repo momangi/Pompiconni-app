@@ -1034,8 +1034,8 @@ async def get_illustration_image(illustration_id: str):
 
 @api_router.get("/illustrations/{illustration_id}/image-status")
 async def get_image_status(illustration_id: str):
-    """Check if an image is available"""
-    illust = await db.illustrations.find_one({"id": illustration_id})
+    """Check if an image is available - only for published illustrations"""
+    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
