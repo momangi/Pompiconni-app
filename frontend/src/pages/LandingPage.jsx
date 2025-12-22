@@ -204,7 +204,8 @@ const LandingPage = () => {
               Chi è Poppiconni?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Un unicorno speciale creato per far sognare, divertire e stimolare la creatività dei bambini attraverso il gioco e il colore.
+              Poppiconni è un mondo illustrato, nato per far sognare, divertire e stimolare la creatività dei bambini attraverso il gioco e il colore.
+              In questo mondo, Conni vive tante piccole avventure da colorare, sempre accompagnato dalla presenza di Poppi, il barattolo di popcorn.
             </p>
           </div>
           
