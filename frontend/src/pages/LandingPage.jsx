@@ -461,7 +461,7 @@ const LandingPage = () => {
                 Download e libri da colorare Poppiconni
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Scarica le tavole gratuite oppure scegli un libro da colorare completo in PDF, pronto da stampare.
+                Scarica le tavole gratuite oppure scegli un libro da colorare completo in PDF, pronto da stampare, per entrare nel mondo di Poppiconni e seguire le avventure di Conni, con Poppi sempre al suo fianco.
               </p>
             </div>
             
