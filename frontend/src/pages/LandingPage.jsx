@@ -233,7 +233,7 @@ const LandingPage = () => {
                     {characterImages.dolce?.title || 'Dolce'}
                   </p>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    {characterImages.dolce?.shortDescription || 'Con i suoi occhi grandi e le guanciotte rosate, Poppiconni conquista tutti con la sua dolcezza'}
+                    {characterImages.dolce?.shortDescription || 'Poppi e Conni sono davvero dolci. Affrontano le loro piccole sfide quotidiane con calma e serenità, sempre insieme come amici inseparabili.'}
                   </p>
                 </CardContent>
               </Card>
