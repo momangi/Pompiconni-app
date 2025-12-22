@@ -247,18 +247,30 @@ class DownloadEvent(BaseModel):
 class SiteSettings(BaseModel):
     show_reviews: bool = True
     stripe_enabled: bool = False
-    # Legal contact information
-    legal_name: Optional[str] = None  # es. "Matteo Calipa – Poppiconni Project"
-    legal_city: Optional[str] = None  # es. "Ventimiglia (IM), Italia"
-    legal_email: Optional[str] = None  # es. "pompiconni@gmail.com"
-    legal_note: Optional[str] = None  # es. "Per richieste legali..."
+    # Legal contact information with visibility flags
+    legal_company_name: Optional[str] = None
+    show_legal_company_name: bool = True
+    legal_address: Optional[str] = None
+    show_legal_address: bool = True
+    legal_vat_number: Optional[str] = None
+    show_legal_vat_number: bool = True
+    legal_email: Optional[str] = None
+    show_legal_email: bool = True
+    legal_pec_email: Optional[str] = None
+    show_legal_pec_email: bool = True
 
 class SiteSettingsUpdate(BaseModel):
     show_reviews: Optional[bool] = None
-    legal_name: Optional[str] = None
-    legal_city: Optional[str] = None
+    legal_company_name: Optional[str] = None
+    show_legal_company_name: Optional[bool] = None
+    legal_address: Optional[str] = None
+    show_legal_address: Optional[bool] = None
+    legal_vat_number: Optional[str] = None
+    show_legal_vat_number: Optional[bool] = None
     legal_email: Optional[str] = None
-    legal_note: Optional[str] = None
+    show_legal_email: Optional[bool] = None
+    legal_pec_email: Optional[str] = None
+    show_legal_pec_email: Optional[bool] = None
 
 class ReviewUpdate(BaseModel):
     is_approved: bool
