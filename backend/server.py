@@ -895,7 +895,8 @@ async def search_illustrations(q: str = "", limit: int = 48):
 
 @api_router.get("/illustrations/{illustration_id}")
 async def get_illustration(illustration_id: str):
-    illust = await db.illustrations.find_one({"id": illustration_id})
+    # Only return published illustrations to public
+    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     illust['_id'] = str(illust.get('_id', ''))
