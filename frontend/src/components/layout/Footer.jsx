@@ -38,8 +38,8 @@ const Footer = () => {
               <span className="text-xl font-bold text-gray-800 font-['Quicksand']">Poppiconni</span>
             </div>
             <p className="text-gray-600 mb-4 max-w-sm">
-              Libri da colorare per bambini con il nostro adorabile unicorno Poppiconni. 
-              Dolce, simpatico e leggermente impacciato!
+              Libri e disegni da colorare per bambini ambientati nel mondo di Poppiconni.
+              Con le avventure di Conni, l'unicorno dolce e un po' impacciato, accompagnato dalla presenza di Poppi, il barattolo di popcorn.
             </p>
             <div className="flex gap-4">
               <a href="mailto:pompiconni@gmail.com" className="text-gray-400 hover:text-pink-500 transition-colors">
