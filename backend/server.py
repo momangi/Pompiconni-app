@@ -127,8 +127,10 @@ class Illustration(IllustrationBase):
     imageUrl: Optional[str] = None
     pdfUrl: Optional[str] = None
     downloadCount: int = 0
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
-    updatedAt: datetime = Field(default_factory=datetime.utcnow)
+    isPublished: bool = False
+    publishedAt: Optional[datetime] = None
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class BundleBase(BaseModel):
     title: str
