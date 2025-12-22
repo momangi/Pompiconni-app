@@ -122,7 +122,7 @@ const LandingPage = () => {
               
               {/* Headline narrativa - cuore emozionale del brand */}
               <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
-                Ciao, sono{' '}
+                Benvenuti nel mondo di{' '}
                 <span className="gradient-text">Poppiconni!</span>
               </p>
               
