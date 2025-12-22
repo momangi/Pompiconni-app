@@ -157,3 +157,60 @@ Pipeline automatica a 4 fasi per generare illustrazioni on-brand:
 - ✅ Read /app/image_testing.md before testing image integrations
 - Use base64-encoded images for all tests
 - Accepted formats: JPEG, PNG, WEBP only
+
+## Test da Eseguire (Fork Session - 22 Dicembre 2025)
+
+### A) Contatti Legali con Flag di Visibilità
+**Backend:**
+- ✅ PUT /api/admin/settings - Salvataggio campi legali con flag show_*
+- ✅ GET /api/site-settings - Restituisce campi legali e flag visibilità
+
+**Frontend:**
+- ✅ Admin Settings - Sezione "Informazioni Legali" con input + checkbox "Mostra"
+- ✅ Pagina /contatti-legali - Mostra dinamicamente solo campi con show=true E valore non vuoto
+
+### B) Illustrazioni con Stato Bozza/Pubblicata
+**Backend:**
+- ✅ Modello Illustration con isPublished, publishedAt
+- ✅ GET /api/illustrations - Filtra server-side solo isPublished=true
+- ✅ GET /api/admin/illustrations - Mostra tutte (incluse bozze)
+- ✅ PUT /api/admin/illustrations/{id}/publish - Toggle stato
+- ✅ Migrazione automatica: illustrazioni esistenti → isPublished=true
+
+**Frontend:**
+- ✅ Admin Illustrazioni - Filtro per stato (Tutti/Pubblicate/Bozze)
+- ✅ Admin Illustrazioni - Toggle publish con icona Eye/EyeOff
+- ✅ Admin Illustrazioni - Badge "Bozza" e bordo arancione per bozze
+- ✅ Galleria pubblica - Non mostra illustrazioni in bozza (filtro server-side)
+
+### Credenziali Test
+- **Email**: admin@pompiconni.it
+- **Password**: admin123
+
+### Endpoint per Test Backend
+```bash
+# Test legal settings
+API_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d '=' -f2)
+TOKEN=$(curl -s -X POST "$API_URL/api/admin/login" -H "Content-Type: application/json" -d '{"email":"admin@pompiconni.it","password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+
+# Update legal settings
+curl -X PUT "$API_URL/api/admin/settings" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"legal_company_name":"Test","show_legal_company_name":true}'
+
+# Get public settings
+curl "$API_URL/api/site-settings"
+
+# Get admin illustrations (all)
+curl "$API_URL/api/admin/illustrations" -H "Authorization: Bearer $TOKEN"
+
+# Toggle publish
+curl -X PUT "$API_URL/api/admin/illustrations/{id}/publish" -H "Authorization: Bearer $TOKEN"
+
+# Get public illustrations (only published)
+curl "$API_URL/api/illustrations"
+```
+
+### Pagine Frontend da Testare
+- /admin/settings - Sezione Informazioni Legali
+- /admin/illustrations - Toggle publish e filtro stati
+- /contatti-legali - Visualizzazione dinamica campi
+- /galleria - Verifica che bozze non siano visibili
