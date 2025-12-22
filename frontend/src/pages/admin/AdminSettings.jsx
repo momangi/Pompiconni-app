@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Upload, Trash2, Image, Eye, CheckCircle, AlertCircle, RefreshCw, Save, Edit3, Instagram, Music2, Mail, MapPin } from 'lucide-react';
+import { Settings, Upload, Trash2, Image, Eye, CheckCircle, AlertCircle, RefreshCw, Save, Edit3, Instagram, Music2, Mail, MapPin, Building2, FileText } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Switch } from '../../components/ui/switch';
 import { Label } from '../../components/ui/label';
+import { Input } from '../../components/ui/input';
+import { Checkbox } from '../../components/ui/checkbox';
 import { getAdminSettings, updateAdminSettings, getHeroStatus, uploadHeroImage, deleteHeroImage, getAdminCharacterImages, uploadCharacterImage, deleteCharacterImage, updateCharacterText, getBrandLogoStatus, uploadBrandLogo, deleteBrandLogo, updateSocialLinks } from '../../services/api';
 import { toast } from 'sonner';
 
@@ -31,6 +33,21 @@ const AdminSettings = () => {
   const [socialLinks, setSocialLinks] = useState({ instagramUrl: '', tiktokUrl: '' });
   const [socialSaving, setSocialSaving] = useState(false);
 
+  // Legal contact info state
+  const [legalInfo, setLegalInfo] = useState({
+    legal_company_name: '',
+    show_legal_company_name: true,
+    legal_address: '',
+    show_legal_address: true,
+    legal_vat_number: '',
+    show_legal_vat_number: true,
+    legal_email: '',
+    show_legal_email: true,
+    legal_pec_email: '',
+    show_legal_pec_email: true
+  });
+  const [legalSaving, setLegalSaving] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -49,6 +66,19 @@ const AdminSettings = () => {
       setSocialLinks({
         instagramUrl: settingsData?.instagramUrl || '',
         tiktokUrl: settingsData?.tiktokUrl || ''
+      });
+      // Load legal info from settings
+      setLegalInfo({
+        legal_company_name: settingsData?.legal_company_name || '',
+        show_legal_company_name: settingsData?.show_legal_company_name ?? true,
+        legal_address: settingsData?.legal_address || '',
+        show_legal_address: settingsData?.show_legal_address ?? true,
+        legal_vat_number: settingsData?.legal_vat_number || '',
+        show_legal_vat_number: settingsData?.show_legal_vat_number ?? true,
+        legal_email: settingsData?.legal_email || '',
+        show_legal_email: settingsData?.show_legal_email ?? true,
+        legal_pec_email: settingsData?.legal_pec_email || '',
+        show_legal_pec_email: settingsData?.show_legal_pec_email ?? true
       });
       // Convert array to object keyed by trait
       const charObj = {};
