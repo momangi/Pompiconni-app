@@ -291,7 +291,7 @@ const LandingPage = () => {
                     {characterImages.impacciato?.title || 'Impacciato'}
                   </p>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    {characterImages.impacciato?.shortDescription || 'Un po\' goffo ma adorabile, si caccia sempre in situazioni comiche ma trova sempre la soluzione'}
+                    {characterImages.impacciato?.shortDescription || 'Poppi e Conni sono un po\' impacciati. A volte qualcosa non va come previsto, ma insieme trovano sempre un modo semplice e divertente per andare avanti.'}
                   </p>
                 </CardContent>
               </Card>
