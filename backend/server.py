@@ -826,8 +826,8 @@ async def search_illustrations(q: str = "", limit: int = 48):
     if not tokens:
         return {"q": q, "results": []}
     
-    # Get all illustrations (public endpoint shows all)
-    illustrations = await db.illustrations.find({}, {"_id": 0}).to_list(1000)
+    # Get only published illustrations (public endpoint)
+    illustrations = await db.illustrations.find({"isPublished": True}, {"_id": 0}).to_list(1000)
     
     # Get all themes for name lookup
     themes = await db.themes.find({}, {"_id": 0}).to_list(100)
