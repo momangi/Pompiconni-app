@@ -262,7 +262,7 @@ const LandingPage = () => {
                     {characterImages.simpatico?.title || 'Simpatico'}
                   </p>
                   <p className="text-white/90 text-sm line-clamp-2">
-                    {characterImages.simpatico?.shortDescription || 'Sempre pronto a far sorridere con le sue espressioni buffe e le sue avventure divertenti'}
+                    {characterImages.simpatico?.shortDescription || 'Poppi e Conni sono simpatici e divertenti. Ogni avventura è un\'occasione per giocare, ridere e scoprire qualcosa di nuovo, sempre fianco a fianco.'}
                   </p>
                 </CardContent>
               </Card>
