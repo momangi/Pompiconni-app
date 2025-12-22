@@ -1048,7 +1048,7 @@ async def get_reviews():
 
 @api_router.get("/site-settings")
 async def get_public_site_settings():
-    """Get public site settings (stripe status, hero image, social links, etc)"""
+    """Get public site settings (stripe status, hero image, social links, legal info, etc)"""
     settings = await db.site_settings.find_one({"id": "global"})
     stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
     has_hero = bool(settings and settings.get('heroImageFileId')) if settings else False
@@ -1064,7 +1064,12 @@ async def get_public_site_settings():
         "hasBrandLogo": has_brand_logo,
         "brandLogoUrl": "/api/site/brand-logo" if has_brand_logo else None,
         "instagramUrl": settings.get("instagramUrl", "") if settings else "",
-        "tiktokUrl": settings.get("tiktokUrl", "") if settings else ""
+        "tiktokUrl": settings.get("tiktokUrl", "") if settings else "",
+        # Legal contact info
+        "legalName": settings.get("legal_name", "") if settings else "",
+        "legalCity": settings.get("legal_city", "") if settings else "",
+        "legalEmail": settings.get("legal_email", "") if settings else "",
+        "legalNote": settings.get("legal_note", "") if settings else ""
     }
 
 @api_router.get("/brand-kit")
