@@ -272,6 +272,17 @@ const AdminIllustrations = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={filterPublished} onValueChange={setFilterPublished}>
+          <SelectTrigger className="w-48">
+            <Eye className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Tutti gli stati" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tutti gli stati</SelectItem>
+            <SelectItem value="published">✅ Pubblicate</SelectItem>
+            <SelectItem value="draft">📝 Bozze</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Illustrations Grid */}
