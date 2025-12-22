@@ -989,11 +989,12 @@ async def get_illustration_image(illustration_id: str):
     """
     Serve the illustration image from GridFS.
     Returns the image for preview/display purposes.
+    Only for published illustrations.
     """
     from bson import ObjectId
     
-    # Find the illustration
-    illust = await db.illustrations.find_one({"id": illustration_id})
+    # Find the illustration - only if published
+    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
