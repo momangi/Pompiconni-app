@@ -912,9 +912,10 @@ async def download_illustration(illustration_id: str):
     """
     Real file download endpoint using GridFS.
     Returns the PDF file as a downloadable attachment.
+    Only for published illustrations.
     """
-    # Find the illustration
-    illust = await db.illustrations.find_one({"id": illustration_id})
+    # Find the illustration - only if published
+    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
