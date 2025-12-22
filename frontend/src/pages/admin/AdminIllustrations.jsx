@@ -288,7 +288,7 @@ const AdminIllustrations = () => {
       {/* Illustrations Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredIllustrations.map((illustration) => (
-          <Card key={illustration.id} className="border shadow-sm hover:shadow-md transition-shadow">
+          <Card key={illustration.id} className={`border shadow-sm hover:shadow-md transition-shadow ${!illustration.isPublished ? 'border-amber-200 bg-amber-50/30' : ''}`}>
             <CardContent className="p-4">
               <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden relative">
                 {illustration.imageFileId ? (
@@ -305,6 +305,14 @@ const AdminIllustrations = () => {
                   />
                 ) : (
                   <span className="text-4xl opacity-30">🦄</span>
+                )}
+                {/* Published status overlay */}
+                {!illustration.isPublished && (
+                  <div className="absolute top-2 left-2">
+                    <Badge className="bg-amber-500 text-white text-xs">
+                      📝 Bozza
+                    </Badge>
+                  </div>
                 )}
               </div>
               
@@ -339,6 +347,22 @@ const AdminIllustrations = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">{illustration.downloadCount} download</span>
                 <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleTogglePublish(illustration)}
+                    disabled={togglingPublish[illustration.id]}
+                    title={illustration.isPublished ? 'Metti in bozza' : 'Pubblica'}
+                    className={illustration.isPublished ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'}
+                  >
+                    {togglingPublish[illustration.id] ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : illustration.isPublished ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => openUploadDialog(illustration)} title="Carica file">
                     <Upload className="w-4 h-4" />
                   </Button>
