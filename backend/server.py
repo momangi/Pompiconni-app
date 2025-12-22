@@ -1080,11 +1080,17 @@ async def get_public_site_settings():
         "brandLogoUrl": "/api/site/brand-logo" if has_brand_logo else None,
         "instagramUrl": settings.get("instagramUrl", "") if settings else "",
         "tiktokUrl": settings.get("tiktokUrl", "") if settings else "",
-        # Legal contact info
-        "legalName": settings.get("legal_name", "") if settings else "",
-        "legalCity": settings.get("legal_city", "") if settings else "",
+        # Legal contact info with visibility flags
+        "legalCompanyName": settings.get("legal_company_name", "") if settings else "",
+        "showLegalCompanyName": settings.get("show_legal_company_name", True) if settings else True,
+        "legalAddress": settings.get("legal_address", "") if settings else "",
+        "showLegalAddress": settings.get("show_legal_address", True) if settings else True,
+        "legalVatNumber": settings.get("legal_vat_number", "") if settings else "",
+        "showLegalVatNumber": settings.get("show_legal_vat_number", True) if settings else True,
         "legalEmail": settings.get("legal_email", "") if settings else "",
-        "legalNote": settings.get("legal_note", "") if settings else ""
+        "showLegalEmail": settings.get("show_legal_email", True) if settings else True,
+        "legalPecEmail": settings.get("legal_pec_email", "") if settings else "",
+        "showLegalPecEmail": settings.get("show_legal_pec_email", True) if settings else True
     }
 
 @api_router.get("/brand-kit")
