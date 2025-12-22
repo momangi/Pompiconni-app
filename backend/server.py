@@ -782,7 +782,8 @@ async def get_theme_background_image(theme_id: str):
 
 @api_router.get("/illustrations", response_model=List[dict])
 async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool] = None):
-    query = {}
+    # Public endpoint: only return published illustrations
+    query = {"isPublished": True}
     if themeId:
         query["themeId"] = themeId
     if isFree is not None:
