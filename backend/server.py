@@ -2375,14 +2375,23 @@ async def admin_get_settings(email: str = Depends(verify_token)):
 @admin_router.put("/settings")
 async def admin_update_settings(settings: SiteSettings, email: str = Depends(verify_token)):
     """Update site settings"""
+    update_data = {
+        "show_reviews": settings.show_reviews,
+        "updatedAt": datetime.now(timezone.utc)
+    }
+    # Add legal fields if provided
+    if settings.legal_name is not None:
+        update_data["legal_name"] = settings.legal_name
+    if settings.legal_city is not None:
+        update_data["legal_city"] = settings.legal_city
+    if settings.legal_email is not None:
+        update_data["legal_email"] = settings.legal_email
+    if settings.legal_note is not None:
+        update_data["legal_note"] = settings.legal_note
+    
     await db.site_settings.update_one(
         {"id": "global"},
-        {
-            "$set": {
-                "show_reviews": settings.show_reviews,
-                "updatedAt": datetime.now(timezone.utc)
-            }
-        },
+        {"$set": update_data},
         upsert=True
     )
     return {"success": True}
