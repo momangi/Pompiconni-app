@@ -19,12 +19,14 @@ const AdminIllustrations = () => {
   const [themes, setThemes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTheme, setFilterTheme] = useState('all');
+  const [filterPublished, setFilterPublished] = useState('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingIllustration, setEditingIllustration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState({ image: false, pdf: false });
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState(null);
+  const [togglingPublish, setTogglingPublish] = useState({});
   
   const [formData, setFormData] = useState({
     title: '',
