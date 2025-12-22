@@ -151,8 +151,21 @@ export const createIllustration = async (illustration) => {
   return response.data;
 };
 
+export const getAdminIllustrations = async (themeId = null, isPublished = null) => {
+  const params = {};
+  if (themeId) params.themeId = themeId;
+  if (isPublished !== null) params.isPublished = isPublished;
+  const response = await api.get('/admin/illustrations', { params });
+  return response.data;
+};
+
 export const updateIllustration = async (illustrationId, illustration) => {
   const response = await api.put(`/admin/illustrations/${illustrationId}`, illustration);
+  return response.data;
+};
+
+export const toggleIllustrationPublish = async (illustrationId) => {
+  const response = await api.put(`/admin/illustrations/${illustrationId}/publish`);
   return response.data;
 };
 
