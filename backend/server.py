@@ -971,8 +971,8 @@ async def download_illustration(illustration_id: str):
 
 @api_router.get("/illustrations/{illustration_id}/download-status")
 async def get_download_status(illustration_id: str):
-    """Check if a file is available for download"""
-    illust = await db.illustrations.find_one({"id": illustration_id})
+    """Check if a file is available for download - only for published illustrations"""
+    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
     
