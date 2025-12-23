@@ -379,6 +379,22 @@ const AdminPosters = () => {
                     <Edit className="w-4 h-4 mr-1" />
                     Modifica
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleToggleDownload(poster)}
+                    disabled={togglingDownload[poster.id] || poster.status !== 'published'}
+                    title={poster.status !== 'published' ? 'Pubblica prima per gestire il download' : (poster.downloadEnabled !== false ? 'Disabilita download' : 'Abilita download')}
+                    className={poster.status !== 'published' ? 'text-gray-300' : (poster.downloadEnabled !== false ? 'text-blue-500' : 'text-red-400')}
+                  >
+                    {togglingDownload[poster.id] ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : poster.downloadEnabled !== false ? (
+                      <Download className="w-4 h-4" />
+                    ) : (
+                      <DownloadOff className="w-4 h-4" />
+                    )}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => handleDelete(poster)}>
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
