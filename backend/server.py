@@ -128,6 +128,7 @@ class Illustration(IllustrationBase):
     pdfUrl: Optional[str] = None
     downloadCount: int = 0
     isPublished: bool = False
+    downloadEnabled: bool = True  # Flag per abilitare/disabilitare download (solo se pubblico)
     publishedAt: Optional[datetime] = None
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
