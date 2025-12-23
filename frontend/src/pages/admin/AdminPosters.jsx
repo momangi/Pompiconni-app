@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Image as ImageIcon, Plus, Trash2, Edit, Upload, Download, DownloadOff,
+  Image as ImageIcon, Plus, Trash2, Edit, Upload, Download, Ban,
   FileText, Check, X, Eye, EyeOff, Search
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
