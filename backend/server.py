@@ -4477,7 +4477,8 @@ async def get_poster_image(poster_id: str):
     """Serve poster preview image from GridFS"""
     from bson import ObjectId
     
-    poster = await db.posters.find_one({"id": poster_id})
+    # Fix: Only serve image for published posters
+    poster = await db.posters.find_one({"id": poster_id, "status": "published"})
     if not poster or not poster.get('imageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
     
@@ -4498,12 +4499,16 @@ async def get_poster_image(poster_id: str):
 
 @api_router.get("/posters/{poster_id}/download")
 async def download_poster_pdf(poster_id: str):
-    """Download poster PDF (only if free or purchased)"""
+    """Download poster PDF (only if published, download enabled, and free or purchased)"""
     from bson import ObjectId
     
     poster = await db.posters.find_one({"id": poster_id, "status": "published"})
     if not poster:
         raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    # Check if download is enabled
+    if not poster.get('downloadEnabled', True):
+        raise HTTPException(status_code=403, detail="Download non disponibile per questo poster")
     
     if not poster.get('pdfFileId'):
         raise HTTPException(status_code=404, detail="PDF non disponibile")
