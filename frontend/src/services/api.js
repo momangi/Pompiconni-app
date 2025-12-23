@@ -542,6 +542,11 @@ export const deletePoster = async (posterId) => {
   return response.data;
 };
 
+export const togglePosterDownload = async (posterId) => {
+  const response = await api.put(`/admin/posters/${posterId}/download-enabled`);
+  return response.data;
+};
+
 export const uploadPosterImage = async (posterId, file) => {
   const formData = new FormData();
   formData.append('file', file);
