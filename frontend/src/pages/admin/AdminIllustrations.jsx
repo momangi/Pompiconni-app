@@ -86,6 +86,29 @@ const AdminIllustrations = () => {
     }
   };
 
+  const handleToggleDownload = async (illustration) => {
+    // Download toggle only relevant for published illustrations
+    if (!illustration.isPublished) {
+      toast.error('Pubblica prima l\'illustrazione per gestire il download');
+      return;
+    }
+    setTogglingDownload(prev => ({ ...prev, [illustration.id]: true }));
+    try {
+      const result = await toggleIllustrationDownload(illustration.id);
+      setIllustrations(prev => prev.map(i => 
+        i.id === illustration.id 
+          ? { ...i, downloadEnabled: result.downloadEnabled }
+          : i
+      ));
+      toast.success(result.downloadEnabled ? 'Download abilitato!' : 'Download disabilitato');
+    } catch (error) {
+      console.error('Toggle download error:', error);
+      toast.error('Errore nel cambio stato download');
+    } finally {
+      setTogglingDownload(prev => ({ ...prev, [illustration.id]: false }));
+    }
+  };
+
   // Upload file directly to an existing illustration via GridFS
   const handleAttachFile = async (illustrationId, file, type) => {
     setUploading(prev => ({ ...prev, [type]: true }));
