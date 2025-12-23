@@ -169,6 +169,11 @@ export const toggleIllustrationPublish = async (illustrationId) => {
   return response.data;
 };
 
+export const toggleIllustrationDownload = async (illustrationId) => {
+  const response = await api.put(`/admin/illustrations/${illustrationId}/download-enabled`);
+  return response.data;
+};
+
 export const deleteIllustration = async (illustrationId) => {
   const response = await api.delete(`/admin/illustrations/${illustrationId}`);
   return response.data;
