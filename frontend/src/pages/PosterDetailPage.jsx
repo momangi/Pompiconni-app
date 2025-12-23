@@ -36,6 +36,12 @@ const PosterDetailPage = () => {
   const handleDownload = async () => {
     if (!poster) return;
     
+    // Check if download is enabled
+    if (poster.downloadEnabled === false) {
+      toast.error('Download non disponibile per questo poster');
+      return;
+    }
+    
     if (poster.price > 0) {
       toast.error('Questo poster è a pagamento. Acquistalo per scaricarlo!');
       return;
@@ -49,6 +55,10 @@ const PosterDetailPage = () => {
     setDownloading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/posters/${posterId}/download`);
+      if (response.status === 403) {
+        toast.error('Download non disponibile per questo poster');
+        return;
+      }
       if (!response.ok) throw new Error('Download failed');
       
       const blob = await response.blob();
