@@ -736,6 +736,22 @@ async def startup_event():
     if migration_result.modified_count > 0:
         logger.info(f"Migrated {migration_result.modified_count} illustrations to published status")
     
+    # Migrate existing illustrations: set downloadEnabled=True if field missing
+    download_migration = await db.illustrations.update_many(
+        {"downloadEnabled": {"$exists": False}},
+        {"$set": {"downloadEnabled": True}}
+    )
+    if download_migration.modified_count > 0:
+        logger.info(f"Migrated {download_migration.modified_count} illustrations with downloadEnabled=True")
+    
+    # Migrate existing posters: set downloadEnabled=True if field missing
+    poster_migration = await db.posters.update_many(
+        {"downloadEnabled": {"$exists": False}},
+        {"$set": {"downloadEnabled": True}}
+    )
+    if poster_migration.modified_count > 0:
+        logger.info(f"Migrated {poster_migration.modified_count} posters with downloadEnabled=True")
+    
     logger.info("Database initialized")
 
 # ============== PUBLIC ENDPOINTS ==============
