@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Upload, Filter, Image, FileText, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Upload, Filter, Image, FileText, CheckCircle, XCircle, Eye, EyeOff, Download, DownloadOff } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
-import { getThemes, getAdminIllustrations, createIllustration, updateIllustration, deleteIllustration, attachPdfToIllustration, attachImageToIllustration, toggleIllustrationPublish } from '../../services/api';
+import { getThemes, getAdminIllustrations, createIllustration, updateIllustration, deleteIllustration, attachPdfToIllustration, attachImageToIllustration, toggleIllustrationPublish, toggleIllustrationDownload } from '../../services/api';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -27,6 +27,7 @@ const AdminIllustrations = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState(null);
   const [togglingPublish, setTogglingPublish] = useState({});
+  const [togglingDownload, setTogglingDownload] = useState({});
   
   const [formData, setFormData] = useState({
     title: '',
