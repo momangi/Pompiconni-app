@@ -395,6 +395,7 @@ class PosterBase(BaseModel):
     description: str = ""
     price: float = 0.0  # 0 = free
     status: str = "draft"  # draft or published
+    downloadEnabled: bool = True  # Flag per abilitare/disabilitare download (solo se pubblico)
 
 class PosterCreate(PosterBase):
     pass
