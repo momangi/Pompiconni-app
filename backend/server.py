@@ -405,6 +405,7 @@ class PosterUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     status: Optional[str] = None
+    downloadEnabled: Optional[bool] = None
 
 class Poster(PosterBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
