@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Image as ImageIcon, Plus, Trash2, Edit, Upload, Download, 
+  Image as ImageIcon, Plus, Trash2, Edit, Upload, Download, DownloadOff,
   FileText, Check, X, Eye, EyeOff, Search
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -11,7 +11,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { 
   getAdminPosters, createPoster, updatePoster, deletePoster,
-  uploadPosterImage, uploadPosterPdf, getPosterStats
+  uploadPosterImage, uploadPosterPdf, getPosterStats, togglePosterDownload
 } from '../../services/api';
 import { toast } from 'sonner';
 
@@ -23,6 +23,7 @@ const AdminPosters = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [togglingDownload, setTogglingDownload] = useState({});
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
