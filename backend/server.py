@@ -4615,6 +4615,26 @@ async def admin_update_poster(poster_id: str, poster: PosterUpdate, email: str =
     
     return {"success": True}
 
+@admin_router.put("/posters/{poster_id}/download-enabled")
+async def toggle_poster_download(poster_id: str, email: str = Depends(verify_token)):
+    """Toggle the downloadEnabled status of a poster"""
+    poster = await db.posters.find_one({"id": poster_id})
+    if not poster:
+        raise HTTPException(status_code=404, detail="Poster non trovato")
+    
+    current_status = poster.get('downloadEnabled', True)
+    new_status = not current_status
+    
+    await db.posters.update_one(
+        {"id": poster_id}, 
+        {"$set": {"downloadEnabled": new_status, "updatedAt": datetime.now(timezone.utc)}}
+    )
+    
+    return {
+        "success": True,
+        "downloadEnabled": new_status
+    }
+
 @admin_router.delete("/posters/{poster_id}")
 async def admin_delete_poster(poster_id: str, email: str = Depends(verify_token)):
     """Delete a poster and its files"""
