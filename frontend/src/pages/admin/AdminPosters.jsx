@@ -111,6 +111,29 @@ const AdminPosters = () => {
     }
   };
 
+  const handleToggleDownload = async (poster) => {
+    // Download toggle only relevant for published posters
+    if (poster.status !== 'published') {
+      toast.error('Pubblica prima il poster per gestire il download');
+      return;
+    }
+    setTogglingDownload(prev => ({ ...prev, [poster.id]: true }));
+    try {
+      const result = await togglePosterDownload(poster.id);
+      setPosters(prev => prev.map(p => 
+        p.id === poster.id 
+          ? { ...p, downloadEnabled: result.downloadEnabled }
+          : p
+      ));
+      toast.success(result.downloadEnabled ? 'Download abilitato!' : 'Download disabilitato');
+    } catch (error) {
+      console.error('Toggle download error:', error);
+      toast.error('Errore nel cambio stato download');
+    } finally {
+      setTogglingDownload(prev => ({ ...prev, [poster.id]: false }));
+    }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !uploadingFor) return;
