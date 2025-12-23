@@ -400,7 +400,10 @@ const AdminIllustrations = () => {
                     ) : illustration.downloadEnabled !== false ? (
                       <Download className="w-4 h-4" />
                     ) : (
-                      <DownloadOff className="w-4 h-4" />
+                      <span className="relative">
+                        <Download className="w-4 h-4" />
+                        <Ban className="w-4 h-4 absolute -top-0.5 -left-0.5 text-red-500" />
+                      </span>
                     )}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => openUploadDialog(illustration)} title="Carica file">
