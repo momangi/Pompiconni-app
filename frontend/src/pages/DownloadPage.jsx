@@ -167,22 +167,31 @@ const DownloadPage = () => {
                     </div>
                     <p className="font-semibold text-gray-800 mb-1 truncate">{illustration.title}</p>
                     <p className="text-sm text-gray-500 mb-4 truncate">{illustration.description}</p>
-                    <Button 
-                      className="w-full bg-green-500 hover:bg-green-600" 
-                      onClick={() => handleDownloadIllustration(illustration)}
-                      disabled={downloading[illustration.id]}
-                    >
-                      {downloading[illustration.id] ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                          Scaricando...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4 mr-2" />Scarica PDF
-                        </>
-                      )}
-                    </Button>
+                    {illustration.downloadEnabled !== false ? (
+                      <Button 
+                        className="w-full bg-green-500 hover:bg-green-600" 
+                        onClick={() => handleDownloadIllustration(illustration)}
+                        disabled={downloading[illustration.id]}
+                      >
+                        {downloading[illustration.id] ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                            Scaricando...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-2" />Scarica PDF
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full bg-gray-300 cursor-not-allowed" 
+                        disabled
+                      >
+                        Download non disponibile
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
