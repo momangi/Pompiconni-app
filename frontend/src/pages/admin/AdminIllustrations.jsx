@@ -387,6 +387,22 @@ const AdminIllustrations = () => {
                       <EyeOff className="w-4 h-4" />
                     )}
                   </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleToggleDownload(illustration)}
+                    disabled={togglingDownload[illustration.id] || !illustration.isPublished}
+                    title={!illustration.isPublished ? 'Pubblica prima per gestire il download' : (illustration.downloadEnabled !== false ? 'Disabilita download' : 'Abilita download')}
+                    className={!illustration.isPublished ? 'text-gray-300 cursor-not-allowed' : (illustration.downloadEnabled !== false ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' : 'text-red-400 hover:text-red-500 hover:bg-red-50')}
+                  >
+                    {togglingDownload[illustration.id] ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : illustration.downloadEnabled !== false ? (
+                      <Download className="w-4 h-4" />
+                    ) : (
+                      <DownloadOff className="w-4 h-4" />
+                    )}
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => openUploadDialog(illustration)} title="Carica file">
                     <Upload className="w-4 h-4" />
                   </Button>
