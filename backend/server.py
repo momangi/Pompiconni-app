@@ -1465,6 +1465,26 @@ async def toggle_illustration_publish(illustration_id: str, email: str = Depends
         "publishedAt": update_data.get("publishedAt", illust.get('publishedAt'))
     }
 
+@admin_router.put("/illustrations/{illustration_id}/download-enabled")
+async def toggle_illustration_download(illustration_id: str, email: str = Depends(verify_token)):
+    """Toggle the downloadEnabled status of an illustration"""
+    illust = await db.illustrations.find_one({"id": illustration_id})
+    if not illust:
+        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
+    
+    current_status = illust.get('downloadEnabled', True)
+    new_status = not current_status
+    
+    await db.illustrations.update_one(
+        {"id": illustration_id}, 
+        {"$set": {"downloadEnabled": new_status, "updatedAt": datetime.now(timezone.utc)}}
+    )
+    
+    return {
+        "success": True,
+        "downloadEnabled": new_status
+    }
+
 @admin_router.put("/illustrations/{illustration_id}")
 async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
     # Get current illustration to check if theme changed
