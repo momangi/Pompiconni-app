@@ -23,7 +23,8 @@ from PyPDF2 import PdfMerger, PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from PIL import Image as PILImage
-from streaming import stream_gridfs_response
+from streaming import stream_gridfs_response, stream_gridfs_response_with_variants
+from media_pipeline import ensure_variants
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -48,7 +49,7 @@ JWT_EXPIRATION_HOURS = 24
 
 # Admin credentials
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@pompiconni.it')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 # Create the main app
 app = FastAPI(title="Poppiconni API", version="1.0.0")
@@ -66,6 +67,35 @@ logger = logging.getLogger(__name__)
 # Upload directory
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+# ============== MEDIA PIPELINE HELPERS (Fase 2) ==============
+
+import asyncio as _asyncio
+
+async def _generate_variants_silent(file_id):
+    """Background variant generation that never raises; logs failures."""
+    try:
+        report = await ensure_variants(
+            db=db,
+            gridfs_bucket=gridfs_bucket,
+            source_file_id=file_id,
+            skip_if_exists=True,
+        )
+        created = sum(1 for v in report.get("variants", []) if v.get("created"))
+        if created:
+            logger.info(f"Variants generated for {file_id}: {created} new")
+        if report.get("errors"):
+            logger.warning(f"Variant partial errors for {file_id}: {report['errors']}")
+    except Exception as e:
+        logger.warning(f"Variant generation failed for {file_id}: {str(e)[:200]}")
+
+
+def fire_variants(file_id):
+    """Fire-and-forget variant generation. Safe to call after any image upload."""
+    try:
+        _asyncio.create_task(_generate_variants_silent(file_id))
+    except Exception as e:
+        logger.warning(f"Could not schedule variants for {file_id}: {e}")
 
 # ============== MODELS ==============
 
@@ -835,15 +865,23 @@ async def get_theme(theme_id: str):
     return theme
 
 @api_router.get("/themes/{theme_id}/background-image")
-async def get_theme_background_image(theme_id: str, request: Request):
-    """Serve theme background image with caching + ETag/304 + true streaming."""
+async def get_theme_background_image(
+    theme_id: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Serve theme background image (streaming + ETag + responsive variants)."""
     theme = await db.themes.find_one({"id": theme_id})
     if not theme or not theme.get('backgroundImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=theme['backgroundImageFileId'],
+        original_file_id=theme['backgroundImageFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type="image/png",
         cache_control="public, max-age=3600",
         not_found_detail="Immagine non trovata",
@@ -1035,9 +1073,16 @@ async def get_download_status(illustration_id: str):
     }
 
 @api_router.get("/illustrations/{illustration_id}/image")
-async def get_illustration_image(illustration_id: str, request: Request):
+async def get_illustration_image(
+    illustration_id: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
     """
     Serve the illustration image from GridFS with true streaming + ETag.
+    Supports responsive variants via `?w=400|800|1600` and `?format=webp|jpg|png`.
+    Falls back to the original when the requested variant is missing.
     Only for published illustrations.
     """
     illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
@@ -1048,10 +1093,13 @@ async def get_illustration_image(illustration_id: str, request: Request):
     if not image_file_id:
         raise HTTPException(status_code=404, detail="Immagine non ancora disponibile")
 
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=image_file_id,
+        original_file_id=image_file_id,
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type="image/jpeg",
         cache_control="public, max-age=31536000, immutable",
         not_found_detail="Immagine non ancora disponibile",
@@ -1649,7 +1697,9 @@ async def upload_bundle_background(
                 "updatedAt": datetime.now(timezone.utc)
             }}
         )
-        
+
+        fire_variants(file_id)
+
         return {"success": True, "backgroundImageUrl": f"/api/bundles/{bundle_id}/background-image"}
     except Exception as e:
         logger.error(f"Error uploading bundle background: {str(e)}")
@@ -2231,7 +2281,10 @@ async def attach_image_to_illustration(
         # Ricalcola conteggi (ora l'illustrazione è scaricabile)
         await recalculate_theme_count(illust.get('themeId'))
         await recalculate_bundle_counts()
-        
+
+        # Fire-and-forget: generate responsive variants for this image
+        fire_variants(file_id)
+
         return {
             "success": True,
             "fileId": str(file_id),
@@ -2583,15 +2636,22 @@ async def admin_reset_fake_counters(email: str = Depends(verify_token)):
 # ============== HERO IMAGE & SITE SETTINGS ==============
 
 @api_router.get("/site/hero-image")
-async def get_hero_image(request: Request):
-    """Serve hero image from GridFS (true streaming + ETag)."""
+async def get_hero_image(
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Serve hero image (streaming + ETag + responsive variants)."""
     settings = await db.site_settings.find_one({"id": "global"})
     if not settings or not settings.get('heroImageFileId'):
         raise HTTPException(status_code=404, detail="Hero image non configurata")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=settings['heroImageFileId'],
+        original_file_id=settings['heroImageFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type=settings.get('heroImageContentType', 'image/png'),
         cache_control="public, max-age=3600",
         not_found_detail="Hero image non trovata",
@@ -2663,7 +2723,10 @@ async def upload_hero_image(
             },
             upsert=True
         )
-        
+
+        # Fire-and-forget: generate responsive variants for hero
+        fire_variants(file_id)
+
         return {
             "success": True,
             "heroImageUrl": "/api/site/hero-image",
@@ -2703,15 +2766,22 @@ async def delete_hero_image(email: str = Depends(verify_token)):
 # ============== BRAND LOGO ==============
 
 @api_router.get("/site/brand-logo")
-async def get_brand_logo(request: Request):
-    """Serve brand logo image (true streaming + ETag)."""
+async def get_brand_logo(
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Serve brand logo image (streaming + ETag + responsive variants)."""
     settings = await db.site_settings.find_one({"id": "global"})
     if not settings or not settings.get('brandLogoFileId'):
         raise HTTPException(status_code=404, detail="Brand logo non configurato")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=settings['brandLogoFileId'],
+        original_file_id=settings['brandLogoFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type=settings.get('brandLogoContentType', 'image/png'),
         cache_control="public, max-age=3600",
         not_found_detail="Brand logo non trovato",
@@ -2771,7 +2841,10 @@ async def upload_brand_logo(
             },
             upsert=True
         )
-        
+
+        # Fire-and-forget: generate responsive variants for the brand logo
+        fire_variants(file_id)
+
         return {"success": True, "brandLogoUrl": f"/api/site/brand-logo?v={datetime.now(timezone.utc).timestamp()}"}
     except Exception as e:
         logger.error(f"Error uploading brand logo: {str(e)}")
@@ -2957,15 +3030,23 @@ async def get_scene_lineart_image(book_id: str, scene_number: int, request: Requ
     )
 
 @api_router.get("/books/{book_id}/cover")
-async def get_book_cover(book_id: str, request: Request):
-    """Serve book cover image (true streaming + ETag)."""
+async def get_book_cover(
+    book_id: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Serve book cover image (streaming + ETag + responsive variants)."""
     book = await db.books.find_one({"id": book_id})
     if not book or not book.get('coverImageFileId'):
         raise HTTPException(status_code=404, detail="Copertina non disponibile")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=book['coverImageFileId'],
+        original_file_id=book['coverImageFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type="image/png",
         cache_control="public, max-age=3600",
         not_found_detail="Copertina non trovata",
@@ -3227,7 +3308,9 @@ async def admin_upload_book_cover(
                 }
             }
         )
-        
+
+        fire_variants(file_id)
+
         return {"success": True, "coverUrl": f"/api/books/{book_id}/cover"}
     except Exception as e:
         logger.error(f"Error uploading book cover: {str(e)}")
@@ -3824,15 +3907,23 @@ async def get_public_game(slug: str):
 
 
 @api_router.get("/games/{slug}/thumbnail")
-async def get_game_thumbnail(slug: str, request: Request):
-    """Get game thumbnail image (true streaming + ETag)."""
+async def get_game_thumbnail(
+    slug: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Get game thumbnail image (streaming + ETag + responsive variants)."""
     game = await db.games.find_one({"slug": slug})
     if not game or not game.get('thumbnailFileId'):
         raise HTTPException(status_code=404, detail="Thumbnail non trovata")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=game['thumbnailFileId'],
+        original_file_id=game['thumbnailFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type="image/png",
         cache_control="public, max-age=3600",
         not_found_detail="Thumbnail non trovata",
@@ -4002,7 +4093,9 @@ async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), emai
             "updatedAt": datetime.now(timezone.utc)
         }}
     )
-    
+
+    fire_variants(file_id)
+
     return {"success": True, "thumbnailUrl": f"/api/games/{game['slug']}/thumbnail"}
 
 
@@ -4042,20 +4135,30 @@ async def upload_game_card_image(
             "updatedAt": datetime.now(timezone.utc)
         }}
     )
+
+    fire_variants(file_id)
     
     return {"success": True, "cardImageUrl": f"/api/games/{game['slug']}/card-image"}
 
 @api_router.get("/games/{slug}/card-image")
-async def get_game_card_image(slug: str, request: Request):
+async def get_game_card_image(
+    slug: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
     """Get card image for a game. Returns 204 No Content if no image exists."""
     game = await db.games.find_one({"slug": slug})
     if not game or not game.get('cardImageFileId'):
         return Response(status_code=204)
     try:
-        return await stream_gridfs_response(
+        return await stream_gridfs_response_with_variants(
+            db=db,
             gridfs_bucket=gridfs_bucket,
-            file_id=game['cardImageFileId'],
+            original_file_id=game['cardImageFileId'],
             request=request,
+            size_param=w,
+            format_param=format,
             fallback_content_type="image/jpeg",
             cache_control="public, max-age=3600, must-revalidate",
             not_found_detail="Immagine non trovata",
@@ -4131,20 +4234,30 @@ async def upload_game_page_image(
             "updatedAt": datetime.now(timezone.utc)
         }}
     )
-    
+
+    fire_variants(file_id)
+
     return {"success": True, "pageImageUrl": f"/api/games/{game['slug']}/page-image"}
 
 @api_router.get("/games/{slug}/page-image")
-async def get_game_page_image(slug: str, request: Request):
+async def get_game_page_image(
+    slug: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
     """Get page background image for a game. Returns 204 No Content if no image exists."""
     game = await db.games.find_one({"slug": slug})
     if not game or not game.get('pageImageFileId'):
         return Response(status_code=204)
     try:
-        return await stream_gridfs_response(
+        return await stream_gridfs_response_with_variants(
+            db=db,
             gridfs_bucket=gridfs_bucket,
-            file_id=game['pageImageFileId'],
+            original_file_id=game['pageImageFileId'],
             request=request,
+            size_param=w,
+            format_param=format,
             fallback_content_type="image/jpeg",
             cache_control="public, max-age=3600, must-revalidate",
             not_found_detail="Immagine non trovata",
@@ -4409,15 +4522,23 @@ async def get_public_poster(poster_id: str):
     return poster
 
 @api_router.get("/posters/{poster_id}/image")
-async def get_poster_image(poster_id: str, request: Request):
-    """Serve poster preview image from GridFS (true streaming + ETag)."""
+async def get_poster_image(
+    poster_id: str,
+    request: Request,
+    w: Optional[int] = None,
+    format: Optional[str] = None,
+):
+    """Serve poster preview image (streaming + ETag + responsive variants)."""
     poster = await db.posters.find_one({"id": poster_id, "status": "published"})
     if not poster or not poster.get('imageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    return await stream_gridfs_response(
+    return await stream_gridfs_response_with_variants(
+        db=db,
         gridfs_bucket=gridfs_bucket,
-        file_id=poster['imageFileId'],
+        original_file_id=poster['imageFileId'],
         request=request,
+        size_param=w,
+        format_param=format,
         fallback_content_type="image/png",
         cache_control="public, max-age=31536000, immutable",
         not_found_detail="Immagine non trovata",
@@ -4607,7 +4728,9 @@ async def admin_upload_poster_image(
                 }
             }
         )
-        
+
+        fire_variants(file_id)
+
         return {
             "success": True,
             "imageUrl": f"/api/posters/{poster_id}/image"
@@ -4780,6 +4903,8 @@ async def admin_upload_character_image(
             },
             upsert=True
         )
+
+        fire_variants(file_id)
         
         return {
             "success": True,

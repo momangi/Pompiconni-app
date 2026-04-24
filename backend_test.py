@@ -2,15 +2,23 @@
 """
 Pompiconni Backend API Test Suite
 Tests all backend endpoints as specified in the review request
+
+Credentials are ONLY read from environment variables:
+  BACKEND_URL       (e.g. https://your-preview.emergentagent.com/api)
+  ADMIN_EMAIL       (falls back to ADMIN_EMAIL in backend/.env)
+  ADMIN_PASSWORD    (falls back to ADMIN_PASSWORD in backend/.env)
 """
 
-import requests
-import json
+import os
 import sys
+import json
+import requests
 from typing import Dict, Any, Optional
 
-# Backend URL from frontend/.env
-BACKEND_URL = "https://draft-security-check.preview.emergentagent.com/api"
+# Read from env; never hardcode credentials or URLs.
+BACKEND_URL = os.environ.get("BACKEND_URL") or os.environ.get("REACT_APP_BACKEND_URL", "") + "/api"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 
 class PompiconniAPITester:
     def __init__(self):
@@ -143,8 +151,8 @@ class PompiconniAPITester:
         print("\n=== Testing Admin Authentication ===")
         
         login_data = {
-            "email": "admin@pompiconni.it",
-            "password": "admin123"
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
         }
         
         success, response, error = self.make_request("POST", "/admin/login", login_data)

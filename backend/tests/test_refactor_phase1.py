@@ -19,13 +19,13 @@ import sys
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://draft-security-check.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 # Backend direct (bypass ingress) to verify Cache-Control actually set by app.
 # The preview ingress/Cloudflare strips app Cache-Control to no-store, no-cache, must-revalidate.
 BACKEND_DIRECT = os.environ.get("BACKEND_DIRECT_URL", "http://localhost:8001").rstrip("/")
-ADMIN_EMAIL = "admin@pompiconni.it"
-ADMIN_PASSWORD = "admin123"
-TARGET_ILLUST_ID = "602f3ea8-16c8-4435-9c69-86fbf39ee5db"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+TARGET_ILLUST_ID = os.environ.get("TARGET_ILLUST_ID", "602f3ea8-16c8-4435-9c69-86fbf39ee5db")
 EXPECTED_CONTENT_LENGTH = 1106583
 EXPECTED_MD5_PREFIX = "c556aa13f6"
 

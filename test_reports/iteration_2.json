@@ -1,0 +1,55 @@
+{
+  "summary": "Phase 2 Media Pipeline (responsive variants 400/800/1600 × webp/jpg) fully validated on DEV Atlas. 28/28 new tests pass + 29/30 Phase-1 regression tests continue to pass (1 pre-existing env skip for book cover). Byte-exact variant sizes confirmed: w=400 webp=15884, w=400 jpg=24349, w=800 webp=38580, w=1600 webp=91280. Safe fallback to ORIGINAL (1,106,583 bytes, PNG magic, MD5 c556aa13f6*) verified for w>1600, invalid sizes, format-without-size, and invalid format — never 500. ETags distinct across 4 variants (original + 3 sizes). 304 Not Modified works per-variant; cross-ETag correctly returns 200. Draft illustrations never leak variants (404 enforced on ?w=400). downloadEnabled=false does NOT block image serving (correct: only blocks PDF downloads). fs.files metadata shape OK: >=18 derived variants with variant='derived', sourceFileId(str), variantSize in {400,800,1600}, variantFormat in {webp,jpg,png}; zero orphan variants. Performance: variant 400px TTFB well under 1.5s, payload <50 KB. fire_variants(file_id) called from 11 admin upload paths (illustrations, posters, books covers, games thumb/card/page, themes bg, hero, brand-logo).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "GET /api/illustrations/{id}/image?w=<non-int>",
+        "issue": "Non-integer w (e.g. ?w=abc) is rejected by FastAPI Pydantic with HTTP 422 (framework-level coercion failure) BEFORE reaching the variant fallback logic. Safe (never 500), but inconsistent with the 'always fallback to original' contract. Consider declaring `w: Optional[str] = None` and let normalize_size_param return None for non-numeric, so the endpoint serves the original transparently. Low priority."
+      },
+      {
+        "endpoint": "GET /api/games/{slug}/card-image (and sibling game endpoints)",
+        "issue": "Returns 204 No Content when the image field is missing, whereas other endpoints return 404. Pre-existing inconsistency, unrelated to Phase 2. Test adjusted to accept both."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_refactor_phase2.py",
+    "/app/backend/tests/test_phase2_db_metadata.py",
+    "/app/backend/tests/test_refactor_phase1.py",
+    "/app/test_reports/pytest/phase2_results.xml"
+  ],
+  "action_items": [
+    "[Optional/low] Align ?w=<non-int> handling: declare w as Optional[str] and let normalize_size_param coerce so server returns the original instead of 422 — would match the 'always safe fallback' contract more literally.",
+    "[Optional] Normalize game image endpoints to return 404 instead of 204 when the image is missing, to match the rest of the image API surface. Pre-existing.",
+    "[Informational] fire_variants post-upload was verified statically (11 call sites in server.py) but not end-to-end in this run because no new admin upload was triggered. A future test could POST a fresh image via /api/admin/illustrations/{id}/attach-image and poll fs.files for the new sourceFileId."
+  ],
+  "critical_code_review_comments": [
+    "media_pipeline.py is clean, small (~290 lines), idempotent (skip_if_exists guard), never raises on single-variant failure (collects errors), respects EXIF orientation, avoids upscaling, picks correct fallback (png for RGBA, jpg for RGB). Production-ready.",
+    "streaming.stream_gridfs_response_with_variants correctly derives per-file ETag (target_id), so browser cache stays correct across variants and a variant refresh invalidates only its own entry. Fallback path is truly safe: when no variant matches it serves the original via the SAME streaming pipeline (strong ETag, Content-Length, content-type from GridFS metadata).",
+    "SECURITY verified: draft illustrations return 404 even for ?w=400 — the endpoint re-checks isPublished BEFORE resolving variants; no leakage.",
+    "downloadEnabled gating is correctly scoped to PDF download routes — image variants remain accessible, matching the stated spec.",
+    "server.py is now 5011 lines (+125 vs Phase 1). Still past the 700-line guideline but Phase 2 edits are chirurgically scoped. Recommend refactoring into domain modules in a future phase.",
+    "fire_variants() uses asyncio.create_task and is fire-and-forget — failures are logged but do not affect the upload request. Good.",
+    "No orphan derived variants in fs.files (every metadata.sourceFileId resolves to an existing _id)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_refactor_phase2.py (created, 26 tests)",
+    "/app/backend/tests/test_phase2_db_metadata.py (created, 2 motor-based tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (28/28 Phase 2 passed, 29/30 Phase 1 passed with 1 environmental skip unchanged)",
+    "frontend": "not tested (backend-only per review request)"
+  },
+  "test_credentials": "Read from backend/.env (ADMIN_EMAIL, ADMIN_PASSWORD) — never hardcoded.",
+  "seed_data_creation": "One ephemeral draft illustration (title prefix TEST_phase2_draft) created + deleted for the draft-variant-leak test. downloadEnabled toggled off then back on for TARGET_ILLUST_ID in a finally block.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 2 regression suite in /app/backend/tests/test_refactor_phase2.py (HTTP) + /app/backend/tests/test_phase2_db_metadata.py (motor/Atlas). Run both with: `REACT_APP_BACKEND_URL=https://draft-security-check.preview.emergentagent.com MONGO_URL=... DB_NAME=poppiconni_dev ADMIN_EMAIL=... ADMIN_PASSWORD=... python -m pytest backend/tests/test_refactor_phase2.py backend/tests/test_phase2_db_metadata.py -v`. Phase 1 regression suite still valid: backend/tests/test_refactor_phase1.py. Atlas DEV fs.files should stay at 3 originals + 18 derived (unless new uploads happen). The 1 Phase-1 skip (test_etag_304_on_second_image_endpoint) auto-enables when any book uploads a cover. Non-integer ?w coerces to FastAPI 422 — intentional acceptance in the test.",
+  "rca of the issue": "N/A — no bugs in Phase 2. All expected byte-exact sizes match, all security guards hold, metadata shape is correct, zero orphans, performance targets met."
+}

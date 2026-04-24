@@ -41,7 +41,7 @@
     "backend": "96.7% (29/30 passed, 1 environmental skip for book-cover ETag test — no book in DB has a cover uploaded)",
     "frontend": "not tested (backend-only per review request)"
   },
-  "test_credentials": "admin@pompiconni.it / admin123 (from /app/backend/.env, used for admin JWT)",
+  "test_credentials": "See /app/memory/test_credentials.md (placeholders only). Actual values live in backend/.env (ADMIN_EMAIL, ADMIN_PASSWORD).",
   "seed_data_creation": "Two ephemeral illustrations created/deleted per run for draft-404 and downloadEnabled-403 tests (title prefix TEST_). All cleaned up automatically in finally blocks.",
   "retest_needed": false,
   "should_main_agent_self_test": false,

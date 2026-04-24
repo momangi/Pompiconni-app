@@ -58,10 +58,9 @@ ADMIN_PASSWORD=your_secure_password
 JWT_SECRET=your_jwt_secret
 ```
 
-## 🔑 Credenziali Demo
+## 🔑 Credenziali Admin
 
-- **Email**: admin@pompiconni.it
-- **Password**: admin123
+Le credenziali admin sono gestite esclusivamente tramite variabili ambiente protette (`ADMIN_EMAIL`, `ADMIN_PASSWORD` in `backend/.env`). Non sono documentate qui.
 
 ## 📚 API Endpoints
 

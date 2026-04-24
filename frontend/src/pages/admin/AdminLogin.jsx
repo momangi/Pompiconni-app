@@ -85,12 +85,6 @@ const AdminLogin = () => {
               {isLoading ? 'Accesso in corso...' : 'Accedi'}
             </Button>
           </form>
-          
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 text-center">
-              <strong>Demo:</strong> admin@pompiconni.it / admin123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

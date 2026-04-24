@@ -145,7 +145,7 @@ Pipeline automatica a 4 fasi per generare illustrazioni on-brand:
 4. **Test toggle options:** Style Lock, Salva in Galleria
 
 ## Credenziali Test
-- Admin: admin@pompiconni.it / admin123
+- Admin: credenziali in `backend/.env` (vedere `/app/memory/test_credentials.md` per placeholder)
 
 ## Note Importanti
 - La pipeline può impiegare 1-2 minuti per completare tutti i 5 tentativi
@@ -184,14 +184,15 @@ Pipeline automatica a 4 fasi per generare illustrazioni on-brand:
 - ✅ Galleria pubblica - Non mostra illustrazioni in bozza (filtro server-side)
 
 ### Credenziali Test
-- **Email**: admin@pompiconni.it
-- **Password**: admin123
+Le credenziali sono in `backend/.env`. Vedi `/app/memory/test_credentials.md` per i placeholder.
 
 ### Endpoint per Test Backend
 ```bash
 # Test legal settings
 API_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d '=' -f2)
-TOKEN=$(curl -s -X POST "$API_URL/api/admin/login" -H "Content-Type: application/json" -d '{"email":"admin@pompiconni.it","password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+ADMIN_EMAIL=$(grep '^ADMIN_EMAIL=' /app/backend/.env | cut -d '=' -f2)
+ADMIN_PASSWORD=$(grep '^ADMIN_PASSWORD=' /app/backend/.env | cut -d '=' -f2)
+TOKEN=$(curl -s -X POST "$API_URL/api/admin/login" -H "Content-Type: application/json" -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
 # Update legal settings
 curl -X PUT "$API_URL/api/admin/settings" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"legal_company_name":"Test","show_legal_company_name":true}'
