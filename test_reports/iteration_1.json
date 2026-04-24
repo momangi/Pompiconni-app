@@ -1,0 +1,50 @@
+{
+  "summary": "Phase 1 performance refactor regression suite for Poppiconni backend. 29/30 tests pass, 1 environmental skip. Verified: public JSON endpoints, GridFS streaming integrity (MD5 c556aa13f6... confirmed on 1.1MB PNG, Content-Length=1106583, PNG magic bytes intact), ETag + 304 Not Modified, PDF download rules, admin auth, draft/downloadEnabled security regression, and all 20 MongoDB indexes present on poppiconni_dev.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "ingress / preview URL",
+        "issue": "Preview ingress (Cloudflare) overrides backend Cache-Control to 'no-store, no-cache, must-revalidate' on all responses. Backend direct (localhost:8001) correctly returns 'public, max-age=31536000, immutable' for immutable assets and 'public, max-age=3600' for mutable. This means the immutable cache policy will NOT be honored by browsers behind the preview URL. Verify behavior on production (non-preview) deployment; if Cloudflare page rules also strip there, Cache-Control refactor yields no browser-cache benefit in prod. ETag/304 still works end-to-end because ETag is forwarded."
+      },
+      {
+        "endpoint": "PUT /api/admin/illustrations/{id}",
+        "issue": "Admin update endpoint uses IllustrationCreate model which does NOT include downloadEnabled field. Any downloadEnabled sent via this endpoint is silently dropped. Only /download-enabled toggle endpoint mutates it. Consider exposing downloadEnabled in IllustrationCreate/Update schema for a cleaner API contract, or document this explicitly."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_refactor_phase1.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Verify Cache-Control override is NOT present on production domain (not the .preview.emergentagent.com ingress). On prod the intended long-cache policy must actually reach the browser; otherwise the streaming/ETag phase-1 gains are partially wasted.",
+    "Consider adding downloadEnabled to IllustrationCreate (and a dedicated UpdateIllustration schema) so the generic PUT can mutate it — right now only the /download-enabled toggle endpoint works.",
+    "Optional: enable bytes Range support (Accept-Ranges currently 'none') to further improve TTFB on large PDFs. Not blocking for phase 1."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 4886 lines — exceeds the 700-line guideline. Strongly recommend splitting into domain modules (illustrations.py, admin/*, posters.py, games.py, books.py, site.py).",
+    "streaming.py helper is clean, correctly handles: ObjectId normalization, short-circuit 304, strong ETag from immutable file_id, metadata content-type, Content-Length, attachment filename sanitization. No issues found.",
+    "create_indexes.py is idempotent and safe; verified all 20 expected indexes exist on poppiconni_dev.",
+    "True chunked streaming integrity verified: 1.1 MB PNG round-trips byte-identical (MD5 prefix c556aa13f6 matches, Content-Length=1106583, magic bytes b'\\x89PNG'). No data corruption from streaming refactor.",
+    "Admin update endpoint (PUT /admin/illustrations/{id}) silently ignores downloadEnabled because it reuses IllustrationCreate schema that doesn't declare the field — pre-existing issue, NOT a regression from phase 1."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_refactor_phase1.py (created)"
+  ],
+  "success_rate": {
+    "backend": "96.7% (29/30 passed, 1 environmental skip for book-cover ETag test — no book in DB has a cover uploaded)",
+    "frontend": "not tested (backend-only per review request)"
+  },
+  "test_credentials": "admin@pompiconni.it / admin123 (from /app/backend/.env, used for admin JWT)",
+  "seed_data_creation": "Two ephemeral illustrations created/deleted per run for draft-404 and downloadEnabled-403 tests (title prefix TEST_). All cleaned up automatically in finally blocks.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Full regression suite in /app/backend/tests/test_refactor_phase1.py. Run: `REACT_APP_BACKEND_URL=https://draft-security-check.preview.emergentagent.com MONGO_URL='...' DB_NAME=poppiconni_dev python -m pytest backend/tests/test_refactor_phase1.py -v`. The Cache-Control check uses BACKEND_DIRECT=http://localhost:8001 to bypass the preview-ingress override — this is intentional and correct. The 1 skipped test (test_etag_304_on_second_image_endpoint) will auto-enable as soon as any book gets a cover uploaded in Atlas DEV.",
+  "rca of the issue": "N/A — no regressions. Phase-1 refactor (streaming.py helper + create_indexes.py) is functionally clean. Two NON-regression observations: (1) preview-ingress rewrites Cache-Control (infra, not code), (2) PUT /admin/illustrations/{id} uses IllustrationCreate schema that doesn't expose downloadEnabled (pre-existing, unrelated to phase 1)."
+}

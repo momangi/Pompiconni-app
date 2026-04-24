@@ -23,6 +23,7 @@ from PyPDF2 import PdfMerger, PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from PIL import Image as PILImage
+from streaming import stream_gridfs_response
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -727,6 +728,56 @@ async def startup_event():
     except Exception as e:
         # Index might already exist
         logger.debug(f"TTL index creation: {str(e)}")
+
+    # ============== PERFORMANCE INDEXES (Fase 1) ==============
+    # create_index is idempotent: no-op when an equivalent index already exists.
+    # All indexes here support hot-path queries grepped from the codebase.
+    perf_indexes = [
+        # illustrations
+        ("illustrations", [("id", 1), ("isPublished", 1)], {"name": "ix_id_isPublished"}),
+        ("illustrations", [("isPublished", 1)],            {"name": "ix_isPublished"}),
+        # posters
+        ("posters",       [("id", 1), ("status", 1)],      {"name": "ix_id_status"}),
+        ("posters",       [("status", 1)],                 {"name": "ix_status"}),
+        # books
+        ("books",         [("id", 1)],                     {"name": "ix_id"}),
+        ("books",         [("slug", 1)],                   {"name": "ix_slug"}),
+        # book_scenes
+        ("book_scenes",   [("bookId", 1), ("sceneNumber", 1)], {"name": "ix_bookId_sceneNumber"}),
+        ("book_scenes",   [("id", 1), ("bookId", 1)],      {"name": "ix_id_bookId"}),
+        # bundles
+        ("bundles",       [("id", 1)],                     {"name": "ix_id"}),
+        # games
+        ("games",         [("id", 1)],                     {"name": "ix_id"}),
+        ("games",         [("slug", 1)],                   {"name": "ix_slug"}),
+        # themes
+        ("themes",        [("id", 1)],                     {"name": "ix_id"}),
+        # game_level_backgrounds
+        ("game_level_backgrounds", [("id", 1)],            {"name": "ix_id"}),
+        # generation_styles
+        ("generation_styles", [("id", 1), ("userId", 1)],  {"name": "ix_id_userId"}),
+        # character_images
+        ("character_images", [("trait", 1)],               {"name": "ix_trait"}),
+        # reviews
+        ("reviews",       [("is_approved", 1)],            {"name": "ix_is_approved"}),
+        # reading_progress
+        ("reading_progress", [("bookId", 1), ("visitorId", 1)], {"name": "ix_bookId_visitorId"}),
+        # download_limits (extra: key lookup for rate limiting)
+        ("download_limits", [("key", 1)],                  {"name": "ix_key"}),
+        # admins
+        ("admins",        [("email", 1)],                  {"name": "ix_email", "unique": True}),
+        # site_settings (single doc, but cheap)
+        ("site_settings", [("id", 1)],                     {"name": "ix_id"}),
+    ]
+    created, skipped = 0, 0
+    for coll_name, keys, opts in perf_indexes:
+        try:
+            await db[coll_name].create_index(keys, **opts)
+            created += 1
+        except Exception as e:
+            skipped += 1
+            logger.debug(f"Index {coll_name}.{opts.get('name')} skipped: {str(e)[:80]}")
+    logger.info(f"Performance indexes ensured: created_or_existing={created}, skipped={skipped}")
     
     # Migrate existing illustrations: set isPublished=True if field missing
     migration_result = await db.illustrations.update_many(
@@ -784,28 +835,19 @@ async def get_theme(theme_id: str):
     return theme
 
 @api_router.get("/themes/{theme_id}/background-image")
-async def get_theme_background_image(theme_id: str):
-    """Serve theme background image with caching"""
-    from bson import ObjectId
-    
+async def get_theme_background_image(theme_id: str, request: Request):
+    """Serve theme background image with caching + ETag/304 + true streaming."""
     theme = await db.themes.find_one({"id": theme_id})
     if not theme or not theme.get('backgroundImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(theme['backgroundImageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving theme background: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=theme['backgroundImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=3600",
+        not_found_detail="Immagine non trovata",
+    )
 
 @api_router.get("/illustrations", response_model=List[dict])
 async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool] = None):
@@ -927,7 +969,7 @@ async def get_illustration(illustration_id: str):
     return illust
 
 @api_router.post("/illustrations/{illustration_id}/download")
-async def download_illustration(illustration_id: str):
+async def download_illustration(illustration_id: str, request: Request):
     """
     Real file download endpoint using GridFS.
     Returns the PDF file as a downloadable attachment.
@@ -949,48 +991,33 @@ async def download_illustration(illustration_id: str):
             status_code=404, 
             detail="File non ancora disponibile. L'amministratore deve prima caricare il PDF."
         )
-    
-    try:
-        from bson import ObjectId
-        # Get file from GridFS
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(pdf_file_id))
-        
-        # Read file content
-        content = await grid_out.read()
-        
-        # Log download event
-        await db.download_events.insert_one({
-            "id": str(uuid.uuid4()),
-            "illustrationId": illustration_id,
-            "bundleId": None,
-            "downloadedAt": datetime.now(timezone.utc)
-        })
-        
-        # Increment download counter
-        await db.illustrations.update_one(
-            {"id": illustration_id},
-            {"$inc": {"downloadCount": 1}}
-        )
-        
-        # Get filename from GridFS metadata or generate one
-        filename = grid_out.filename or f"pompiconni_{illust.get('title', illustration_id)}.pdf"
-        # Sanitize filename
-        filename = filename.replace(' ', '_').replace('"', '').replace("'", "")
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Error downloading file: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail="Errore durante il download del file"
-        )
+
+    # Log download event + increment counter (before streaming so we count attempts)
+    await db.download_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "illustrationId": illustration_id,
+        "bundleId": None,
+        "downloadedAt": datetime.now(timezone.utc)
+    })
+    await db.illustrations.update_one(
+        {"id": illustration_id},
+        {"$inc": {"downloadCount": 1}}
+    )
+
+    # Resolve filename (sanitize spaces/quotes)
+    raw_name = f"pompiconni_{illust.get('title') or illustration_id}.pdf"
+    filename = raw_name.replace(' ', '_').replace('"', '').replace("'", "")
+
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=pdf_file_id,
+        request=request,
+        fallback_content_type="application/pdf",
+        cache_control="no-cache",
+        filename=filename,
+        as_attachment=True,
+        not_found_detail="File non disponibile",
+    )
 
 @api_router.get("/illustrations/{illustration_id}/download-status")
 async def get_download_status(illustration_id: str):
@@ -1008,52 +1035,27 @@ async def get_download_status(illustration_id: str):
     }
 
 @api_router.get("/illustrations/{illustration_id}/image")
-async def get_illustration_image(illustration_id: str):
+async def get_illustration_image(illustration_id: str, request: Request):
     """
-    Serve the illustration image from GridFS.
-    Returns the image for preview/display purposes.
+    Serve the illustration image from GridFS with true streaming + ETag.
     Only for published illustrations.
     """
-    from bson import ObjectId
-    
-    # Find the illustration - only if published
     illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
     if not illust:
         raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    
-    # Check if image exists in GridFS
+
     image_file_id = illust.get('imageFileId')
     if not image_file_id:
-        raise HTTPException(
-            status_code=404, 
-            detail="Immagine non ancora disponibile"
-        )
-    
-    try:
-        # Get file from GridFS
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(image_file_id))
-        
-        # Read file content
-        content = await grid_out.read()
-        
-        # Get content type from metadata
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/jpeg')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={
-                "Cache-Control": "public, max-age=31536000"  # Cache for 1 year
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Error serving image: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail="Errore durante il caricamento dell'immagine"
-        )
+        raise HTTPException(status_code=404, detail="Immagine non ancora disponibile")
+
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=image_file_id,
+        request=request,
+        fallback_content_type="image/jpeg",
+        cache_control="public, max-age=31536000, immutable",
+        not_found_detail="Immagine non ancora disponibile",
+    )
 
 @api_router.get("/illustrations/{illustration_id}/image-status")
 async def get_image_status(illustration_id: str):
@@ -1703,56 +1705,41 @@ async def upload_bundle_pdf(
         raise HTTPException(status_code=500, detail="Errore durante il caricamento")
 
 @api_router.get("/bundles/{bundle_id}/background-image")
-async def get_bundle_background_image(bundle_id: str):
-    """Serve bundle background image"""
-    from bson import ObjectId
-    
+async def get_bundle_background_image(bundle_id: str, request: Request):
+    """Serve bundle background image (true streaming + ETag)."""
     bundle = await db.bundles.find_one({"id": bundle_id})
     if not bundle or not bundle.get('backgroundImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['backgroundImageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving bundle background: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=bundle['backgroundImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=3600",
+        not_found_detail="Immagine non trovata",
+    )
 
 @api_router.get("/bundles/{bundle_id}/download")
-async def download_bundle_pdf_legacy(bundle_id: str):
+async def download_bundle_pdf_legacy(bundle_id: str, request: Request):
     """Download bundle PDF (legacy - manual upload)"""
-    from bson import ObjectId
-    
     bundle = await db.bundles.find_one({"id": bundle_id})
     if not bundle:
         raise HTTPException(status_code=404, detail="Bundle non trovato")
-    
     if not bundle.get('pdfFileId'):
         raise HTTPException(status_code=404, detail="PDF non disponibile per questo bundle")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['pdfFileId']))
-        content = await grid_out.read()
-        
-        safe_title = bundle.get('title', 'bundle').replace(' ', '_')
-        filename = f"Poppiconni_{safe_title}.pdf"
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
-        )
-    except Exception as e:
-        logger.error(f"Error downloading bundle PDF: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel download")
+
+    safe_title = bundle.get('title', 'bundle').replace(' ', '_')
+    filename = f"Poppiconni_{safe_title}.pdf"
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=bundle['pdfFileId'],
+        request=request,
+        fallback_content_type="application/pdf",
+        cache_control="no-cache",
+        filename=filename,
+        as_attachment=True,
+        not_found_detail="PDF non disponibile per questo bundle",
+    )
 
 
 def calculate_bundle_hash(bundle: dict, illustrations: list) -> str:
@@ -1980,16 +1967,17 @@ async def download_bundle_generated_pdf(bundle_id: str, request: Request):
     
     # Check cache
     if bundle.get('generatedPdfFileId') and bundle.get('generatedPdfHash') == current_hash:
-        # Serve cached PDF
+        logger.info(f"Serving cached PDF for bundle {bundle_id}")
         try:
-            logger.info(f"Serving cached PDF for bundle {bundle_id}")
-            grid_out = await gridfs_bucket.open_download_stream(ObjectId(bundle['generatedPdfFileId']))
-            content = await grid_out.read()
-            
-            return StreamingResponse(
-                io.BytesIO(content),
-                media_type="application/pdf",
-                headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+            return await stream_gridfs_response(
+                gridfs_bucket=gridfs_bucket,
+                file_id=bundle['generatedPdfFileId'],
+                request=request,
+                fallback_content_type="application/pdf",
+                cache_control="no-cache",
+                filename=filename,
+                as_attachment=True,
+                not_found_detail="PDF cache non disponibile",
             )
         except Exception as e:
             logger.warning(f"Cache miss, regenerating PDF: {str(e)}")
@@ -2595,27 +2583,19 @@ async def admin_reset_fake_counters(email: str = Depends(verify_token)):
 # ============== HERO IMAGE & SITE SETTINGS ==============
 
 @api_router.get("/site/hero-image")
-async def get_hero_image():
-    """Serve hero image from GridFS"""
-    from bson import ObjectId
-    
+async def get_hero_image(request: Request):
+    """Serve hero image from GridFS (true streaming + ETag)."""
     settings = await db.site_settings.find_one({"id": "global"})
     if not settings or not settings.get('heroImageFileId'):
         raise HTTPException(status_code=404, detail="Hero image non configurata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(settings['heroImageFileId']))
-        content = await grid_out.read()
-        content_type = settings.get('heroImageContentType', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving hero image: {str(e)}")
-        raise HTTPException(status_code=404, detail="Hero image non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=settings['heroImageFileId'],
+        request=request,
+        fallback_content_type=settings.get('heroImageContentType', 'image/png'),
+        cache_control="public, max-age=3600",
+        not_found_detail="Hero image non trovata",
+    )
 
 @api_router.get("/site/hero-status")
 async def get_hero_status():
@@ -2723,27 +2703,19 @@ async def delete_hero_image(email: str = Depends(verify_token)):
 # ============== BRAND LOGO ==============
 
 @api_router.get("/site/brand-logo")
-async def get_brand_logo():
-    """Serve brand logo image"""
-    from bson import ObjectId
-    
+async def get_brand_logo(request: Request):
+    """Serve brand logo image (true streaming + ETag)."""
     settings = await db.site_settings.find_one({"id": "global"})
     if not settings or not settings.get('brandLogoFileId'):
         raise HTTPException(status_code=404, detail="Brand logo non configurato")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(settings['brandLogoFileId']))
-        content = await grid_out.read()
-        content_type = settings.get('brandLogoContentType', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving brand logo: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento logo")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=settings['brandLogoFileId'],
+        request=request,
+        fallback_content_type=settings.get('brandLogoContentType', 'image/png'),
+        cache_control="public, max-age=3600",
+        not_found_detail="Brand logo non trovato",
+    )
 
 @admin_router.get("/brand-logo-status")
 async def get_brand_logo_status(email: str = Depends(verify_token)):
@@ -2955,73 +2927,49 @@ async def get_book(book_id: str):
     return {"book": book, "scenes": scenes}
 
 @api_router.get("/books/{book_id}/scene/{scene_number}/colored-image")
-async def get_scene_colored_image(book_id: str, scene_number: int):
-    """Serve colored image for a scene"""
-    from bson import ObjectId
-    
+async def get_scene_colored_image(book_id: str, scene_number: int, request: Request):
+    """Serve colored image for a scene (true streaming + ETag)."""
     scene = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene_number})
     if not scene or not scene.get('coloredImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non disponibile")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(scene['coloredImageFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=31536000"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving colored image: {str(e)}")
-        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=scene['coloredImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=31536000, immutable",
+        not_found_detail="Immagine non trovata",
+    )
 
 @api_router.get("/books/{book_id}/scene/{scene_number}/lineart-image")
-async def get_scene_lineart_image(book_id: str, scene_number: int):
-    """Serve line art image for a scene"""
-    from bson import ObjectId
-    
+async def get_scene_lineart_image(book_id: str, scene_number: int, request: Request):
+    """Serve line art image for a scene (true streaming + ETag)."""
     scene = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene_number})
     if not scene or not scene.get('lineArtImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non disponibile")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(scene['lineArtImageFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=31536000"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving lineart image: {str(e)}")
-        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=scene['lineArtImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=31536000, immutable",
+        not_found_detail="Immagine non trovata",
+    )
 
 @api_router.get("/books/{book_id}/cover")
-async def get_book_cover(book_id: str):
-    """Serve book cover image"""
-    from bson import ObjectId
-    
+async def get_book_cover(book_id: str, request: Request):
+    """Serve book cover image (true streaming + ETag)."""
     book = await db.books.find_one({"id": book_id})
     if not book or not book.get('coverImageFileId'):
         raise HTTPException(status_code=404, detail="Copertina non disponibile")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(book['coverImageFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving book cover: {str(e)}")
-        raise HTTPException(status_code=404, detail="Copertina non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=book['coverImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=3600",
+        not_found_detail="Copertina non trovata",
+    )
 
 # Reading Progress
 @api_router.get("/books/{book_id}/progress/{visitor_id}")
@@ -3626,28 +3574,19 @@ async def upload_style_reference(
         raise HTTPException(status_code=500, detail="Errore durante il caricamento")
 
 @admin_router.get("/styles/{style_id}/reference-image")
-async def get_style_reference_image(style_id: str, email: str = Depends(verify_token)):
-    """Serve reference image for a style"""
-    from bson import ObjectId
-    
+async def get_style_reference_image(style_id: str, request: Request, email: str = Depends(verify_token)):
+    """Serve reference image for a style (true streaming + ETag)."""
     style = await db.generation_styles.find_one({"id": style_id, "userId": email})
     if not style or not style.get('referenceImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine di riferimento non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(style['referenceImageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving style reference: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=style['referenceImageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="private, max-age=3600",
+        not_found_detail="Immagine di riferimento non trovata",
+    )
 
 @admin_router.post("/generate-poppiconni", response_model=PoppiconniGenerateResponse)
 async def generate_poppiconni_illustration(
@@ -3885,21 +3824,19 @@ async def get_public_game(slug: str):
 
 
 @api_router.get("/games/{slug}/thumbnail")
-async def get_game_thumbnail(slug: str):
-    """Get game thumbnail image"""
-    from bson import ObjectId
-    
+async def get_game_thumbnail(slug: str, request: Request):
+    """Get game thumbnail image (true streaming + ETag)."""
     game = await db.games.find_one({"slug": slug})
     if not game or not game.get('thumbnailFileId'):
         raise HTTPException(status_code=404, detail="Thumbnail non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['thumbnailFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/png') if grid_out.metadata else 'image/png'
-        return StreamingResponse(io.BytesIO(content), media_type=content_type)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=game['thumbnailFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=3600",
+        not_found_detail="Thumbnail non trovata",
+    )
 
 
 # --- ADMIN GAMES ENDPOINTS ---
@@ -4109,28 +4046,22 @@ async def upload_game_card_image(
     return {"success": True, "cardImageUrl": f"/api/games/{game['slug']}/card-image"}
 
 @api_router.get("/games/{slug}/card-image")
-async def get_game_card_image(slug: str):
+async def get_game_card_image(slug: str, request: Request):
     """Get card image for a game. Returns 204 No Content if no image exists."""
-    from bson import ObjectId
     game = await db.games.find_one({"slug": slug})
-    
-    # Return 204 No Content instead of 404 when image doesn't exist
     if not game or not game.get('cardImageFileId'):
         return Response(status_code=204)
-    
     try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['cardImageFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
-        
-        # Cache control: allow caching but revalidate
-        headers = {
-            "Cache-Control": "public, max-age=3600, must-revalidate",
-            "ETag": f'"{game.get("cardImageFileId")}"'
-        }
-        return StreamingResponse(io.BytesIO(content), media_type=content_type, headers=headers)
-    except Exception:
-        return Response(status_code=204)  # File missing from GridFS
+        return await stream_gridfs_response(
+            gridfs_bucket=gridfs_bucket,
+            file_id=game['cardImageFileId'],
+            request=request,
+            fallback_content_type="image/jpeg",
+            cache_control="public, max-age=3600, must-revalidate",
+            not_found_detail="Immagine non trovata",
+        )
+    except HTTPException:
+        return Response(status_code=204)
 
 @api_router.delete("/admin/games/{game_id}/card-image")
 async def delete_game_card_image(
@@ -4204,28 +4135,22 @@ async def upload_game_page_image(
     return {"success": True, "pageImageUrl": f"/api/games/{game['slug']}/page-image"}
 
 @api_router.get("/games/{slug}/page-image")
-async def get_game_page_image(slug: str):
+async def get_game_page_image(slug: str, request: Request):
     """Get page background image for a game. Returns 204 No Content if no image exists."""
-    from bson import ObjectId
     game = await db.games.find_one({"slug": slug})
-    
-    # Return 204 No Content instead of 404 when image doesn't exist
     if not game or not game.get('pageImageFileId'):
         return Response(status_code=204)
-    
     try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(game['pageImageFileId']))
-        content = await grid_out.read()
-        content_type = grid_out.metadata.get('content_type', 'image/jpeg') if grid_out.metadata else 'image/jpeg'
-        
-        # Cache control: allow caching but revalidate
-        headers = {
-            "Cache-Control": "public, max-age=3600, must-revalidate",
-            "ETag": f'"{game.get("pageImageFileId")}"'
-        }
-        return StreamingResponse(io.BytesIO(content), media_type=content_type, headers=headers)
-    except Exception:
-        return Response(status_code=204)  # File missing from GridFS
+        return await stream_gridfs_response(
+            gridfs_bucket=gridfs_bucket,
+            file_id=game['pageImageFileId'],
+            request=request,
+            fallback_content_type="image/jpeg",
+            cache_control="public, max-age=3600, must-revalidate",
+            not_found_detail="Immagine non trovata",
+        )
+    except HTTPException:
+        return Response(status_code=204)
 
 @api_router.delete("/admin/games/{game_id}/page-image")
 async def delete_game_page_image(
@@ -4278,28 +4203,19 @@ async def get_level_backgrounds():
     return backgrounds
 
 @api_router.get("/games/bolle-magiche/level-backgrounds/{bg_id}/image")
-async def get_level_background_image(bg_id: str):
-    """Serve level background image from GridFS"""
-    from bson import ObjectId
-    
+async def get_level_background_image(bg_id: str, request: Request):
+    """Serve level background image from GridFS (true streaming + ETag)."""
     bg = await db.game_level_backgrounds.find_one({"id": bg_id})
     if not bg or not bg.get('backgroundImageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(bg['backgroundImageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/jpeg')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving level background image: {e}")
-        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=bg['backgroundImageFileId'],
+        request=request,
+        fallback_content_type="image/jpeg",
+        cache_control="public, max-age=3600",
+        not_found_detail="Immagine non trovata",
+    )
 
 # --- ADMIN LEVEL BACKGROUNDS ---
 
@@ -4493,35 +4409,23 @@ async def get_public_poster(poster_id: str):
     return poster
 
 @api_router.get("/posters/{poster_id}/image")
-async def get_poster_image(poster_id: str):
-    """Serve poster preview image from GridFS"""
-    from bson import ObjectId
-    
-    # Fix: Only serve image for published posters
+async def get_poster_image(poster_id: str, request: Request):
+    """Serve poster preview image from GridFS (true streaming + ETag)."""
     poster = await db.posters.find_one({"id": poster_id, "status": "published"})
     if not poster or not poster.get('imageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(poster['imageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving poster image: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=poster['imageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=31536000, immutable",
+        not_found_detail="Immagine non trovata",
+    )
 
 @api_router.get("/posters/{poster_id}/download")
-async def download_poster_pdf(poster_id: str):
+async def download_poster_pdf(poster_id: str, request: Request):
     """Download poster PDF (only if published, download enabled, and free or purchased)"""
-    from bson import ObjectId
-    
     poster = await db.posters.find_one({"id": poster_id, "status": "published"})
     if not poster:
         raise HTTPException(status_code=404, detail="Poster non trovato")
@@ -4536,33 +4440,24 @@ async def download_poster_pdf(poster_id: str):
     # Check if poster is free
     if poster.get('price', 0) > 0:
         # TODO: Check if user has purchased this poster
-        # For now, return error for paid posters
         raise HTTPException(status_code=403, detail="Poster a pagamento - acquista per scaricare")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(poster['pdfFileId']))
-        content = await grid_out.read()
-        
-        # Increment download count
-        await db.posters.update_one(
-            {"id": poster_id},
-            {"$inc": {"downloadCount": 1}}
-        )
-        
-        safe_title = re.sub(r'[^\w\s-]', '', poster.get('title', 'poster')).strip().replace(' ', '_')
-        filename = f"Poppiconni_Poster_{safe_title}.pdf"
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-                "Cache-Control": "no-cache"
-            }
-        )
-    except Exception as e:
-        logger.error(f"Error downloading poster PDF: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel download")
+
+    # Increment download count
+    await db.posters.update_one({"id": poster_id}, {"$inc": {"downloadCount": 1}})
+
+    safe_title = re.sub(r'[^\w\s-]', '', poster.get('title', 'poster')).strip().replace(' ', '_')
+    filename = f"Poppiconni_Poster_{safe_title}.pdf"
+
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=poster['pdfFileId'],
+        request=request,
+        fallback_content_type="application/pdf",
+        cache_control="no-cache",
+        filename=filename,
+        as_attachment=True,
+        not_found_detail="PDF non disponibile",
+    )
 
 # --- ADMIN POSTER ENDPOINTS ---
 
@@ -4896,31 +4791,21 @@ async def admin_upload_character_image(
         raise HTTPException(status_code=500, detail="Errore durante il caricamento")
 
 @api_router.get("/character-images/{trait}/image")
-async def get_character_image(trait: str):
-    """Serve character trait image"""
-    from bson import ObjectId
-    
+async def get_character_image(trait: str, request: Request):
+    """Serve character trait image (true streaming + ETag)."""
     if trait not in CHARACTER_TRAITS:
         raise HTTPException(status_code=400, detail="Invalid trait")
-    
     record = await db.character_images.find_one({"trait": trait})
     if not record or not record.get('imageFileId'):
         raise HTTPException(status_code=404, detail="Immagine non trovata")
-    
-    try:
-        grid_out = await gridfs_bucket.open_download_stream(ObjectId(record['imageFileId']))
-        content = await grid_out.read()
-        metadata = grid_out.metadata or {}
-        content_type = metadata.get('content_type', 'image/png')
-        
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=content_type,
-            headers={"Cache-Control": "public, max-age=3600"}
-        )
-    except Exception as e:
-        logger.error(f"Error serving character image: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore nel caricamento immagine")
+    return await stream_gridfs_response(
+        gridfs_bucket=gridfs_bucket,
+        file_id=record['imageFileId'],
+        request=request,
+        fallback_content_type="image/png",
+        cache_control="public, max-age=3600",
+        not_found_detail="Immagine non trovata",
+    )
 
 @admin_router.delete("/character-images/{trait}")
 async def admin_delete_character_image(trait: str, email: str = Depends(verify_token)):
