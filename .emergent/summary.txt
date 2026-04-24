@@ -1,58 +1,36 @@
 <analysis>**original_problem_statement:**
-L'utente ha richiesto una serie di ottimizzazioni SEO e di aggiornamenti dei contenuti per allineare il sito alla nuova narrativa del brand Poppiconni. Successivamente, ha richiesto di rendere le informazioni di contatto legali (presenti nella pagina ) modificabili dal pannello di amministrazione per evitare la necessità di un nuovo deploy per ogni aggiornamento.
+L'utente ha richiesto due implementazioni principali:
+1. **Contatti Legali:** Aggiungere un flag di visibilità (es. ) per ogni campo legale modificabile dall'Admin, riflettendo le scelte sulla pagina pubblica.
+2. **Illustrazioni e Poster:** 
+   - Aggiungere lo stato  (Bozza/Pubblicato) per le Illustrazioni, proteggendo severamente i file in bozza lato server-side.
+   - Disaccoppiare la visibilità dal download introducendo un flag . Se falso, il contenuto è visibile (immagine mostrata) ma il download del PDF restituisce 403 Forbidden.
+   - Risolvere una falla di sicurezza in cui le immagini dei Poster in bozza erano accessibili pubblicamente.
 
-Le richieste SEO e di contenuto includevano:
-- Implementazione di una struttura semantica con H1 invisibili e H2 visibili su tutte le pagine principali.
-- Rimozione degli heading H3 dalla struttura delle pagine.
-- Aggiornamento di tutti i testi narrativi per introdurre i personaggi Conni (unicorno) e Poppi (barattolo di popcorn).
-- Aggiornamento dei link e del testo nel footer.
-- Generazione di  e .
+**User's preferred language**: italiano (INSTRUCT next agent to respond in italiano only)
 
-**User's preferred language**: italiano
-
-**what currently exists?**
-L'applicazione è un portale per il brand Poppiconni, con un gioco (Bolle Magiche), una galleria di disegni, sezioni per libri e poster, e un pannello di amministrazione.
-L'agente ha completato con successo una massiccia revisione SEO e dei contenuti su tutto il sito.
-Attualmente, l'agente ha iniziato a implementare la funzionalità per rendere i contatti legali modificabili dall'admin. Ha già modificato il backend () aggiungendo i campi necessari al modello  e aggiornando le API GET e PUT. La parte frontend non è ancora stata toccata.
+**what currently exists?** 
+L'applicazione è un portale del brand Poppiconni. Il sistema CMS include ora controlli granulari per mostrare/nascondere informazioni legali. Le Illustrazioni e i Poster supportano ora lo stato di visibilità (Bozza/Pubblico) e, indipendentemente, un flag  gestibile da admin per bloccare/permettere i download dei PDF, con solide restrizioni di sicurezza backend (404 per bozze, 403 per download bloccati). Il sistema compila ed è pronto per il deploy.
 
 **Last working item**:
-- **Last item agent was working:** Rendere i contatti legali modificabili dalla pagina Impostazioni dell'Admin. L'agente ha appena finito di modificare il backend () per supportare questa funzionalità.
-    - Ha aggiunto i campi , , , ,  ai modelli Pydantic  e .
-    - Ha aggiornato l'endpoint  per esporre questi dati.
-    - Ha aggiornato l'endpoint  per permetterne la modifica.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both.
-    1.  **Backend Testing**: Utilizzare  per chiamare  con i nuovi dati legali, e poi verificare con  che i dati siano stati salvati correttamente.
-    2.  **Frontend Testing**: Dopo aver implementato la UI, usare lo  per:
-        - Verificare che i nuovi campi siano presenti in .
-        - Verificare che la pagina  mostri i dati salvati dal database.
+- **Last item agent was working:** Verifica finale tramite Health Check del flag  per Illustrazioni e Poster, inclusa la correzione di un errore di compilazione frontend causato da un'icona non valida di  ().
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** Y
+- **Which testing method agent to use?** both (Script curl estesi per test backend, Health Check Agent per readiness e screenshot tool per verificare le UI Admin e Pubbliche).
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
 - **Issue 1: Il gioco Bolle Magiche non è responsive (P1)**
-  - **Attempted fixes:** Per risolvere un grave bug di disallineamento del mouse, l'agente ha rimosso il CSS  che gestiva la responsività. Questo ha risolto il puntamento ma ha reso l'area di gioco di dimensioni fisse (484x597px), causando problemi di layout su mobile (troppo grande) e desktop (troppo piccolo).
-  - **Next debug checklist:**
-    1.  Discutere con l'utente una strategia alternativa per la responsività che non rompa il calcolo delle coordinate del mouse.
-    2.  Possibili soluzioni:
-        - Usare  e compensare i calcoli del mouse.
-        - Ricostruire la UI del gioco con unità relative (%, vw, vh) invece di pixel fissi.
-  - **Why fix this issue and what will be achieved with the fix?** Ripristina l'usabilità e l'esperienza immersiva del gioco su tutti i dispositivi.
-  - **Status:** NOT STARTED (il fix del bug ha creato questa regressione)
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** frontend
-  - **Blocked on other issue:** None
+   - **Attempted fixes:** L'agente precedente ha rimosso il CSS  per correggere il tracciamento del mouse, rendendo però l'area di gioco di dimensioni fisse. Nessun fix applicato in questa sessione.
+   - **Next debug checklist:** 
+     - Ripristinare la responsività senza rompere le coordinate del mouse usando  o unità relative.
+   - **Why fix this issue and what will be achieved with the fix?** Rende il gioco usabile su dispositivi mobili.
+   - **Status:** NOT STARTED
+   - **Is recurring issue?** Y
+   - **Should Test frontend/backend/both after fix?** frontend
+   - **Blocked on other issue:** Nessuno.
 
 **In progress Task List**:
-- **Task 1: Rendere i contatti legali modificabili dall'Admin (P0)**
-  - **Where to resume:** Il backend è pronto. Il prossimo passo è il frontend.
-    1.  Modificare  per aggiungere un nuovo pannello con i campi di input per le informazioni legali (, , , , ).
-    2.  Collegare questi campi allo stato del componente e alla chiamata API .
-    3.  Modificare la pagina  per recuperare dinamicamente i dati dall'endpoint  invece di usare testo hardcoded.
-  - **What will be achieved with this?** L'amministratore potrà aggiornare le informazioni legali del sito in autonomia, senza richiedere un nuovo deploy.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** both
-  - **Blocked on something:** None
+Nessun task in corso.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
@@ -61,99 +39,90 @@ Attualmente, l'agente ha iniziato a implementare la funzionalità per rendere i 
   - **P2:** Espandere il gioco Bolle Magiche con bolle speciali (arcobaleno, luce, festa).
   - **P3:** Espandere la funzionalità e-commerce per supportare la vendita di libri fisici.
   - **P4:** Attivare l'integrazione con Stripe per l'acquisto di bundle.
-- **Cancelled Tasks:** L'utente ha richiesto l'implementazione di una feature Prompt Base nel generatore AI, ma ha poi annullato la richiesta. Le modifiche al backend sono state revertite.
 
 **Completed work in this session**
-- **BUG FIX (Admin):** Risolto il bug critico che mostrava 0 giochi nel pannello admin correggendo la logica di autenticazione in .
-- **BUG FIX (Gioco):** Risolto il disallineamento del mouse nel gioco Bolle Magiche rimuovendo il CSS .
-- **FEATURE (Gioco):** Implementato il controllo touch trascina per mirare, rilascia per sparare su mobile.
-- **BUG FIX (DB):** Ripristinato l'accesso all'admin e i dati del sito dopo che il database è risultato vuoto, ricreando l'utente admin mancante.
-- **SEO & CONTENT (Major Task):**
-  - Eseguita una revisione SEO completa sulle pagine Home, Galleria, Poster, Libri, Download.
-  - Implementata una struttura semantica con H1 invisibili () e H2 visibili.
-  - Riscritto il copy di tutte le pagine per allinearsi alla nuova narrativa del brand (introduzione di Conni e Poppi).
-  - Creato un componente riutilizzabile .
-  - Generati e configurati  e .
-  - Aggiornato il footer con nuovi link e nuovo testo narrativo.
-- **HEALTH CHECK:** Eseguiti con successo molteplici health check, confermando la stabilità e la prontezza al deploy dell'applicazione.
+- Implementati flag di visibilità per i contatti legali (Admin + Endpoint dinamici) (DONE)
+- Aggiunto stato Bozza/Pubblicato per le Illustrazioni (UI Admin, endpoint, migrazione DB) (DONE)
+- Corretta regressione sicurezza backend: bloccato l'accesso diretto (ID, Image, Download) alle illustrazioni e ai poster in stato bozza (404 Not Found) (DONE)
+- Implementato flag  per separare la visibilità di Illustrazioni/Poster dal download del PDF (403 Forbidden se disabilitato) (DONE)
+- Risolto errore compilazione frontend (rimossa icona inesistente in  e ) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: Layout del gioco Bolle Magiche non responsive.** Questo è il problema più significativo rimasto in sospeso. L'agente lo ha identificato come conseguenza del fix al puntatore del mouse e ha chiesto all'utente come procedere, ma l'utente ha dato priorità ad altre attività.
+- **Issue 1:** Layout del gioco Bolle Magiche non responsive. (Come documentato in All Pending/In progress Issue list).
+   - **Debug checklist:** Rivedere il calcolo bounding client rect nel JS di canvas rispetto alla viewport.
+   - **Why to solve this issue and what will be achieved with this?** L'esperienza mobile è compromessa.
+   - **Should Test frontend/backend/both after fix:** frontend
+   - **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
-- Nessuno.
+- Nessuno relativo al lavoro corrente.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Pydantic, Motor (MongoDB).
-- **Frontend:** React, TailwindCSS.
-- **SEO:** Utilizzo strategico di heading (H1 , H2 visibili) per bilanciare UX e indicizzazione. Creazione di  e .
-- **Gestione Stato (Admin):** Modifica di un'entità globale () tramite API per configurare parti del sito dinamicamente.
-- **Debugging:** L'agente ha affrontato e risolto un complesso problema di interazione tra CSS () e JavaScript (), dimostrando un processo di debug iterativo (anche se il fix ha causato una regressione nel layout).
+- **FastAPI Backend Security:** Controllo granulare degli accessi server-side. Se un elemento è in bozza, tutte le API GET dirette (inclusa immagine e download) devono restituire . Se il download è disabilitato, l'endpoint download restituisce .
+- **Frontend vs Backend Sync:** Il frontend non si limita a nascondere i pulsanti (es. download non visibile se disabilitato), ma il backend respinge esplicitamente l'azione se forzata.
 
 **key DB schema**
-- ****: Esteso con i campi , , , , .
+  - **site_settings**: 
+  - **illustrations**: 
+  - **posters**: 
 
 **changes in tech stack**
-- Nessuno.
+  - Nessuno.
 
-**All files of reference**
-- : Contiene la logica API per le impostazioni legali.
-- : Prossimo file da modificare per la UI admin.
-- : Da modificare per renderla dinamica.
-- : Contiene il fix al puntatore e la regressione del layout responsive.
-- : Esempio principale delle modifiche SEO e di contenuto.
-- : Contiene il testo narrativo globale.
-- , : File di configurazione per i motori di ricerca.
+**All files of reference** 
+-  (Core: API routing, Models, MongoDB operations, Security checks)
+-  (Aggiunte endpoint chiamate per toggle)
+-  (UI Legale admin)
+-  (UI Flag)
+-  (UI Flag)
+-  (Rendering condizionale visibilità)
+-  (Rendering condizionale pulsante download)
+-  (Rendering condizionale pulsante download)
+-  (Aggiornato con l'esito dei test e status backend)
 
 **Areas that need refactoring**:
-- La pagina  necessita di una soluzione di responsività robusta che non sia basata su CSS .
+-  (Responsività tramite canvas scale vs CSS zoom).
 
 **key api endpoints**
-- : Endpoint per aggiornare le impostazioni globali, incluse le nuove informazioni legali.
-- : Endpoint pubblico per recuperare le impostazioni da mostrare nel frontend, come i contatti legali.
-- : Endpoint che è stato riparato e ora funziona correttamente.
+- : Salvataggio settaggi con flag visibilità.
+- : Getter pubblico filtrato per impostazioni globali.
+-  & : Ritorna payload con  e omette i record draft.
+- 
+- 
 
 **Critical Info for New Agent**
-- La priorità è completare la feature dei contatti legali.
-- Subito dopo, è cruciale affrontare la regressione del layout responsive del gioco Bolle Magiche. Proponi all'utente una soluzione chiara prima di implementarla.
-- L'utente è molto preciso e si aspetta che le sue istruzioni (specialmente per SEO e copy) vengano seguite alla lettera.
-- L'utente può cambiare idea bruscamente (es. feature Prompt Base). Sii pronto a fermare il lavoro e, se necessario, a revertire le modifiche.
+- **Attenzione ai requisiti utente:** L'utente è estremamente tecnico, scrupoloso, e detesta che l'AI implementi cose non richieste (no workaround, no miglioramenti non richiesti). Implementa *solo* ciò che chiede, rispettando i Principi non negoziabili espressi.
+- **Stripe è Disabilitato:** Stripe è inerte. Non toccare le variabili d'ambiente di Stripe o cercare di attivarlo.
+- **Server-side Security:** Non toccare la logica appena implementata in  per i controlli 404 e 403 su illustrazioni e poster, l'utente li ha verificati metodicamente.
 
-**documents and test_reports created in this job**
-- Nessuno.
+**documents and test reports created in this job** 
+  - 
 
 **Last 10 User Messages and any pending HUMAN messages**
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+-  (Implementato flag )
+-  (Risolto dal bot correggendo l'import errato di lucide-react)
+-  (Agente ha eseguito check finale)
 
 **Project Health Check:**
-- **Broken:** Il layout del gioco Bolle Magiche è rotto su mobile e non è immersivo su desktop a causa della rimozione del CSS  per risolvere un bug del puntatore.
+- **Broken:**  responsività.
 - **Mocked:** Nessuno.
 
 **3rd Party Integrations**
-- **OpenAI GPT-4o, gpt-image-1:** Utilizza Emergent LLM Key (menzionato nella cronologia, usato nel generatore AI).
-- **Stripe (Payments):** Predisposto ma non attivo. Richiede User API Key.
+- OpenAI GPT-4o — uses Emergent LLM Key
+- Stripe (Payments) — requires User API Key (Attualmente configurato come , non attivare).
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** Nessuno.
-- **Known regressions:** Il layout del gioco Bolle Magiche non è più responsive.
+- Testing agent used after significant changes: YES
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: None
+- Known regressions:  non responsive (dalla sessione precedente).
 
 **Credentials to test flow:**
-- **Email**: 
-- **Password**: 
+- **Email:** 
+- **Password:** 
 
 **What agent forgot to execute**
-- L'agente non ha dimenticato di eseguire nulla, ma ha creato una regressione (il layout non responsive del gioco) come effetto collaterale di un bug fix. Ha correttamente notificato l'utente, ma la risoluzione della regressione è ancora in sospeso.</analysis>
+- Niente, tutte le richieste dell'utente sono state eseguite puntualmente e verificate.</analysis>
