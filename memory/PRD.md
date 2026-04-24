@@ -36,18 +36,22 @@ Portale del brand "Poppiconni" (editoria per bambini): illustrazioni scaricabili
 Strategia: "1 fase alla volta, piccoli batch, testing_agent_v3_fork dopo ogni fase, nessuna mega-riscrittura".
 
 ### ✅ Fase 1 — Performance Foundation (COMPLETATA 24/04/2026)
-- 20 indici MongoDB su `poppiconni_dev` e `poppiconni_prod` (ix_id_isPublished, ix_slug, ix_bookId_sceneNumber, …)
-- True chunked streaming GridFS su 17 endpoint file (TTFB immagine 994ms → 440ms = –56%)
-- ETag strong + `If-None-Match` → `304 Not Modified` (risparmia 1.1 MB trasferimento per immagine su cache hit)
-- Cache-Control `public, max-age=31536000, immutable` su asset immutabili (illustrazioni, poster, book scenes)
-- Regression test suite `test_refactor_phase1.py` (29/30 passati)
-- **Files:** `backend/streaming.py`, `backend/create_indexes.py`, `backend/server.py` (edit chirurgico)
+- 20 indici MongoDB su `poppiconni_dev` e `poppiconni_prod`
+- True chunked streaming GridFS su 17 endpoint (TTFB 994ms → 440ms = –56%)
+- ETag strong + `304 Not Modified`
+- Regression suite 29/30 passati
 
-### ⏳ Fase 2 — Media Pipeline professionale
-- Generazione thumbnail all'upload (400/800/1600 px × WebP+JPG)
-- Endpoint immagine con size hint (`?w=400`)
-- Migrazione batch file GridFS esistenti
-- Riduzione payload Gallery: 26 MB → 1 MB (–97%)
+### ✅ Fase 2 — Media Pipeline professionale (COMPLETATA 24/04/2026)
+- **`media_pipeline.py`** — `ensure_variants()` / `find_variant()` / `normalize_size_param()` / `normalize_format_param()`. PIL + EXIF orientation rispettata, no upscale, fallback png/jpg in base ad alpha channel. Idempotente.
+- **`streaming.py` esteso** — `stream_gridfs_response_with_variants()` con fallback sicuro all'originale. ETag per-variante.
+- **Endpoint `?w=400|800|1600` + `?format=webp|jpg|png`** su: illustrations, posters, books cover, games thumbnail/card/page, themes bg, hero, brand-logo. Fallback: mai 500, sempre serve originale quando variante assente.
+- **Auto-generazione post-upload** via `fire_variants()` (asyncio.create_task fire-and-forget) su 11 endpoint admin upload.
+- **`migrate_variants.py`** — script idempotente batch. Eseguito su DEV e PROD: 3 originali → **18 varianti** generate in ciascun ambiente (3 × 3 size × 2 format).
+- **Risultati misurati:**
+  - Illustrazione 1.1 MB PNG → variante 400 webp = **15.5 KB** (–98.5%)
+  - Gallery stimata 24 card a 400 webp ≈ **380 KB** (vs 26 MB originali)
+  - Originali **intatti** (MD5, size, magic bytes verificati)
+- Regression suite 28/28 + 29/30 Fase 1 ancora OK
 
 ### ⏳ Fase 3 — Frontend media professionale
 - Componente `SmartImage` (`<picture>` + `srcset` + lazy + decoding async + blur placeholder)
@@ -116,3 +120,5 @@ frontend/src/
 - **2026-04-24** — Migrazione MongoDB locale → Atlas DEV (`poppiconni_dev`). 86 documenti, GridFS 3.57 MB.
 - **2026-04-24** — Migrazione Atlas DEV → Atlas PROD (`poppiconni_prod`). Binary integrity verified (MD5).
 - **2026-04-24** — Fase 1 Performance Foundation completata: 20 indici + true streaming + ETag/304. TTFB –56%.
+- **2026-04-24** — Sanitizzazione credenziali: rimossi password/MongoDB URI/admin hint da README, AdminLogin, test files, reports. Tutte le credenziali solo in env vars.
+- **2026-04-24** — Fase 2 Media Pipeline completata: 18 varianti responsive su DEV+PROD, endpoint `?w=` e `?format=`, fallback sicuro, auto-generazione post-upload. Gallery –98.5% (26 MB → 380 KB stimati).
