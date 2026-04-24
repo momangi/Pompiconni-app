@@ -4,9 +4,9 @@ import { Menu, X, Palette, Download, Images, Home, Lock, BookOpen, Search, Image
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import SmartImage from '../media/SmartImage';
+import { buildBrandLogoUrl } from '../../services/imageUrl';
 import { getSiteSettings } from '../../services/api';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,10 +47,15 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-200 to-blue-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 overflow-hidden">
               {siteSettings.hasBrandLogo ? (
-                <img 
-                  src={`${BACKEND_URL}${siteSettings.brandLogoUrl}`} 
-                  alt="Poppiconni" 
-                  className="w-full h-full object-cover"
+                <SmartImage
+                  builder={(_, opts) => buildBrandLogoUrl(opts)}
+                  idOrSlug="logo"
+                  alt="Poppiconni"
+                  defaultWidth={400}
+                  sizes="40px"
+                  priority
+                  className="w-full h-full"
+                  objectFit="cover"
                 />
               ) : null}
             </div>

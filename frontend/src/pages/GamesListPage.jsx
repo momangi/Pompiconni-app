@@ -7,9 +7,9 @@ import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
+import SmartImage from '../components/media/SmartImage';
+import { buildGameThumbnailUrl, buildGameCardImageUrl } from '../services/imageUrl';
 import { getGames } from '../services/api';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const GamesListPage = () => {
   const [games, setGames] = useState([]);

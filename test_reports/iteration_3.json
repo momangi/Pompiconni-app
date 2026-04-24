@@ -1,0 +1,50 @@
+{
+  "summary": "Phase 3 Frontend Media (SmartImage + React Query) validated via Playwright on DEV preview URL. SmartImage renders <picture> with two <source> (image/webp + image/jpeg), each exposing a srcset of 3 variants (w=400, w=800, w=1600) pointing to the Phase-2 backend image endpoints with ?w=<n>&format=<fmt> query params. Lazy loading (loading='lazy') + async decode (decoding='async') confirmed on non-priority <img>. Mobile viewport (390x844) correctly resolves currentSrc to the w=400 variant on /galleria theme cards. Admin login no longer shows the 'Demo: admin@pompiconni.it / admin123' hint and login with credentials from backend/.env succeeds (redirects to /admin). Admin illustrations list loads and correctly falls back to gradient/emoji placeholders for the 23 illustrations that have no imageFileId (per agent-to-agent note — expected, not a bug). FIXED 1 real code bug during testing: SmartImage used the React-invalid prop name `fetchpriority` (lowercase) which emitted `Invalid DOM property fetchpriority. Did you mean fetchPriority?` console errors on every page using SmartImage — changed to `fetchPriority` (camelCase). Post-fix: 0 console errors across /, /galleria, /poster, /libri.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "React Query cache for useThemes()",
+        "issue": "/api/themes was observed to be called 4 times across the sequence /galleria -> / -> /galleria. With staleTime=5min and a shared query key ['themes'], the second /galleria visit should hit cache (0 extra calls). The hot-navigation dedupe appears imperfect — possibly because LandingPage and GalleryPage both trigger useThemes on mount and React.StrictMode is not enabled (so this isn't the usual dev double-fetch). Low severity: data still renders correctly, just more network chatter than advertised. Recommend verifying all theme consumers use queryKeys.themes and that no legacy useEffect+fetch path still exists on landing.",
+        "affected_selectors": []
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_refactor_phase1.py",
+    "/app/backend/tests/test_refactor_phase2.py",
+    "/app/backend/tests/test_phase2_db_metadata.py"
+  ],
+  "action_items": [
+    "[Optional / low] Investigate why /api/themes is fetched multiple times across hot navigation between / and /galleria — confirm both pages share the useThemes() hook from /app/frontend/src/hooks/usePublicData.js and no residual useEffect+getThemes() path remains.",
+    "[Informational] Most public pages (/poster, /libri, /giochi, /download) render with bodyLen<2700 and 0 <picture> elements because the DEV Atlas has essentially no items (per the agent note: only 1 illustration has imageFileId, 2 themes have backgroundImageFileId). Recommend seeding more DEV content if you want to validate card-grid srcset visually — the wiring itself is correct."
+  ],
+  "critical_code_review_comments": [
+    "FIXED: SmartImage.jsx used `fetchpriority` (lowercase) as a JSX prop. React requires the camelCase `fetchPriority` — otherwise React logs `Invalid DOM property` errors on every render and does NOT forward the attribute to the DOM, defeating the LCP priority hint. Replaced in both the fallbackSrc branch (~L84) and the primary <picture> branch (~L119). Verified: 0 console errors post-fix across /, /galleria, /poster, /libri.",
+    "SmartImage safe-fallback ladder is correct: missing builder OR (missing idOrSlug AND missing fallbackSrc) -> neutral gray placeholder div; idOrSlug missing but fallbackSrc present -> plain <img>; broken flag (onError) -> pink/amber gradient div. Never produces a raw broken-image icon. Good defensive UX.",
+    "imageUrl.js correctly reads REACT_APP_BACKEND_URL (no hardcoded host), encodes idOrSlug, and emits ?w=&format= query params. SUPPORTED_WIDTHS=[400,800,1600] matches the Phase-2 backend contract exactly. DEFAULT_SIZES is conservative ('(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px').",
+    "queryClient.js: staleTime=5min, gcTime=30min, retry=1, refetchOnWindowFocus=false — sensible conservative defaults for editorial content.",
+    "App.js correctly wraps Routes in <QueryClientProvider>. CookieBanner is outside BrowserRouter but inside QueryClientProvider — correct.",
+    "AdminLogin.jsx — the 'Demo: admin@pompiconni.it / admin123' hint has been fully removed; only the placeholder inside the email <Input> remains (which is standard UX, not a credential leak). Verified visually and via innerText scan.",
+    "Minor code-quality note: SmartImage has two near-duplicate <img> render branches (fallbackSrc path and <picture> path) with the same loading/decoding/fetchPriority logic. Could be factored into a shared render helper to prevent the fetchpriority-style typo from recurring in only one branch."
+  ],
+  "updated_files": [
+    "/app/frontend/src/components/media/SmartImage.jsx (fetchpriority -> fetchPriority in both render branches)",
+    "/app/test_reports/iteration_3.json"
+  ],
+  "success_rate": {
+    "backend": "not tested in this phase (frontend-only per review request; Phase 1/2 regression suites still pass per iteration_2)",
+    "frontend": "~95% (all functional checks pass; 1 prop-name bug found and fixed; 1 minor cache-dedupe observation remaining)"
+  },
+  "test_credentials": "admin@pompiconni.it / admin123 (from backend/.env ADMIN_EMAIL/ADMIN_PASSWORD; login succeeded and redirected to /admin)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 frontend wiring is correct. The only code change during this run was SmartImage.jsx fetchpriority -> fetchPriority (line ~84 and ~119). Verified via browser automation across /, /galleria, /poster, /libri, /giochi, /download, /galleria/mestieri, /admin/login, /admin, /admin/illustrations. Mobile viewport 390x844 confirmed w=400 variant is picked (sizes='(max-width:640px) 100vw,...'). The remaining low-priority open item is that /api/themes is fetched more often than staleTime=5min would suggest across route transitions — worth a 10-minute look at LandingPage.jsx and GalleryPage.jsx to confirm both use useThemes() from hooks/usePublicData.js and share the ['themes'] key. Nothing blocking.",
+  "rca of the issue": "SmartImage fetchpriority bug RCA: React's synthetic attribute allow-list maps JSX props to DOM attributes via a camelCase convention (fetchPriority -> fetchpriority). Using the lowercase `fetchpriority` in JSX triggers the 'Invalid DOM property' dev warning and causes React to DROP the attribute when rendering to the DOM — so the LCP priority hint was never actually set on the hero image. Reproduction: open any page containing a SmartImage and inspect the DevTools console (multiple warnings) + inspect the <img> attributes (no fetchpriority set). Mitigation applied: replaced both occurrences in SmartImage.jsx with the React-correct `fetchPriority`. Verified post-fix: 0 console errors and the attribute now reaches the DOM."
+}

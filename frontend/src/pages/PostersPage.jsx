@@ -7,8 +7,8 @@ import { getPublicPosters } from '../services/api';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import SmartImage from '../components/media/SmartImage';
+import { buildPosterImageUrl } from '../services/imageUrl';
 
 const PostersPage = () => {
   const [posters, setPosters] = useState([]);
@@ -102,10 +102,14 @@ const PostersPage = () => {
                   {/* Image */}
                   <div className="h-64 bg-gradient-to-br from-pink-100 to-purple-100 relative overflow-hidden">
                     {poster.imageUrl ? (
-                      <img 
-                        src={`${BACKEND_URL}${poster.imageUrl}`}
+                      <SmartImage
+                        builder={buildPosterImageUrl}
+                        idOrSlug={poster.id}
                         alt={`Poster illustrato per bambini ${poster.title} – Poppiconni`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        defaultWidth={400}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                        objectFit="cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

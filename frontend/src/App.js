@@ -1,6 +1,8 @@
 import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./services/queryClient";
 import { Toaster } from "./components/ui/sonner";
 import LandingPage from "./pages/LandingPage";
 import GalleryPage from "./pages/GalleryPage";
@@ -36,55 +38,57 @@ import CookieBanner from "./components/CookieBanner";
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/galleria" element={<GalleryPage />} />
-          <Route path="/galleria/:themeId" element={<ThemePage />} />
-          <Route path="/libri" element={<BooksPage />} />
-          <Route path="/libri/:bookId" element={<BookReaderPage />} />
-          <Route path="/cerca" element={<SearchPage />} />
-          <Route path="/download" element={<DownloadPage />} />
-          <Route path="/poster" element={<PostersPage />} />
-          <Route path="/poster/:posterId" element={<PosterDetailPage />} />
-          
-          {/* Games Routes */}
-          <Route path="/giochi" element={<GamesListPage />} />
-          <Route path="/giochi/:slug" element={<GameDetailPage />} />
-          <Route path="/giochi/bolle-magiche/play" element={<BolleMagicheGame />} />
-          
-          {/* Redirect old brand-kit URL to home */}
-          <Route path="/brand-kit" element={<Navigate to="/" replace />} />
-          
-          {/* Legal Pages */}
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-          <Route path="/termini-condizioni" element={<TerminiCondizioniPage />} />
-          <Route path="/contatti-legali" element={<ContattiLegaliPage />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="illustrations" element={<AdminIllustrations />} />
-            <Route path="themes" element={<AdminThemes />} />
-            <Route path="generator" element={<AdminGenerator />} />
-            <Route path="books" element={<AdminBooks />} />
-            <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
-            <Route path="posters" element={<AdminPosters />} />
-            <Route path="bundles" element={<AdminBundles />} />
-            <Route path="games" element={<AdminGames />} />
-            <Route path="level-backgrounds" element={<AdminLevelBackgrounds />} />
-            <Route path="brand-kit" element={<BrandKitPage />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      <Toaster position="top-right" />
-      <CookieBanner />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/galleria" element={<GalleryPage />} />
+            <Route path="/galleria/:themeId" element={<ThemePage />} />
+            <Route path="/libri" element={<BooksPage />} />
+            <Route path="/libri/:bookId" element={<BookReaderPage />} />
+            <Route path="/cerca" element={<SearchPage />} />
+            <Route path="/download" element={<DownloadPage />} />
+            <Route path="/poster" element={<PostersPage />} />
+            <Route path="/poster/:posterId" element={<PosterDetailPage />} />
+
+            {/* Games Routes */}
+            <Route path="/giochi" element={<GamesListPage />} />
+            <Route path="/giochi/:slug" element={<GameDetailPage />} />
+            <Route path="/giochi/bolle-magiche/play" element={<BolleMagicheGame />} />
+
+            {/* Redirect old brand-kit URL to home */}
+            <Route path="/brand-kit" element={<Navigate to="/" replace />} />
+
+            {/* Legal Pages */}
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+            <Route path="/termini-condizioni" element={<TerminiCondizioniPage />} />
+            <Route path="/contatti-legali" element={<ContattiLegaliPage />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="illustrations" element={<AdminIllustrations />} />
+              <Route path="themes" element={<AdminThemes />} />
+              <Route path="generator" element={<AdminGenerator />} />
+              <Route path="books" element={<AdminBooks />} />
+              <Route path="books/:bookId/scenes" element={<AdminSceneEditor />} />
+              <Route path="posters" element={<AdminPosters />} />
+              <Route path="bundles" element={<AdminBundles />} />
+              <Route path="games" element={<AdminGames />} />
+              <Route path="level-backgrounds" element={<AdminLevelBackgrounds />} />
+              <Route path="brand-kit" element={<BrandKitPage />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="top-right" />
+        <CookieBanner />
+      </div>
+    </QueryClientProvider>
   );
 }
 

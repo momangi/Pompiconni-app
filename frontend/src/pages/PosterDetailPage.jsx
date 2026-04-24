@@ -9,6 +9,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { getPublicPoster } from '../services/api';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SmartImage from '../components/media/SmartImage';
+import { buildPosterImageUrl } from '../services/imageUrl';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -135,10 +137,15 @@ const PosterDetailPage = () => {
             <Card className="border-0 shadow-2xl overflow-hidden">
               <div className="aspect-[3/4] bg-gradient-to-br from-pink-100 to-purple-100 relative">
                 {poster.imageUrl ? (
-                  <img 
-                    src={`${BACKEND_URL}${poster.imageUrl}`}
+                  <SmartImage
+                    builder={buildPosterImageUrl}
+                    idOrSlug={poster.id}
                     alt={poster.title}
-                    className="w-full h-full object-contain"
+                    defaultWidth={800}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
+                    className="w-full h-full"
+                    objectFit="contain"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

@@ -7,9 +7,9 @@ import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
+import SmartImage from '../components/media/SmartImage';
+import { buildBookCoverUrl } from '../services/imageUrl';
 import { getBooks, getSiteSettings } from '../services/api';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BooksPage = () => {
   const [books, setBooks] = useState([]);
@@ -104,10 +104,14 @@ const BooksPage = () => {
                   {/* Cover Image */}
                   <div className="relative h-64 bg-gradient-to-br from-pink-100 to-blue-100 flex items-center justify-center overflow-hidden">
                     {book.coverImageFileId ? (
-                      <img 
-                        src={`${BACKEND_URL}/api/books/${book.id}/cover`}
+                      <SmartImage
+                        builder={buildBookCoverUrl}
+                        idOrSlug={book.id}
                         alt={`Libro illustrato per bambini ${book.title} – Poppiconni`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        defaultWidth={400}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                        objectFit="cover"
                       />
                     ) : (
                       <div className="text-center">

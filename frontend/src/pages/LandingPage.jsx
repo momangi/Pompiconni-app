@@ -6,6 +6,8 @@ import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
+import SmartImage from '../components/media/SmartImage';
+import { buildHeroImageUrl, buildThemeBackgroundUrl } from '../services/imageUrl';
 import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings, getCharacterImages } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -168,10 +170,15 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-blue-100 to-green-100 rounded-full blur-3xl opacity-60 scale-110" />
                 <div className="relative w-80 h-80 sm:w-96 sm:h-96 bg-gradient-to-br from-pink-100 to-blue-100 rounded-3xl flex items-center justify-center animate-float soft-shadow overflow-hidden">
                   {siteSettings.hasHeroImage ? (
-                    <img 
-                      src={`${BACKEND_URL}/api/site/hero-image`}
+                    <SmartImage
+                      builder={(_, opts) => buildHeroImageUrl(opts)}
+                      idOrSlug="hero"
                       alt="Poppiconni"
-                      className="w-full h-full object-cover"
+                      defaultWidth={800}
+                      sizes="(max-width: 640px) 320px, 384px"
+                      priority
+                      className="w-full h-full"
+                      objectFit="cover"
                     />
                   ) : (
                     <div className="text-center">
@@ -411,15 +418,18 @@ const LandingPage = () => {
                   <div className="h-40 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
                     {/* Background Image Layer - sempre visibile con opacity 1 */}
                     {theme.backgroundImageUrl && (
-                      <img 
-                        src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
+                      <SmartImage
+                        builder={buildThemeBackgroundUrl}
+                        idOrSlug={theme.id}
                         alt={`Tema ${theme.name} - Disegni da colorare Poppiconni`}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        style={{ 
+                        defaultWidth={400}
+                        sizes="(max-width: 640px) 50vw, 200px"
+                        className="absolute inset-0 w-full h-full"
+                        style={{
                           filter: `blur(${themeBlurPx}px)`,
                           transform: 'scale(1.1)',
-                          opacity: 1
                         }}
+                        objectFit="cover"
                       />
                     )}
                     {/* Velo overlay - opacità controllata dallo slider, colore crema */}

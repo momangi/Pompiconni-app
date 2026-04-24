@@ -8,10 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SmartImage from '../components/media/SmartImage';
+import { buildIllustrationImageUrl } from '../services/imageUrl';
 import { getTheme, getIllustrations, downloadIllustration, checkDownloadStatus, getSiteSettings } from '../services/api';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ThemePage = () => {
   const { themeId } = useParams();
@@ -208,21 +208,20 @@ const ThemePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredIllustrations.map((illustration) => {
-              // Use GridFS image if available, otherwise fall back to local uploads
-              const imageUrl = illustration.imageFileId 
-                ? `${BACKEND_URL}/api/illustrations/${illustration.id}/image`
-                : illustration.imageUrl 
-                  ? `${BACKEND_URL}${illustration.imageUrl}`
-                  : null;
-              
+              const hasImage = Boolean(illustration.imageFileId || illustration.imageUrl);
+
               return (
               <Card key={illustration.id} className="border-0 shadow-lg hover-lift overflow-hidden group">
                 <div className="relative h-48 bg-gray-50 flex items-center justify-center">
-                  {imageUrl ? (
-                    <img 
-                      src={imageUrl} 
+                  {hasImage ? (
+                    <SmartImage
+                      builder={buildIllustrationImageUrl}
+                      idOrSlug={illustration.id}
                       alt={illustration.title}
-                      className="w-full h-full object-cover"
+                      defaultWidth={400}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="w-full h-full"
+                      objectFit="cover"
                     />
                   ) : (
                     <div className="text-6xl opacity-30">🦄</div>
@@ -241,12 +240,16 @@ const ThemePage = () => {
                       <DialogContent className="sm:max-w-lg">
                         <DialogHeader><DialogTitle>{illustration.title}</DialogTitle></DialogHeader>
                         <div className="mt-4">
-                          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                            {imageUrl ? (
-                              <img 
-                                src={imageUrl} 
+                          <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                            {hasImage ? (
+                              <SmartImage
+                                builder={buildIllustrationImageUrl}
+                                idOrSlug={illustration.id}
                                 alt={illustration.title}
-                                className="max-h-full max-w-full object-contain"
+                                defaultWidth={800}
+                                sizes="(max-width: 640px) 100vw, 800px"
+                                className="max-h-full max-w-full"
+                                objectFit="contain"
                               />
                             ) : (
                               <div className="text-8xl opacity-40">🦄</div>

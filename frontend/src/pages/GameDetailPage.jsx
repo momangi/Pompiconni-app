@@ -5,9 +5,9 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SmartImage from '../components/media/SmartImage';
+import { buildGameThumbnailUrl, buildGamePageImageUrl } from '../services/imageUrl';
 import { getGame } from '../services/api';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const GameDetailPage = () => {
   const { slug } = useParams();
@@ -111,14 +111,17 @@ const GameDetailPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-pink-50/30 to-white relative">
       {/* Page Background Image (if exists) */}
       {game.pageImageUrl && (
-        <div 
-          className="fixed inset-0 bg-cover bg-center pointer-events-none"
-          style={{ 
-            backgroundImage: `url(${BACKEND_URL}${game.pageImageUrl})`,
-            opacity: (game.pageImageOpacity || 25) / 100,
-            zIndex: 0
-          }}
-        />
+        <div className="fixed inset-0 pointer-events-none" style={{ opacity: (game.pageImageOpacity || 25) / 100, zIndex: 0 }}>
+          <SmartImage
+            builder={buildGamePageImageUrl}
+            idOrSlug={game.slug}
+            alt=""
+            defaultWidth={1600}
+            sizes="100vw"
+            className="w-full h-full"
+            objectFit="cover"
+          />
+        </div>
       )}
       
       <div className="relative z-10">
@@ -138,10 +141,15 @@ const GameDetailPage = () => {
           {/* Cover Image */}
           <div className="h-64 sm:h-80 rounded-3xl overflow-hidden bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 relative mb-8 shadow-xl">
             {game.thumbnailUrl ? (
-              <img 
-                src={`${BACKEND_URL}${game.thumbnailUrl}`}
+              <SmartImage
+                builder={buildGameThumbnailUrl}
+                idOrSlug={game.slug}
                 alt={game.title}
-                className="w-full h-full object-cover"
+                defaultWidth={800}
+                sizes="(max-width: 1024px) 100vw, 800px"
+                priority
+                className="w-full h-full"
+                objectFit="cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center relative overflow-hidden">

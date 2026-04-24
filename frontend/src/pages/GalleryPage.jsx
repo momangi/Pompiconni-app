@@ -1,31 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
-import { getThemes } from '../services/api';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import SmartImage from '../components/media/SmartImage';
+import { buildThemeBackgroundUrl } from '../services/imageUrl';
+import { useThemes } from '../hooks/usePublicData';
 
 const GalleryPage = () => {
-  const [themes, setThemes] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchThemes = async () => {
-      try {
-        const data = await getThemes();
-        setThemes(data);
-      } catch (error) {
-        console.error('Error fetching themes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchThemes();
-  }, []);
+  const { data: themes = [], isLoading: loading } = useThemes();
 
   return (
     <div className="min-h-screen bg-white">
@@ -82,15 +67,18 @@ const GalleryPage = () => {
                     <div className="h-48 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: theme.color + '40' }}>
                       {/* Background Image Layer - sempre visibile con opacity 1 */}
                       {theme.backgroundImageUrl && (
-                        <img 
-                          src={`${BACKEND_URL}${theme.backgroundImageUrl}`}
+                        <SmartImage
+                          builder={buildThemeBackgroundUrl}
+                          idOrSlug={theme.id}
                           alt={`Disegni da colorare tema ${theme.name} - Poppiconni`}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          style={{ 
+                          defaultWidth={800}
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+                          className="absolute inset-0 w-full h-full"
+                          style={{
                             filter: `blur(${themeBlurPx}px)`,
                             transform: 'scale(1.1)',
-                            opacity: 1
                           }}
+                          objectFit="cover"
                         />
                       )}
                       {/* Velo overlay - opacità controllata dallo slider, colore crema */}

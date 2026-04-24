@@ -6,10 +6,10 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import SmartImage from '../components/media/SmartImage';
+import { buildIllustrationImageUrl } from '../services/imageUrl';
 import { searchIllustrations } from '../services/api';
 import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Suggested search terms for empty results
 const SUGGESTIONS = ['fattoria', 'pompiere', 'mare', 'spazio', 'dinosauro', 'principessa'];
@@ -122,11 +122,14 @@ const SearchPage = () => {
               >
                 <div className="aspect-square bg-gradient-to-br from-pink-50 to-blue-50 relative overflow-hidden">
                   {illustration.imageFileId ? (
-                    <img
-                      src={`${BACKEND_URL}/api/illustrations/${illustration.id}/image`}
+                    <SmartImage
+                      builder={buildIllustrationImageUrl}
+                      idOrSlug={illustration.id}
                       alt={illustration.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
+                      defaultWidth={400}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                      objectFit="cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
