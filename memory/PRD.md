@@ -53,10 +53,22 @@ Strategia: "1 fase alla volta, piccoli batch, testing_agent_v3_fork dopo ogni fa
   - Originali **intatti** (MD5, size, magic bytes verificati)
 - Regression suite 28/28 + 29/30 Fase 1 ancora OK
 
-### ⏳ Fase 3 — Frontend media professionale
-- Componente `SmartImage` (`<picture>` + `srcset` + lazy + decoding async + blur placeholder)
-- React Query per cache client-side
-- Refactor 33 `<img>` → `<SmartImage>`
+### ✅ Fase 3 — Frontend Media Professionale (COMPLETATA 26/04/2026)
+- **`SmartImage.jsx`** — `<picture>` + 2 `<source srcset>` (WebP + JPEG) × 3 widths (400/800/1600), `loading=lazy` di default, `decoding=async`, `fetchPriority` per LCP, fallback ladder a 3 livelli (placeholder neutro / fallbackSrc / gradient broken state). Mai produce broken-image icon.
+- **`services/imageUrl.js`** — single source of truth per URL backend image: 11 builder functions + `buildImageSrcSet()` + `SUPPORTED_WIDTHS`. Tutti gli URL passano da REACT_APP_BACKEND_URL.
+- **`services/queryClient.js`** — React Query setup (staleTime 5min, gcTime 30min, retry 1, refetchOnWindowFocus false).
+- **`hooks/usePublicData.js`** — hooks centralizzati: `useThemes`, `useIllustrations`, `usePosters`, `useBooks`, `useBundles`, `useGames`, `useReviews`, `useSiteSettings`, `useBrandKit`.
+- **`App.js`** — wrappato in `<QueryClientProvider>`.
+- **Pagine refactored a SmartImage:** GalleryPage, ThemePage (24 card + dialog preview), PostersPage, PosterDetailPage (priority hero), LandingPage (hero + theme cards), SearchPage, BooksPage, GamesListPage, GameDetailPage, Navbar (brand logo).
+- **Pagine convertite a React Query:** GalleryPage (useThemes), LandingPage (useThemes/useBundles/useReviews/useIllustrations/useSiteSettings + useQuery characterImages).
+- **Endpoint image card:** ora puntano a `?w=400` (mobile) / `?w=800` (desktop card) / `?w=1600` (lightbox). Hero/LCP usa priority.
+- **Bug found and fixed by testing agent:** `fetchpriority` lowercase JSX prop → `fetchPriority` camelCase (React DOM allow-list).
+
+#### Esito `testing_agent_v3_fork` (iteration_3)
+- ~95% pass rate, 0 critical, 0 console errors post-fix
+- Mobile viewport 390×844: card carica `?w=400` come progettato
+- Admin login senza più hint credenziali demo
+- Regressione Fase 1+2 OK
 
 ### ⏳ Fase 4 — Refactor backend modulare
 Split di `server.py` (4886 righe, 57 endpoint) in:
@@ -122,3 +134,4 @@ frontend/src/
 - **2026-04-24** — Fase 1 Performance Foundation completata: 20 indici + true streaming + ETag/304. TTFB –56%.
 - **2026-04-24** — Sanitizzazione credenziali: rimossi password/MongoDB URI/admin hint da README, AdminLogin, test files, reports. Tutte le credenziali solo in env vars.
 - **2026-04-24** — Fase 2 Media Pipeline completata: 18 varianti responsive su DEV+PROD, endpoint `?w=` e `?format=`, fallback sicuro, auto-generazione post-upload. Gallery –98.5% (26 MB → 380 KB stimati).
+- **2026-04-26** — Fase 3 Frontend Media Professionale completata: SmartImage component + React Query + 11 builder functions + 10 pagine refactored. Mobile usa w=400, desktop w=800, hero priority. Fix `fetchpriority` → `fetchPriority`.

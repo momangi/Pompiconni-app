@@ -8,48 +8,25 @@ import Footer from '../components/layout/Footer';
 import SEO from '../components/SEO';
 import SmartImage from '../components/media/SmartImage';
 import { buildHeroImageUrl, buildThemeBackgroundUrl } from '../services/imageUrl';
-import { getThemes, getBundles, getReviews, getIllustrations, getSiteSettings, getCharacterImages } from '../services/api';
+import { useThemes, useBundles, useReviews, useIllustrations, useSiteSettings } from '../hooks/usePublicData';
+import { useQuery } from '@tanstack/react-query';
+import { getCharacterImages } from '../services/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const LandingPage = () => {
-  const [themes, setThemes] = useState([]);
-  const [bundles, setBundles] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [illustrations, setIllustrations] = useState([]);
-  const [siteSettings, setSiteSettings] = useState({ stripe_enabled: false, hasHeroImage: false });
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  
-  // Character images state
-  const [characterImages, setCharacterImages] = useState({});
-  const [expandedTrait, setExpandedTrait] = useState(null);
+  const { data: themes = [] } = useThemes();
+  const { data: bundles = [] } = useBundles();
+  const { data: reviews = [] } = useReviews();
+  const { data: illustrations = [] } = useIllustrations();
+  const { data: siteSettings = { stripe_enabled: false, hasHeroImage: false } } = useSiteSettings();
+  const { data: characterImages = {} } = useQuery({
+    queryKey: ['characterImages'],
+    queryFn: () => getCharacterImages().catch(() => ({})),
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [themesData, bundlesData, reviewsData, illustrationsData, settingsData, characterData] = await Promise.all([
-          getThemes(),
-          getBundles(),
-          getReviews(),
-          getIllustrations(),
-          getSiteSettings(),
-          getCharacterImages().catch(() => ({}))
-        ]);
-        setThemes(themesData);
-        setBundles(bundlesData);
-        setReviews(reviewsData);
-        setIllustrations(illustrationsData);
-        setSiteSettings(settingsData);
-        setCharacterImages(characterData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [expandedTrait, setExpandedTrait] = useState(null);
 
   // Handle modal close with Escape key
   useEffect(() => {
