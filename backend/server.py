@@ -29,10 +29,22 @@ from media_pipeline import ensure_variants
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+# MongoDB connection — prefer MONGODB_URI / MONGODB_DB_NAME (set by us) over
+# MONGO_URL / DB_NAME (which the Emergent platform may auto-override during
+# deploy with its own managed MongoDB). This way the deployed app continues
+# to read from our Atlas cluster as configured in backend/.env.
+mongo_url = (
+    os.environ.get('MONGODB_URI')
+    or os.environ.get('MONGO_URL')
+    or 'mongodb://localhost:27017'
+)
+mongo_db_name = (
+    os.environ.get('MONGODB_DB_NAME')
+    or os.environ.get('DB_NAME')
+    or 'pompiconni_db'
+)
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'pompiconni_db')]
+db = client[mongo_db_name]
 
 # GridFS bucket for file storage
 gridfs_bucket = AsyncIOMotorGridFSBucket(db)
@@ -749,7 +761,15 @@ async def init_database():
 
 @app.on_event("startup")
 async def startup_event():
-    await init_database()
+    """
+    Best-effort startup: seed data + index creation are wrapped in try/except
+    so the pod never enters CrashLoopBackOff if Atlas is momentarily slow or
+    a single migration fails. Health endpoints work regardless.
+    """
+    try:
+        await init_database()
+    except Exception as e:
+        logger.error(f"init_database failed (non-fatal): {str(e)[:200]}")
     
     # Create TTL index for download_limits (auto-delete after 30 days)
     try:
@@ -4995,6 +5015,21 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Include routers
 app.include_router(api_router)
 app.include_router(admin_router)
+
+
+# Top-level health endpoints for the orchestrator (K8s readiness/liveness probes).
+# These intentionally do NOT touch the database so the pod is reported healthy
+# even if the DB is momentarily slow during cold start / index creation.
+@app.get("/")
+async def _root_health():
+    return {"status": "ok", "service": "poppiconni"}
+
+
+@app.get("/health")
+@app.get("/api/health")
+async def _health():
+    return {"status": "ok"}
+
 
 # CORS Middleware
 app.add_middleware(
