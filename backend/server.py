@@ -37,6 +37,11 @@ from core.security import create_token, verify_token, security_bearer as securit
 # in subsequent batches.
 from services import review_service, settings_service, theme_service
 
+# Domain services (Fase 4B Batch 2) --------------------------------------------
+# Posters / games / level_backgrounds. GridFS-heavy flows (image streaming,
+# upload, PDF download) intentionally stay in server.py for this batch.
+from services import poster_service, game_service, level_background_service
+
 # Domain models (Fase 4A refactor) ---------------------------------------------
 # All Pydantic classes now live in /app/backend/models/*.py and are re-exported
 # via the package __init__. Importing them here keeps every existing route
@@ -3380,41 +3385,13 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
 @api_router.get("/games")
 async def get_public_games():
     """Get all games for public display"""
-    games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
-    
-    # Add image URLs if exist
-    for game in games:
-        # Cache busting with updatedAt timestamp
-        cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
-        
-        if game.get('thumbnailFileId'):
-            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
-        if game.get('cardImageFileId'):
-            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
-        if game.get('pageImageFileId'):
-            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
-    
-    return games
+    return await game_service.list_public_games()
 
 
 @api_router.get("/games/{slug}")
 async def get_public_game(slug: str):
     """Get a single game by slug"""
-    game = await db.games.find_one({"slug": slug}, {"_id": 0})
-    if not game:
-        raise HTTPException(status_code=404, detail="Gioco non trovato")
-    
-    # Cache busting with updatedAt timestamp
-    cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
-    
-    if game.get('thumbnailFileId'):
-        game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
-    if game.get('cardImageFileId'):
-        game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
-    if game.get('pageImageFileId'):
-        game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
-    
-    return game
+    return await game_service.get_public_game(slug)
 
 
 @api_router.get("/games/{slug}/thumbnail")
@@ -3446,124 +3423,38 @@ async def get_game_thumbnail(
 @api_router.get("/admin/games")
 async def get_admin_games(email: str = Depends(verify_token)):
     """Get all games for admin"""
-    games = await db.games.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
-    
-    for game in games:
-        # Cache busting with updatedAt timestamp
-        cache_bust = int(game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if game.get('updatedAt') else ''
-        
-        if game.get('thumbnailFileId'):
-            game['thumbnailUrl'] = f"/api/games/{game['slug']}/thumbnail?v={cache_bust}"
-        if game.get('cardImageFileId'):
-            game['cardImageUrl'] = f"/api/games/{game['slug']}/card-image?v={cache_bust}"
-        if game.get('pageImageFileId'):
-            game['pageImageUrl'] = f"/api/games/{game['slug']}/page-image?v={cache_bust}"
-    
-    return games
+    return await game_service.list_admin_games()
 
 
 @api_router.post("/admin/games")
 async def create_game(game_data: dict, email: str = Depends(verify_token)):
     """Create a new game"""
-    
-    # Check slug uniqueness
-    existing = await db.games.find_one({"slug": game_data.get('slug')})
-    if existing:
-        raise HTTPException(status_code=400, detail="Slug già esistente")
-    
-    game = {
-        "id": str(uuid.uuid4()),
-        "slug": game_data.get('slug'),
-        "title": game_data.get('title'),
-        "shortDescription": game_data.get('shortDescription', ''),
-        "longDescription": game_data.get('longDescription', ''),
-        "status": game_data.get('status', 'coming_soon'),
-        "ageRecommended": game_data.get('ageRecommended', '3+'),
-        "howToPlay": game_data.get('howToPlay', []),
-        "thumbnailFileId": None,
-        "sortOrder": game_data.get('sortOrder', 0),
-        "createdAt": datetime.now(timezone.utc),
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    await db.games.insert_one(game)
-    if '_id' in game:
-        del game['_id']
-    return game
+    return await game_service.create_game(game_data)
 
 
 @api_router.put("/admin/games/{game_id}")
 async def update_game(game_id: str, game_data: dict, email: str = Depends(verify_token)):
     """Update a game"""
-    
-    game = await db.games.find_one({"id": game_id})
-    if not game:
-        raise HTTPException(status_code=404, detail="Gioco non trovato")
-    
-    update_data = {
-        "title": game_data.get('title', game['title']),
-        "slug": game_data.get('slug', game['slug']),
-        "shortDescription": game_data.get('shortDescription', game.get('shortDescription', '')),
-        "longDescription": game_data.get('longDescription', game.get('longDescription', '')),
-        "status": game_data.get('status', game.get('status', 'coming_soon')),
-        "ageRecommended": game_data.get('ageRecommended', game.get('ageRecommended', '3+')),
-        "howToPlay": game_data.get('howToPlay', game.get('howToPlay', [])),
-        "sortOrder": game_data.get('sortOrder', game.get('sortOrder', 0)),
-        # Card image opacity (0-100) - CLAMPED
-        "cardImageOpacity": max(0, min(100, int(game_data.get('cardImageOpacity', game.get('cardImageOpacity', 35))))),
-        # Page image opacity (0-100) - CLAMPED
-        "pageImageOpacity": max(0, min(100, int(game_data.get('pageImageOpacity', game.get('pageImageOpacity', 25))))),
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    await db.games.update_one({"id": game_id}, {"$set": update_data})
-    
-    updated_game = await db.games.find_one({"id": game_id}, {"_id": 0})
-    
-    # Add URLs with cache busting (?v=timestamp)
-    cache_bust = int(updated_game.get('updatedAt', datetime.now(timezone.utc)).timestamp()) if updated_game.get('updatedAt') else ''
-    
-    if updated_game.get('thumbnailFileId'):
-        updated_game['thumbnailUrl'] = f"/api/games/{updated_game['slug']}/thumbnail?v={cache_bust}"
-    if updated_game.get('cardImageFileId'):
-        updated_game['cardImageUrl'] = f"/api/games/{updated_game['slug']}/card-image?v={cache_bust}"
-    if updated_game.get('pageImageFileId'):
-        updated_game['pageImageUrl'] = f"/api/games/{updated_game['slug']}/page-image?v={cache_bust}"
-    
-    return updated_game
+    return await game_service.update_game(game_id, game_data)
 
 
 @api_router.delete("/admin/games/{game_id}")
 async def delete_game(game_id: str, email: str = Depends(verify_token)):
     """Delete a game and all associated images"""
     from bson import ObjectId
-    
-    game = await db.games.find_one({"id": game_id})
-    if not game:
-        raise HTTPException(status_code=404, detail="Gioco non trovato")
-    
-    # Delete thumbnail if exists
-    if game.get('thumbnailFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(game['thumbnailFileId']))
-        except Exception:
-            pass
-    
-    # Delete card image if exists
-    if game.get('cardImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(game['cardImageFileId']))
-        except Exception:
-            pass
-    
-    # Delete page image if exists
-    if game.get('pageImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(game['pageImageFileId']))
-        except Exception:
-            pass
-    
-    await db.games.delete_one({"id": game_id})
+
+    game = await game_service.prepare_admin_delete(game_id)
+
+    # GridFS cleanup stays here in server.py (Fase 4B Batch 2 scope).
+    for file_id_key in ("thumbnailFileId", "cardImageFileId", "pageImageFileId"):
+        file_id = game.get(file_id_key)
+        if file_id:
+            try:
+                await gridfs_bucket.delete(ObjectId(file_id))
+            except Exception:
+                pass
+
+    await game_service.finalize_admin_delete(game_id)
     return {"message": "Gioco eliminato"}
 
 
@@ -3814,17 +3705,7 @@ async def delete_game_page_image(
 @api_router.get("/games/bolle-magiche/level-backgrounds")
 async def get_level_backgrounds():
     """Get all level backgrounds for Bolle Magiche (public)"""
-    backgrounds = await db.game_level_backgrounds.find(
-        {"gameSlug": "bolle-magiche"},
-        {"_id": 0}
-    ).sort("levelRangeStart", 1).to_list(50)
-    
-    # Add image URLs
-    for bg in backgrounds:
-        if bg.get('backgroundImageFileId'):
-            bg['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg['id']}/image"
-    
-    return backgrounds
+    return await level_background_service.list_public_backgrounds()
 
 @api_router.get("/games/bolle-magiche/level-backgrounds/{bg_id}/image")
 async def get_level_background_image(bg_id: str, request: Request):
@@ -3846,17 +3727,7 @@ async def get_level_background_image(bg_id: str, request: Request):
 @api_router.get("/admin/games/bolle-magiche/level-backgrounds")
 async def admin_get_level_backgrounds(user_id: str = Depends(verify_token)):
     """Admin: Get all level backgrounds"""
-    
-    backgrounds = await db.game_level_backgrounds.find(
-        {"gameSlug": "bolle-magiche"},
-        {"_id": 0}
-    ).sort("levelRangeStart", 1).to_list(50)
-    
-    for bg in backgrounds:
-        if bg.get('backgroundImageFileId'):
-            bg['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg['id']}/image"
-    
-    return backgrounds
+    return await level_background_service.list_admin_backgrounds()
 
 @api_router.post("/admin/games/bolle-magiche/level-backgrounds")
 async def admin_create_level_background(
@@ -3924,27 +3795,9 @@ async def admin_update_level_background(
     user_id: str = Depends(verify_token)
 ):
     """Admin: Update level background settings"""
-    
-    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
-    if not bg:
-        raise HTTPException(status_code=404, detail="Sfondo non trovato")
-    
-    update_data = {"updatedAt": datetime.now(timezone.utc)}
-    
-    if levelRangeStart is not None:
-        update_data["levelRangeStart"] = levelRangeStart
-    if levelRangeEnd is not None:
-        update_data["levelRangeEnd"] = levelRangeEnd
-    if backgroundOpacity is not None:
-        update_data["backgroundOpacity"] = backgroundOpacity
-    
-    await db.game_level_backgrounds.update_one({"id": bg_id}, {"$set": update_data})
-    
-    updated = await db.game_level_backgrounds.find_one({"id": bg_id}, {"_id": 0})
-    if updated.get('backgroundImageFileId'):
-        updated['backgroundImageUrl'] = f"/api/games/bolle-magiche/level-backgrounds/{bg_id}/image"
-    
-    return updated
+    return await level_background_service.update_background(
+        bg_id, levelRangeStart, levelRangeEnd, backgroundOpacity
+    )
 
 @api_router.post("/admin/games/bolle-magiche/level-backgrounds/{bg_id}/image")
 async def admin_upload_level_background_image(
@@ -3991,20 +3844,17 @@ async def admin_delete_level_background(
 ):
     """Admin: Delete a level background"""
     from bson import ObjectId
-    
-    bg = await db.game_level_backgrounds.find_one({"id": bg_id})
-    if not bg:
-        raise HTTPException(status_code=404, detail="Sfondo non trovato")
-    
-    # Delete image from GridFS
+
+    bg = await level_background_service.get_raw_background(bg_id)
+
+    # GridFS cleanup remains in server.py (Fase 4B Batch 2 scope).
     if bg.get('backgroundImageFileId'):
         try:
             await gridfs_bucket.delete(ObjectId(bg['backgroundImageFileId']))
         except Exception:
             pass
-    
+
     await db.game_level_backgrounds.delete_one({"id": bg_id})
-    
     return {"success": True}
 
 
@@ -4015,22 +3865,12 @@ async def admin_delete_level_background(
 @api_router.get("/posters")
 async def get_public_posters():
     """Get all published posters for public display"""
-    posters = await db.posters.find(
-        {"status": "published"},
-        {"_id": 0}
-    ).sort("createdAt", -1).to_list(100)
-    return posters
+    return await poster_service.list_public_posters()
 
 @api_router.get("/posters/{poster_id}")
 async def get_public_poster(poster_id: str):
     """Get a single published poster by ID"""
-    poster = await db.posters.find_one(
-        {"id": poster_id, "status": "published"},
-        {"_id": 0}
-    )
-    if not poster:
-        raise HTTPException(status_code=404, detail="Poster non trovato")
-    return poster
+    return await poster_service.get_public_poster(poster_id)
 
 @api_router.get("/posters/{poster_id}/image")
 async def get_poster_image(
@@ -4096,96 +3936,45 @@ async def download_poster_pdf(poster_id: str, request: Request):
 @admin_router.get("/posters")
 async def admin_get_posters(email: str = Depends(verify_token)):
     """Get all posters for admin panel"""
-    posters = await db.posters.find({}, {"_id": 0}).sort("createdAt", -1).to_list(100)
-    return posters
+    return await poster_service.list_admin_posters()
 
 @admin_router.post("/posters")
 async def admin_create_poster(poster: PosterCreate, email: str = Depends(verify_token)):
     """Create a new poster"""
-    poster_dict = {
-        "id": str(uuid.uuid4()),
-        "title": poster.title,
-        "description": poster.description,
-        "price": poster.price,
-        "status": poster.status,
-        "imageFileId": None,
-        "imageUrl": None,
-        "pdfFileId": None,
-        "pdfUrl": None,
-        "downloadCount": 0,
-        "createdAt": datetime.now(timezone.utc),
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    await db.posters.insert_one(poster_dict)
-    poster_dict.pop('_id', None)
-    
-    return poster_dict
+    return await poster_service.create_poster(poster)
 
 @admin_router.get("/posters/{poster_id}")
 async def admin_get_poster(poster_id: str, email: str = Depends(verify_token)):
     """Get a single poster for editing"""
-    poster = await db.posters.find_one({"id": poster_id}, {"_id": 0})
-    if not poster:
-        raise HTTPException(status_code=404, detail="Poster non trovato")
-    return poster
+    return await poster_service.get_admin_poster(poster_id)
 
 @admin_router.put("/posters/{poster_id}")
 async def admin_update_poster(poster_id: str, poster: PosterUpdate, email: str = Depends(verify_token)):
     """Update a poster"""
-    update_data = {k: v for k, v in poster.dict().items() if v is not None}
-    update_data['updatedAt'] = datetime.now(timezone.utc)
-    
-    result = await db.posters.update_one({"id": poster_id}, {"$set": update_data})
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Poster non trovato")
-    
-    return {"success": True}
+    return await poster_service.update_poster(poster_id, poster)
 
 @admin_router.put("/posters/{poster_id}/download-enabled")
 async def toggle_poster_download(poster_id: str, email: str = Depends(verify_token)):
     """Toggle the downloadEnabled status of a poster"""
-    poster = await db.posters.find_one({"id": poster_id})
-    if not poster:
-        raise HTTPException(status_code=404, detail="Poster non trovato")
-    
-    current_status = poster.get('downloadEnabled', True)
-    new_status = not current_status
-    
-    await db.posters.update_one(
-        {"id": poster_id}, 
-        {"$set": {"downloadEnabled": new_status, "updatedAt": datetime.now(timezone.utc)}}
-    )
-    
-    return {
-        "success": True,
-        "downloadEnabled": new_status
-    }
+    return await poster_service.toggle_download_enabled(poster_id)
 
 @admin_router.delete("/posters/{poster_id}")
 async def admin_delete_poster(poster_id: str, email: str = Depends(verify_token)):
     """Delete a poster and its files"""
     from bson import ObjectId
-    
-    poster = await db.posters.find_one({"id": poster_id})
-    if not poster:
-        raise HTTPException(status_code=404, detail="Poster non trovato")
-    
-    # Delete image from GridFS
-    if poster.get('imageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(poster['imageFileId']))
-        except Exception:
-            pass
-    
-    # Delete PDF from GridFS
-    if poster.get('pdfFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(poster['pdfFileId']))
-        except Exception:
-            pass
-    
-    await db.posters.delete_one({"id": poster_id})
+
+    poster = await poster_service.prepare_admin_delete(poster_id)
+
+    # GridFS cleanup remains in server.py (Fase 4B Batch 2 scope).
+    for file_id_key in ("imageFileId", "pdfFileId"):
+        file_id = poster.get(file_id_key)
+        if file_id:
+            try:
+                await gridfs_bucket.delete(ObjectId(file_id))
+            except Exception:
+                pass
+
+    await poster_service.finalize_admin_delete(poster_id)
     return {"success": True}
 
 @admin_router.post("/posters/{poster_id}/upload-image")
@@ -4310,24 +4099,7 @@ async def admin_upload_poster_pdf(
 @admin_router.get("/posters/stats/summary")
 async def admin_poster_stats(email: str = Depends(verify_token)):
     """Get poster statistics"""
-    total = await db.posters.count_documents({})
-    published = await db.posters.count_documents({"status": "published"})
-    drafts = await db.posters.count_documents({"status": "draft"})
-    free = await db.posters.count_documents({"status": "published", "price": 0})
-    
-    # Sum all downloads
-    pipeline = [{"$group": {"_id": None, "total": {"$sum": "$downloadCount"}}}]
-    result = await db.posters.aggregate(pipeline).to_list(1)
-    total_downloads = result[0]['total'] if result else 0
-    
-    return {
-        "total": total,
-        "published": published,
-        "drafts": drafts,
-        "free": free,
-        "paid": published - free,
-        "totalDownloads": total_downloads
-    }
+    return await poster_service.stats_summary()
 
 # ============== POPPICONNI CHARACTER IMAGES ==============
 
