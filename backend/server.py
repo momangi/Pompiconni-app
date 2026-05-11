@@ -1,9 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import StreamingResponse, Response
-from dotenv import load_dotenv
+from fastapi.responses import StreamingResponse, Response, JSONResponse
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 import os
 import logging
 import re
@@ -14,7 +12,6 @@ from enum import Enum
 import uuid
 import hashlib
 from datetime import datetime, timezone, timedelta
-import jwt
 import base64
 import aiofiles
 import io
@@ -26,42 +23,64 @@ from PIL import Image as PILImage
 from streaming import stream_gridfs_response, stream_gridfs_response_with_variants
 from media_pipeline import ensure_variants
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Core infrastructure (Fase 4A refactor) ---------------------------------------
+# Centralized configuration, database client, security helpers and logging
+# previously inlined in this file. Existing module-level symbols below are
+# preserved as aliases so the rest of server.py keeps working unchanged.
+from core.config import settings
+from core.database import client, db, gridfs_bucket, ping_db, close_client
+from core.security import create_token, verify_token, security_bearer as security
 
-# MongoDB connection — prefer MONGODB_URI / MONGODB_DB_NAME (set by us) over
-# MONGO_URL / DB_NAME (which the Emergent platform may auto-override during
-# deploy with its own managed MongoDB). This way the deployed app continues
-# to read from our Atlas cluster as configured in backend/.env.
-mongo_url = (
-    os.environ.get('MONGODB_URI')
-    or os.environ.get('MONGO_URL')
-    or 'mongodb://localhost:27017'
+# Domain models (Fase 4A refactor) ---------------------------------------------
+# All Pydantic classes now live in /app/backend/models/*.py and are re-exported
+# via the package __init__. Importing them here keeps every existing route
+# signature compatible with no further changes.
+from models import (
+    # auth
+    LoginRequest, LoginResponse,
+    # theme
+    Theme, ThemeBase, ThemeCreate, ThemeUpdate, THEME_COLOR_PALETTE,
+    # illustration
+    Illustration, IllustrationBase, IllustrationCreate, GenerateRequest,
+    # bundle
+    Bundle, BundleBase, BundleCreate, BundleUpdate,
+    # review
+    Review, ReviewUpdate,
+    # game
+    Game,
+    # level background
+    GameLevelBackground, GameLevelBackgroundBase,
+    GameLevelBackgroundCreate, GameLevelBackgroundUpdate,
+    # site settings
+    SiteSettings, SiteSettingsUpdate, HeroImageResponse,
+    # book
+    Book, BookBase, BookCreate, BookScene, BookSceneCreate, BookSceneText,
+    ReadingProgress, MAX_SCENES_PER_BOOK,
+    # generation
+    GenerationStyle, GenerationStyleBase, GenerationStyleCreate,
+    PoppiconniGenerateRequest, PoppiconniGenerateResponse,
+    # poster
+    Poster, PosterBase, PosterCreate, PosterUpdate, PosterStatus,
+    # character
+    CharacterTextUpdate,
+    # common
+    DownloadEvent,
 )
-mongo_db_name = (
-    os.environ.get('MONGODB_DB_NAME')
-    or os.environ.get('DB_NAME')
-    or 'pompiconni_db'
-)
-client = AsyncIOMotorClient(mongo_url)
-db = client[mongo_db_name]
 
-# GridFS bucket for file storage
-gridfs_bucket = AsyncIOMotorGridFSBucket(db)
-
-# Stripe configuration
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-
-# JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'pompiconni_secret_key_2024')
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
-
-# Admin credentials
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@pompiconni.it')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
+# Legacy module-level aliases — kept so existing route bodies that still
+# reference `JWT_SECRET`, `ADMIN_PASSWORD`, etc. continue to work unchanged.
+ROOT_DIR = settings.root_dir
+UPLOAD_DIR = settings.upload_dir
+mongo_url = settings.mongo_uri
+mongo_db_name = settings.mongo_db_name
+JWT_SECRET = settings.jwt_secret
+JWT_ALGORITHM = settings.jwt_algorithm
+JWT_EXPIRATION_HOURS = settings.jwt_expiration_hours
+ADMIN_EMAIL = settings.admin_email
+ADMIN_PASSWORD = settings.admin_password
+STRIPE_SECRET_KEY = settings.stripe_secret_key
+STRIPE_PUBLISHABLE_KEY = settings.stripe_publishable_key
+STRIPE_WEBHOOK_SECRET = settings.stripe_webhook_secret
 
 # Create the main app
 app = FastAPI(title="Poppiconni API", version="1.0.0")
@@ -70,15 +89,8 @@ app = FastAPI(title="Poppiconni API", version="1.0.0")
 api_router = APIRouter(prefix="/api")
 admin_router = APIRouter(prefix="/api/admin")
 
-security = HTTPBearer()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Logger
 logger = logging.getLogger(__name__)
-
-# Upload directory
-UPLOAD_DIR = ROOT_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 # ============== MEDIA PIPELINE HELPERS (Fase 2) ==============
 
@@ -110,373 +122,14 @@ def fire_variants(file_id):
         logger.warning(f"Could not schedule variants for {file_id}: {e}")
 
 # ============== MODELS ==============
-
-class ThemeBase(BaseModel):
-    name: str
-    description: str
-    icon: str = "BookOpen"
-    color: str = "#FFB6C1"
-    coverImage: Optional[str] = None
-    backgroundOpacity: int = 30  # 10-80%
-
-class ThemeCreate(ThemeBase):
-    pass
-
-class ThemeUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    icon: Optional[str] = None
-    color: Optional[str] = None
-    coverImage: Optional[str] = None
-    backgroundOpacity: Optional[int] = None
-
-class Theme(ThemeBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    illustrationCount: int = 0
-    backgroundImageFileId: Optional[str] = None
-    backgroundImageUrl: Optional[str] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-# Predefined color palette for themes (coherent with site design)
-THEME_COLOR_PALETTE = [
-    {"name": "Rosa Poppiconni", "value": "#FFB6C1", "hex": "#FFB6C1"},
-    {"name": "Azzurro Cielo", "value": "#87CEEB", "hex": "#87CEEB"},
-    {"name": "Verde Prato", "value": "#90EE90", "hex": "#90EE90"},
-    {"name": "Giallo Sole", "value": "#FFD700", "hex": "#FFD700"},
-    {"name": "Arancio Tramonto", "value": "#FFA07A", "hex": "#FFA07A"},
-    {"name": "Lavanda", "value": "#E6E6FA", "hex": "#E6E6FA"},
-    {"name": "Pesca", "value": "#FFDAB9", "hex": "#FFDAB9"},
-    {"name": "Menta", "value": "#98FB98", "hex": "#98FB98"},
-    {"name": "Corallo", "value": "#F08080", "hex": "#F08080"},
-    {"name": "Turchese", "value": "#40E0D0", "hex": "#40E0D0"},
-    {"name": "Lilla", "value": "#DDA0DD", "hex": "#DDA0DD"},
-    {"name": "Albicocca", "value": "#FBCEB1", "hex": "#FBCEB1"}
-]
-
-class IllustrationBase(BaseModel):
-    title: str
-    description: str
-    themeId: str
-    isFree: bool = True
-    price: float = 0.99
-
-class IllustrationCreate(IllustrationBase):
-    imageUrl: Optional[str] = None
-    pdfUrl: Optional[str] = None
-
-class Illustration(IllustrationBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    imageUrl: Optional[str] = None
-    pdfUrl: Optional[str] = None
-    downloadCount: int = 0
-    isPublished: bool = False
-    downloadEnabled: bool = True  # Flag per abilitare/disabilitare download (solo se pubblico)
-    publishedAt: Optional[datetime] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class BundleBase(BaseModel):
-    title: str
-    subtitle: str = ""
-    price: float = 0
-    currency: str = "EUR"
-    isFree: bool = True
-    badgeText: str = ""
-    isActive: bool = True
-    sortOrder: int = 0
-    backgroundOpacity: int = 30  # 10-80%
-
-class BundleCreate(BundleBase):
-    illustrationIds: List[str] = []
-
-class BundleUpdate(BaseModel):
-    title: Optional[str] = None
-    subtitle: Optional[str] = None
-    price: Optional[float] = None
-    currency: Optional[str] = None
-    isFree: Optional[bool] = None
-    badgeText: Optional[str] = None
-    isActive: Optional[bool] = None
-    sortOrder: Optional[int] = None
-    illustrationIds: Optional[List[str]] = None
-    backgroundOpacity: Optional[int] = None
-
-class Bundle(BundleBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    illustrationIds: List[str] = []
-    illustrationCount: int = 0
-    pdfFileId: Optional[str] = None  # Legacy - manual PDF upload
-    pdfUrl: Optional[str] = None
-    backgroundImageFileId: Optional[str] = None
-    backgroundImageUrl: Optional[str] = None
-    # Auto-generated PDF cache
-    generatedPdfFileId: Optional[str] = None
-    generatedPdfHash: Optional[str] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class Review(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    role: str
-    text: str
-    rating: int = 5
-
-class Game(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    slug: str
-    title: str
-    shortDescription: Optional[str] = None
-    longDescription: Optional[str] = None
-    status: str = "coming_soon"  # available, coming_soon
-    ageRecommended: str = "3+"
-    howToPlay: List[str] = []
-    thumbnailFileId: Optional[str] = None
-    thumbnailUrl: Optional[str] = None
-    # Card image (for /giochi list page)
-    cardImageFileId: Optional[str] = None
-    cardImageUrl: Optional[str] = None
-    cardImageOpacity: int = 35  # 0-100%
-    # Page image (for /giochi/:slug detail page)
-    pageImageFileId: Optional[str] = None
-    pageImageUrl: Optional[str] = None
-    pageImageOpacity: int = 25  # 0-100%
-    sortOrder: int = 0
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-# ============== GAME LEVEL BACKGROUND MODELS ==============
-
-class GameLevelBackgroundBase(BaseModel):
-    """Background image for game levels (changes every 5 levels)"""
-    levelRangeStart: int  # e.g., 1, 6, 11, 16...
-    levelRangeEnd: int    # e.g., 5, 10, 15, 20...
-    backgroundOpacity: int = 30  # 0-100% - controls overlay/blur
-
-class GameLevelBackgroundCreate(GameLevelBackgroundBase):
-    pass
-
-class GameLevelBackgroundUpdate(BaseModel):
-    levelRangeStart: Optional[int] = None
-    levelRangeEnd: Optional[int] = None
-    backgroundOpacity: Optional[int] = None
-
-class GameLevelBackground(GameLevelBackgroundBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    gameSlug: str = "bolle-magiche"  # For future multi-game support
-    backgroundImageFileId: Optional[str] = None
-    backgroundImageUrl: Optional[str] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-class LoginResponse(BaseModel):
-    token: str
-    email: str
-
-class GenerateRequest(BaseModel):
-    prompt: str
-    themeId: Optional[str] = None
-    style: str = "lineart"
-
-class DownloadEvent(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    illustrationId: str
-    bundleId: Optional[str] = None
-    downloadedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    ipHash: Optional[str] = None  # Privacy-friendly tracking
-
-class SiteSettings(BaseModel):
-    show_reviews: bool = True
-    stripe_enabled: bool = False
-    # Legal contact information with visibility flags
-    legal_company_name: Optional[str] = None
-    show_legal_company_name: bool = True
-    legal_address: Optional[str] = None
-    show_legal_address: bool = True
-    legal_vat_number: Optional[str] = None
-    show_legal_vat_number: bool = True
-    legal_email: Optional[str] = None
-    show_legal_email: bool = True
-    legal_pec_email: Optional[str] = None
-    show_legal_pec_email: bool = True
-
-class SiteSettingsUpdate(BaseModel):
-    show_reviews: Optional[bool] = None
-    legal_company_name: Optional[str] = None
-    show_legal_company_name: Optional[bool] = None
-    legal_address: Optional[str] = None
-    show_legal_address: Optional[bool] = None
-    legal_vat_number: Optional[str] = None
-    show_legal_vat_number: Optional[bool] = None
-    legal_email: Optional[str] = None
-    show_legal_email: Optional[bool] = None
-    legal_pec_email: Optional[str] = None
-    show_legal_pec_email: Optional[bool] = None
-
-class ReviewUpdate(BaseModel):
-    is_approved: bool
-
-class HeroImageResponse(BaseModel):
-    hasHeroImage: bool
-    heroImageUrl: Optional[str] = None
-    updatedAt: Optional[str] = None
-
-# ============== BOOK MODELS ==============
-
-MAX_SCENES_PER_BOOK = 15  # Limite fisso e non modificabile
-
-class BookSceneText(BaseModel):
-    """Text content for a scene with TipTap HTML formatting"""
-    html: str = ""  # Sanitized HTML from TipTap editor
-    # Allowed tags: p, br, ul, li, strong, em, span (for font-size class)
-    # Allowed classes: text-left, text-center, text-right, text-sm, text-base, text-lg
-
-class BookSceneCreate(BaseModel):
-    """Create a new scene"""
-    sceneNumber: int
-    text: BookSceneText = BookSceneText()
-
-class BookScene(BaseModel):
-    """A single scene in a book (2 logical pages)"""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    bookId: str
-    sceneNumber: int  # 1-15
-    text: BookSceneText = BookSceneText()
-    coloredImageFileId: Optional[str] = None  # GridFS ID for colored/soft image
-    coloredImageUrl: Optional[str] = None
-    lineArtImageFileId: Optional[str] = None  # GridFS ID for line art
-    lineArtImageUrl: Optional[str] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class BookBase(BaseModel):
-    title: str
-    description: str
-    isFree: bool = True
-    price: float = 4.99
-    isVisible: bool = True
-    allowDownload: bool = True
-
-class BookCreate(BookBase):
-    pass
-
-class Book(BookBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    coverImageFileId: Optional[str] = None
-    coverImageUrl: Optional[str] = None
-    sceneCount: int = 0
-    viewCount: int = 0
-    downloadCount: int = 0
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class ReadingProgress(BaseModel):
-    """Track reading progress per user/browser"""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    bookId: str
-    visitorId: str  # Browser fingerprint or user ID
-    currentScene: int = 1
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-# ============== GENERATION STYLES MODELS (PIPELINE AI) ==============
-
-class GenerationStyleBase(BaseModel):
-    """Reference style for AI generation"""
-    styleName: str
-    description: Optional[str] = None
-    isActive: bool = True
-
-class GenerationStyleCreate(GenerationStyleBase):
-    pass
-
-class GenerationStyle(GenerationStyleBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
-    referenceImageFileId: Optional[str] = None
-    referenceImageUrl: Optional[str] = None
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class PoppiconniGenerateRequest(BaseModel):
-    """Request for Poppiconni Multi-AI Pipeline"""
-    user_request: str  # User's description in natural language
-    style_id: Optional[str] = None  # Reference style from library
-    style_lock: bool = False  # If true, strictly follow reference style
-    save_to_gallery: bool = True  # Auto-save to illustrations
-    theme_id: Optional[str] = None  # Optional theme for categorization
-    reference_image_base64: Optional[str] = None  # Direct reference image upload (base64)
-
-class PoppiconniGenerateResponse(BaseModel):
-    """Response from Poppiconni Multi-AI Pipeline"""
-    success: bool
-    generation_id: str
-    status: str
-    optimized_prompt: Optional[str] = None
-    qc_passed: bool = False
-    confidence_score: float = 0.0
-    qc_issues: List[str] = []
-    has_final_image: bool = False
-    thumbnail_base64: Optional[str] = None
-    illustration_id: Optional[str] = None
-    message: str = ""
-    retry_count: int = 0
-
-# ============== POSTER MODELS ==============
-
-class PosterStatus(str, Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-
-class PosterBase(BaseModel):
-    """Base model for Poster (decorative colored illustrations for framing)"""
-    title: str
-    description: str = ""
-    price: float = 0.0  # 0 = free
-    status: str = "draft"  # draft or published
-    downloadEnabled: bool = True  # Flag per abilitare/disabilitare download (solo se pubblico)
-
-class PosterCreate(PosterBase):
-    pass
-
-class PosterUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    price: Optional[float] = None
-    status: Optional[str] = None
-    downloadEnabled: Optional[bool] = None
-
-class Poster(PosterBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    imageFileId: Optional[str] = None  # GridFS ID for preview image
-    imageUrl: Optional[str] = None
-    pdfFileId: Optional[str] = None  # GridFS ID for print-ready PDF
-    pdfUrl: Optional[str] = None
-    downloadCount: int = 0
-    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updatedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# All Pydantic models moved to /app/backend/models/*.py in Fase 4A.
+# They are imported at the top of this file via `from models import ...`
+# and kept available under the same names for backward compatibility.
 
 # ============== AUTH HELPERS ==============
-
-def create_token(email: str) -> str:
-    payload = {
-        "sub": email,
-        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload["sub"]
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token scaduto")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token non valido")
+# `create_token` and `verify_token` moved to `core/security.py` in Fase 4A.
+# They are imported at the top of this file and remain usable everywhere
+# in this module under the same names.
 
 def sanitize_scene_html(html: str) -> str:
     """
@@ -4970,11 +4623,7 @@ async def admin_delete_character_image(trait: str, email: str = Depends(verify_t
     await db.character_images.delete_one({"trait": trait})
     return {"success": True}
 
-class CharacterTextUpdate(BaseModel):
-    """Model for updating character trait texts"""
-    title: Optional[str] = None
-    shortDescription: Optional[str] = None
-    longDescription: Optional[str] = None
+# CharacterTextUpdate model moved to /app/backend/models/character.py (Fase 4A)
 
 @admin_router.put("/character-images/{trait}/text")
 async def admin_update_character_text(
@@ -5017,18 +4666,34 @@ app.include_router(api_router)
 app.include_router(admin_router)
 
 
-# Top-level health endpoints for the orchestrator (K8s readiness/liveness probes).
-# These intentionally do NOT touch the database so the pod is reported healthy
-# even if the DB is momentarily slow during cold start / index creation.
+# Health endpoints.
+#
+# `/`  and `/health`  : K8s LIVENESS probes. Must NOT touch the DB so the pod
+#                       is reported alive even if Atlas is momentarily slow
+#                       during cold start or index creation.
+# `/api/health`       : READINESS probe. Pings MongoDB with a short timeout
+#                       and returns HTTP 503 if the database is unreachable,
+#                       so load balancers can take this instance out of
+#                       rotation until Atlas is back.
 @app.get("/")
 async def _root_health():
     return {"status": "ok", "service": "poppiconni"}
 
 
 @app.get("/health")
-@app.get("/api/health")
-async def _health():
+async def _liveness():
     return {"status": "ok"}
+
+
+@app.get("/api/health")
+async def _readiness():
+    db_ok = await ping_db(timeout_seconds=2.0)
+    if not db_ok:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "db": "unreachable"},
+        )
+    return {"status": "ok", "db": "ok"}
 
 
 # CORS Middleware
@@ -5042,4 +4707,4 @@ app.add_middleware(
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    await close_client()

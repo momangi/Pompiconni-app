@@ -1,0 +1,12 @@
+"""Auth & login DTOs — moved verbatim from ``server.py`` (Fase 4A)."""
+from pydantic import BaseModel
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    email: str
