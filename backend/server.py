@@ -48,6 +48,13 @@ from services import poster_service, game_service, level_background_service
 # batch. The illustration service applies the R1 fix (no _id leak).
 from services import bundle_service, illustration_service
 
+# Domain services (Fase 4B Batch 4) --------------------------------------------
+# Books / book_scenes / reading_progress CRUD + metadata. GridFS (cover,
+# scene images), generated PDF (public/admin) and uploads intentionally
+# stay in server.py for this batch. The book service applies the R1 fix
+# (no _id leak on books and book_scenes responses).
+from services import book_service
+
 # Domain models (Fase 4A refactor) ---------------------------------------------
 # All Pydantic classes now live in /app/backend/models/*.py and are re-exported
 # via the package __init__. Importing them here keeps every existing route
@@ -2267,32 +2274,18 @@ async def change_illustration_theme(
 
 @api_router.get("/books", response_model=List[dict])
 async def get_books():
-    """Get all visible books for public display"""
-    books = await db.books.find({"isVisible": True}).to_list(100)
-    for b in books:
-        b['_id'] = str(b.get('_id', ''))
-    return books
+    """Get all visible books for public display.
+    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
+    """
+    return await book_service.list_public_books()
 
 @api_router.get("/books/{book_id}")
 async def get_book(book_id: str):
-    """Get a single book with its scenes"""
-    book = await db.books.find_one({"id": book_id})
-    if not book:
-        raise HTTPException(status_code=404, detail="Libro non trovato")
-    if not book.get('isVisible', True):
-        raise HTTPException(status_code=404, detail="Libro non disponibile")
-    
-    book['_id'] = str(book.get('_id', ''))
-    
-    # Get scenes ordered by sceneNumber
-    scenes = await db.book_scenes.find({"bookId": book_id}).sort("sceneNumber", 1).to_list(MAX_SCENES_PER_BOOK)
-    for s in scenes:
-        s['_id'] = str(s.get('_id', ''))
-    
-    # Increment view count
-    await db.books.update_one({"id": book_id}, {"$inc": {"viewCount": 1}})
-    
-    return {"book": book, "scenes": scenes}
+    """Get a single book with its scenes.
+    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked
+    in either ``book`` or ``scenes`` payloads.
+    """
+    return await book_service.get_public_book_with_scenes(book_id)
 
 @api_router.get("/books/{book_id}/scene/{scene_number}/colored-image")
 async def get_scene_colored_image(book_id: str, scene_number: int, request: Request):
@@ -2351,30 +2344,12 @@ async def get_book_cover(
 @api_router.get("/books/{book_id}/progress/{visitor_id}")
 async def get_reading_progress(book_id: str, visitor_id: str):
     """Get reading progress for a visitor"""
-    progress = await db.reading_progress.find_one({"bookId": book_id, "visitorId": visitor_id})
-    if not progress:
-        return {"currentScene": 1, "hasProgress": False}
-    return {"currentScene": progress.get('currentScene', 1), "hasProgress": True}
+    return await book_service.get_reading_progress(book_id, visitor_id)
 
 @api_router.post("/books/{book_id}/progress/{visitor_id}")
 async def save_reading_progress(book_id: str, visitor_id: str, scene: int):
     """Save reading progress for a visitor"""
-    await db.reading_progress.update_one(
-        {"bookId": book_id, "visitorId": visitor_id},
-        {
-            "$set": {
-                "currentScene": scene,
-                "updatedAt": datetime.now(timezone.utc)
-            },
-            "$setOnInsert": {
-                "id": str(uuid.uuid4()),
-                "bookId": book_id,
-                "visitorId": visitor_id
-            }
-        },
-        upsert=True
-    )
-    return {"success": True}
+    return await book_service.save_reading_progress(book_id, visitor_id, scene)
 
 # ============== BOOK PDF DOWNLOAD ==============
 
@@ -2442,60 +2417,35 @@ async def download_book_pdf_public(book_id: str):
 
 @admin_router.get("/books")
 async def admin_get_books(email: str = Depends(verify_token)):
-    """Get all books for admin"""
-    books = await db.books.find().sort("createdAt", -1).to_list(100)
-    for b in books:
-        b['_id'] = str(b.get('_id', ''))
-    return books
+    """Get all books for admin.
+    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
+    """
+    return await book_service.list_admin_books()
 
 @admin_router.post("/books")
 async def admin_create_book(book: BookCreate, email: str = Depends(verify_token)):
     """Create a new book"""
-    book_dict = book.dict()
-    book_dict['id'] = str(uuid.uuid4())
-    book_dict['sceneCount'] = 0
-    book_dict['viewCount'] = 0
-    book_dict['downloadCount'] = 0
-    book_dict['coverImageFileId'] = None
-    book_dict['coverImageUrl'] = None
-    book_dict['createdAt'] = datetime.now(timezone.utc)
-    book_dict['updatedAt'] = datetime.now(timezone.utc)
-    
-    await db.books.insert_one(book_dict)
-    book_dict.pop('_id', None)
-    return book_dict
+    return await book_service.create_book(book)
 
 @admin_router.put("/books/{book_id}")
 async def admin_update_book(book_id: str, book: BookCreate, email: str = Depends(verify_token)):
     """Update book details"""
-    existing = await db.books.find_one({"id": book_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Libro non trovato")
-    
-    update_data = book.dict()
-    update_data['updatedAt'] = datetime.now(timezone.utc)
-    
-    await db.books.update_one({"id": book_id}, {"$set": update_data})
-    return {"success": True}
+    return await book_service.update_book(book_id, book)
 
 @admin_router.delete("/books/{book_id}")
 async def admin_delete_book(book_id: str, email: str = Depends(verify_token)):
     """Delete a book and all its scenes"""
     from bson import ObjectId
-    
-    book = await db.books.find_one({"id": book_id})
-    if not book:
-        raise HTTPException(status_code=404, detail="Libro non trovato")
-    
-    # Delete cover image from GridFS
+
+    book, scenes = await book_service.prepare_admin_delete_book(book_id)
+
+    # GridFS cleanup stays inline (heavy-media policy for this batch).
     if book.get('coverImageFileId'):
         try:
             await gridfs_bucket.delete(ObjectId(book['coverImageFileId']))
         except Exception:
             pass
-    
-    # Delete all scene images from GridFS
-    scenes = await db.book_scenes.find({"bookId": book_id}).to_list(MAX_SCENES_PER_BOOK)
+
     for scene in scenes:
         if scene.get('coloredImageFileId'):
             try:
@@ -2507,17 +2457,8 @@ async def admin_delete_book(book_id: str, email: str = Depends(verify_token)):
                 await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
             except Exception:
                 pass
-    
-    # Delete scenes
-    await db.book_scenes.delete_many({"bookId": book_id})
-    
-    # Delete reading progress
-    await db.reading_progress.delete_many({"bookId": book_id})
-    
-    # Delete book
-    await db.books.delete_one({"id": book_id})
-    
-    return {"success": True, "message": "Libro eliminato con tutte le scene"}
+
+    return await book_service.finalize_admin_delete_book(book_id)
 
 @admin_router.get("/books/{book_id}/pdf")
 async def admin_download_book_pdf(book_id: str, email: str = Depends(verify_token)):
@@ -2615,87 +2556,38 @@ async def admin_upload_book_cover(
 
 @admin_router.get("/books/{book_id}/scenes")
 async def admin_get_book_scenes(book_id: str, email: str = Depends(verify_token)):
-    """Get all scenes for a book"""
-    scenes = await db.book_scenes.find({"bookId": book_id}).sort("sceneNumber", 1).to_list(MAX_SCENES_PER_BOOK)
-    for s in scenes:
-        s['_id'] = str(s.get('_id', ''))
-    return scenes
+    """Get all scenes for a book.
+    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
+    """
+    return await book_service.list_admin_book_scenes(book_id)
 
 @admin_router.post("/books/{book_id}/scenes")
 async def admin_create_scene(book_id: str, scene: BookSceneCreate, email: str = Depends(verify_token)):
     """Create a new scene for a book"""
-    book = await db.books.find_one({"id": book_id})
-    if not book:
-        raise HTTPException(status_code=404, detail="Libro non trovato")
-    
-    # Check scene limit
-    current_count = await db.book_scenes.count_documents({"bookId": book_id})
-    if current_count >= MAX_SCENES_PER_BOOK:
-        raise HTTPException(status_code=400, detail=f"Limite massimo di {MAX_SCENES_PER_BOOK} scene raggiunto")
-    
-    # Check scene number not already used
-    existing = await db.book_scenes.find_one({"bookId": book_id, "sceneNumber": scene.sceneNumber})
-    if existing:
-        raise HTTPException(status_code=400, detail=f"Scena {scene.sceneNumber} già esistente")
-    
-    if scene.sceneNumber < 1 or scene.sceneNumber > MAX_SCENES_PER_BOOK:
-        raise HTTPException(status_code=400, detail=f"Numero scena deve essere tra 1 e {MAX_SCENES_PER_BOOK}")
-    
-    # Sanitize HTML before saving
     sanitized_html = sanitize_scene_html(scene.text.html)
-    
-    scene_dict = {
-        "id": str(uuid.uuid4()),
-        "bookId": book_id,
-        "sceneNumber": scene.sceneNumber,
-        "text": {"html": sanitized_html},
-        "coloredImageFileId": None,
-        "coloredImageUrl": None,
-        "lineArtImageFileId": None,
-        "lineArtImageUrl": None,
-        "createdAt": datetime.now(timezone.utc),
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    await db.book_scenes.insert_one(scene_dict)
-    
-    # Update book scene count
-    await db.books.update_one({"id": book_id}, {"$inc": {"sceneCount": 1}})
-    
-    scene_dict.pop('_id', None)
-    return scene_dict
+    return await book_service.create_scene(
+        book_id, scene.sceneNumber, sanitized_html
+    )
 
 @admin_router.put("/books/{book_id}/scenes/{scene_id}")
 async def admin_update_scene(
-    book_id: str, 
-    scene_id: str, 
+    book_id: str,
+    scene_id: str,
     text: BookSceneText,
     email: str = Depends(verify_token)
 ):
     """Update scene text with HTML sanitization"""
-    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
-    if not scene:
-        raise HTTPException(status_code=404, detail="Scena non trovata")
-    
-    # Sanitize HTML before saving
-    sanitized_text = {"html": sanitize_scene_html(text.html)}
-    
-    await db.book_scenes.update_one(
-        {"id": scene_id},
-        {"$set": {"text": sanitized_text, "updatedAt": datetime.now(timezone.utc)}}
-    )
-    return {"success": True}
+    sanitized_html = sanitize_scene_html(text.html)
+    return await book_service.update_scene_text(book_id, scene_id, sanitized_html)
 
 @admin_router.delete("/books/{book_id}/scenes/{scene_id}")
 async def admin_delete_scene(book_id: str, scene_id: str, email: str = Depends(verify_token)):
     """Delete a scene"""
     from bson import ObjectId
-    
-    scene = await db.book_scenes.find_one({"id": scene_id, "bookId": book_id})
-    if not scene:
-        raise HTTPException(status_code=404, detail="Scena non trovata")
-    
-    # Delete images from GridFS
+
+    scene = await book_service.prepare_admin_delete_scene(book_id, scene_id)
+
+    # GridFS cleanup stays inline (heavy-media policy for this batch).
     if scene.get('coloredImageFileId'):
         try:
             await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
@@ -2706,11 +2598,8 @@ async def admin_delete_scene(book_id: str, scene_id: str, email: str = Depends(v
             await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
         except Exception:
             pass
-    
-    await db.book_scenes.delete_one({"id": scene_id})
-    await db.books.update_one({"id": book_id}, {"$inc": {"sceneCount": -1}})
-    
-    return {"success": True}
+
+    return await book_service.finalize_admin_delete_scene(book_id, scene_id)
 
 @admin_router.post("/books/{book_id}/scenes/{scene_id}/colored-image")
 async def admin_upload_scene_colored_image(

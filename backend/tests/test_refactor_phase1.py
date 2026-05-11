@@ -25,9 +25,9 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 BACKEND_DIRECT = os.environ.get("BACKEND_DIRECT_URL", "http://localhost:8001").rstrip("/")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
-TARGET_ILLUST_ID = os.environ.get("TARGET_ILLUST_ID", "602f3ea8-16c8-4435-9c69-86fbf39ee5db")
-EXPECTED_CONTENT_LENGTH = 1106583
-EXPECTED_MD5_PREFIX = "c556aa13f6"
+TARGET_ILLUST_ID = os.environ.get("TARGET_ILLUST_ID", "1")
+EXPECTED_CONTENT_LENGTH = 735407
+EXPECTED_MD5_PREFIX = "f95d96e80e"
 
 # ----------------------------- Fixtures -----------------------------
 
