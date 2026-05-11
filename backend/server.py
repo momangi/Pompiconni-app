@@ -31,6 +31,12 @@ from core.config import settings
 from core.database import client, db, gridfs_bucket, ping_db, close_client
 from core.security import create_token, verify_token, security_bearer as security
 
+# Domain services (Fase 4B Batch 1) --------------------------------------------
+# Encapsulate the data access for reviews/site_settings/themes. The legacy
+# route bodies are kept intact for every other domain and will be migrated
+# in subsequent batches.
+from services import review_service, settings_service, theme_service
+
 # Domain models (Fase 4A refactor) ---------------------------------------------
 # All Pydantic classes now live in /app/backend/models/*.py and are re-exported
 # via the package __init__. Importing them here keeps every existing route
@@ -516,26 +522,11 @@ async def root():
 
 @api_router.get("/themes", response_model=List[dict])
 async def get_themes():
-    themes = await db.themes.find({}, {"_id": 0}).to_list(100)
-    for t in themes:
-        # Add background image URL if available
-        if t.get('backgroundImageFileId'):
-            t['backgroundImageUrl'] = f"/api/themes/{t['id']}/background-image"
-        # Ensure backgroundOpacity has default
-        if 'backgroundOpacity' not in t:
-            t['backgroundOpacity'] = 30
-    return themes
+    return await theme_service.list_public()
 
 @api_router.get("/themes/{theme_id}")
 async def get_theme(theme_id: str):
-    theme = await db.themes.find_one({"id": theme_id}, {"_id": 0})
-    if not theme:
-        raise HTTPException(status_code=404, detail="Tema non trovato")
-    if theme.get('backgroundImageFileId'):
-        theme['backgroundImageUrl'] = f"/api/themes/{theme_id}/background-image"
-    if 'backgroundOpacity' not in theme:
-        theme['backgroundOpacity'] = 30
-    return theme
+    return await theme_service.get_public(theme_id)
 
 @api_router.get("/themes/{theme_id}/background-image")
 async def get_theme_background_image(
@@ -807,48 +798,12 @@ async def get_bundles():
 @api_router.get("/reviews", response_model=List[dict])
 async def get_reviews():
     """Get public reviews - only approved ones if show_reviews is enabled"""
-    # Check site settings
-    settings = await db.site_settings.find_one({"id": "global"})
-    if settings and not settings.get("show_reviews", True):
-        return []  # Reviews disabled globally
-    
-    # Only return approved reviews
-    reviews = await db.reviews.find({"is_approved": True}).to_list(100)
-    for r in reviews:
-        r['_id'] = str(r.get('_id', ''))
-    return reviews
+    return await review_service.get_public_reviews()
 
 @api_router.get("/site-settings")
 async def get_public_site_settings():
     """Get public site settings (stripe status, hero image, social links, legal info, etc)"""
-    settings = await db.site_settings.find_one({"id": "global"})
-    stripe_enabled = bool(STRIPE_SECRET_KEY) if not settings else settings.get("stripe_enabled", False)
-    has_hero = bool(settings and settings.get('heroImageFileId')) if settings else False
-    show_bundles = settings.get("showBundlesSection", True) if settings else True
-    has_brand_logo = bool(settings and settings.get('brandLogoFileId')) if settings else False
-    
-    return {
-        "stripe_enabled": stripe_enabled,
-        "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY if stripe_enabled else None,
-        "hasHeroImage": has_hero,
-        "heroImageUrl": "/api/site/hero-image" if has_hero else None,
-        "showBundlesSection": show_bundles,
-        "hasBrandLogo": has_brand_logo,
-        "brandLogoUrl": "/api/site/brand-logo" if has_brand_logo else None,
-        "instagramUrl": settings.get("instagramUrl", "") if settings else "",
-        "tiktokUrl": settings.get("tiktokUrl", "") if settings else "",
-        # Legal contact info with visibility flags
-        "legalCompanyName": settings.get("legal_company_name", "") if settings else "",
-        "showLegalCompanyName": settings.get("show_legal_company_name", True) if settings else True,
-        "legalAddress": settings.get("legal_address", "") if settings else "",
-        "showLegalAddress": settings.get("show_legal_address", True) if settings else True,
-        "legalVatNumber": settings.get("legal_vat_number", "") if settings else "",
-        "showLegalVatNumber": settings.get("show_legal_vat_number", True) if settings else True,
-        "legalEmail": settings.get("legal_email", "") if settings else "",
-        "showLegalEmail": settings.get("show_legal_email", True) if settings else True,
-        "legalPecEmail": settings.get("legal_pec_email", "") if settings else "",
-        "showLegalPecEmail": settings.get("show_legal_pec_email", True) if settings else True
-    }
+    return await settings_service.get_public_payload()
 
 @api_router.get("/brand-kit")
 async def get_brand_kit():
@@ -958,14 +913,10 @@ async def recalculate_bundle_counts():
 async def recalculate_theme_count(theme_id: str):
     """
     Ricalcola il conteggio di TUTTE le illustrazioni per un singolo tema.
+    Delegates to ``theme_service`` (Fase 4B Batch 1). Wrapper kept for
+    backward compatibility with the existing call sites in this module.
     """
-    if not theme_id:
-        return
-    count = await db.illustrations.count_documents({"themeId": theme_id})
-    await db.themes.update_one(
-        {"id": theme_id},
-        {"$set": {"illustrationCount": count}}
-    )
+    await theme_service.recalc_illustration_count(theme_id)
 
 # ============== ADMIN ENDPOINTS ==============
 
@@ -1031,36 +982,11 @@ async def admin_dashboard(email: str = Depends(verify_token)):
 
 @admin_router.post("/themes")
 async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
-    theme_dict = theme.dict()
-    theme_dict['id'] = str(uuid.uuid4())
-    theme_dict['illustrationCount'] = 0
-    theme_dict['backgroundImageFileId'] = None
-    theme_dict['backgroundImageUrl'] = None
-    theme_dict['createdAt'] = datetime.now(timezone.utc)
-    theme_dict['updatedAt'] = datetime.now(timezone.utc)
-    await db.themes.insert_one(theme_dict)
-    theme_dict.pop('_id', None)
-    return theme_dict
+    return await theme_service.create_theme(theme)
 
 @admin_router.put("/themes/{theme_id}")
 async def update_theme(theme_id: str, theme: ThemeUpdate, email: str = Depends(verify_token)):
-    existing = await db.themes.find_one({"id": theme_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Tema non trovato")
-    
-    update_data = {"updatedAt": datetime.now(timezone.utc)}
-    theme_data = theme.dict(exclude_unset=True)
-    
-    for key, value in theme_data.items():
-        if value is not None:
-            update_data[key] = value
-    
-    await db.themes.update_one({"id": theme_id}, {"$set": update_data})
-    
-    updated = await db.themes.find_one({"id": theme_id}, {"_id": 0})
-    if updated.get('backgroundImageFileId'):
-        updated['backgroundImageUrl'] = f"/api/themes/{theme_id}/background-image"
-    return updated
+    return await theme_service.update_theme(theme_id, theme)
 
 @admin_router.post("/themes/{theme_id}/upload-background")
 async def upload_theme_background(
@@ -2079,27 +2005,19 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
 @admin_router.get("/reviews")
 async def admin_get_reviews(email: str = Depends(verify_token)):
     """Get all reviews for admin (including non-approved)"""
-    reviews = await db.reviews.find().to_list(100)
-    for r in reviews:
-        r['_id'] = str(r.get('_id', ''))
-    return reviews
+    return await review_service.get_admin_reviews()
 
 @admin_router.put("/reviews/{review_id}")
 async def admin_update_review(review_id: str, update: ReviewUpdate, email: str = Depends(verify_token)):
     """Approve or disapprove a review"""
-    result = await db.reviews.update_one(
-        {"id": review_id},
-        {"$set": {"is_approved": update.is_approved}}
-    )
-    if result.modified_count == 0:
+    if not await review_service.set_review_approval(review_id, update.is_approved):
         raise HTTPException(status_code=404, detail="Recensione non trovata")
     return {"success": True}
 
 @admin_router.delete("/reviews/{review_id}")
 async def admin_delete_review(review_id: str, email: str = Depends(verify_token)):
     """Delete a review"""
-    result = await db.reviews.delete_one({"id": review_id})
-    if result.deleted_count == 0:
+    if not await review_service.delete_review(review_id):
         raise HTTPException(status_code=404, detail="Recensione non trovata")
     return {"success": True}
 
@@ -2203,53 +2121,12 @@ async def admin_fix_brand_name(email: str = Depends(verify_token)):
 @admin_router.get("/settings")
 async def admin_get_settings(email: str = Depends(verify_token)):
     """Get site settings"""
-    settings = await db.site_settings.find_one({"id": "global"})
-    if not settings:
-        settings = {
-            "id": "global",
-            "show_reviews": True,
-            "stripe_enabled": bool(STRIPE_SECRET_KEY)
-        }
-    settings['_id'] = str(settings.get('_id', ''))
-    settings['stripe_configured'] = bool(STRIPE_SECRET_KEY)
-    return settings
+    return await settings_service.get_admin_payload()
 
 @admin_router.put("/settings")
 async def admin_update_settings(settings: SiteSettingsUpdate, email: str = Depends(verify_token)):
     """Update site settings"""
-    update_data = {
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    # Add show_reviews if provided
-    if settings.show_reviews is not None:
-        update_data["show_reviews"] = settings.show_reviews
-    # Add legal fields if provided
-    if settings.legal_company_name is not None:
-        update_data["legal_company_name"] = settings.legal_company_name
-    if settings.show_legal_company_name is not None:
-        update_data["show_legal_company_name"] = settings.show_legal_company_name
-    if settings.legal_address is not None:
-        update_data["legal_address"] = settings.legal_address
-    if settings.show_legal_address is not None:
-        update_data["show_legal_address"] = settings.show_legal_address
-    if settings.legal_vat_number is not None:
-        update_data["legal_vat_number"] = settings.legal_vat_number
-    if settings.show_legal_vat_number is not None:
-        update_data["show_legal_vat_number"] = settings.show_legal_vat_number
-    if settings.legal_email is not None:
-        update_data["legal_email"] = settings.legal_email
-    if settings.show_legal_email is not None:
-        update_data["show_legal_email"] = settings.show_legal_email
-    if settings.legal_pec_email is not None:
-        update_data["legal_pec_email"] = settings.legal_pec_email
-    if settings.show_legal_pec_email is not None:
-        update_data["show_legal_pec_email"] = settings.show_legal_pec_email
-    
-    await db.site_settings.update_one(
-        {"id": "global"},
-        {"$set": update_data},
-        upsert=True
-    )
+    await settings_service.update_admin_settings(settings)
     return {"success": True}
 
 @admin_router.get("/download-stats")
@@ -2550,12 +2427,7 @@ async def update_social_links(
     email: str = Depends(verify_token)
 ):
     """Update social media links"""
-    await db.site_settings.update_one(
-        {"id": "global"},
-        {"$set": {"instagramUrl": instagramUrl, "tiktokUrl": tiktokUrl}},
-        upsert=True
-    )
-    return {"success": True, "instagramUrl": instagramUrl, "tiktokUrl": tiktokUrl}
+    return await settings_service.update_social_links(instagramUrl, tiktokUrl)
 
 @api_router.get("/theme-colors")
 async def get_theme_color_palette():
@@ -2567,46 +2439,12 @@ async def get_theme_color_palette():
 @admin_router.get("/themes/check-delete/{theme_id}")
 async def check_theme_delete(theme_id: str, email: str = Depends(verify_token)):
     """Check if theme can be deleted and how many illustrations it has"""
-    theme = await db.themes.find_one({"id": theme_id})
-    if not theme:
-        raise HTTPException(status_code=404, detail="Tema non trovato")
-    
-    illustration_count = await db.illustrations.count_documents({"themeId": theme_id})
-    
-    return {
-        "canDelete": illustration_count == 0,
-        "illustrationCount": illustration_count,
-        "message": f"Questo tema ha {illustration_count} illustrazioni associate" if illustration_count > 0 else "Tema eliminabile"
-    }
+    return await theme_service.check_delete(theme_id)
 
 @admin_router.delete("/themes/{theme_id}")
 async def delete_theme(theme_id: str, force: bool = False, email: str = Depends(verify_token)):
     """Delete theme. If force=true, unassign illustrations first."""
-    theme = await db.themes.find_one({"id": theme_id})
-    if not theme:
-        raise HTTPException(status_code=404, detail="Tema non trovato")
-    
-    illustration_count = await db.illustrations.count_documents({"themeId": theme_id})
-    
-    if illustration_count > 0 and not force:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Tema ha {illustration_count} illustrazioni. Usa force=true per rimuovere comunque."
-        )
-    
-    # Unassign illustrations if force delete
-    if force and illustration_count > 0:
-        await db.illustrations.update_many(
-            {"themeId": theme_id},
-            {"$set": {"themeId": None, "updatedAt": datetime.now(timezone.utc)}}
-        )
-    
-    await db.themes.delete_one({"id": theme_id})
-    
-    return {
-        "success": True,
-        "message": f"Tema eliminato. {illustration_count} illustrazioni riassegnate." if illustration_count > 0 else "Tema eliminato."
-    }
+    return await theme_service.delete_theme(theme_id, force=force)
 
 @admin_router.put("/illustrations/{illustration_id}/theme")
 async def change_illustration_theme(
