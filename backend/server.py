@@ -42,6 +42,12 @@ from services import review_service, settings_service, theme_service
 # upload, PDF download) intentionally stay in server.py for this batch.
 from services import poster_service, game_service, level_background_service
 
+# Domain services (Fase 4B Batch 3) --------------------------------------------
+# Bundles / illustrations CRUD + metadata. Heavy GridFS, generated-PDF,
+# upload/attach/streaming routes intentionally stay in server.py for this
+# batch. The illustration service applies the R1 fix (no _id leak).
+from services import bundle_service, illustration_service
+
 # Domain models (Fase 4A refactor) ---------------------------------------------
 # All Pydantic classes now live in /app/backend/models/*.py and are re-exported
 # via the package __init__. Importing them here keeps every existing route
@@ -558,27 +564,11 @@ async def get_theme_background_image(
 
 @api_router.get("/illustrations", response_model=List[dict])
 async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool] = None):
-    # Public endpoint: only return published illustrations
-    query = {"isPublished": True}
-    if themeId:
-        query["themeId"] = themeId
-    if isFree is not None:
-        query["isFree"] = isFree
-    illustrations = await db.illustrations.find(query).to_list(1000)
-    
-    # Get real download counts from download_events
-    download_counts = {}
-    pipeline = [{"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}}]
-    events = await db.download_events.aggregate(pipeline).to_list(1000)
-    for e in events:
-        download_counts[e["_id"]] = e["count"]
-    
-    # Override downloadCount with real counts
-    for i in illustrations:
-        i['_id'] = str(i.get('_id', ''))
-        i['downloadCount'] = download_counts.get(i['id'], 0)
-    
-    return illustrations
+    # Public endpoint: only return published illustrations.
+    # R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
+    return await illustration_service.list_public_illustrations(
+        themeId=themeId, isFree=isFree
+    )
 
 @api_router.get("/search/illustrations")
 async def search_illustrations(q: str = "", limit: int = 48):
@@ -663,17 +653,9 @@ async def search_illustrations(q: str = "", limit: int = 48):
 
 @api_router.get("/illustrations/{illustration_id}")
 async def get_illustration(illustration_id: str):
-    # Only return published illustrations to public
-    illust = await db.illustrations.find_one({"id": illustration_id, "isPublished": True})
-    if not illust:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    illust['_id'] = str(illust.get('_id', ''))
-    
-    # Get real download count from download_events
-    real_count = await db.download_events.count_documents({"illustrationId": illustration_id})
-    illust['downloadCount'] = real_count
-    
-    return illust
+    # Only return published illustrations to public.
+    # R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
+    return await illustration_service.get_public_illustration(illustration_id)
 
 @api_router.post("/illustrations/{illustration_id}/download")
 async def download_illustration(illustration_id: str, request: Request):
@@ -791,14 +773,7 @@ async def get_image_status(illustration_id: str):
 @api_router.get("/bundles", response_model=List[dict])
 async def get_bundles():
     """Get public bundles - only active ones, sorted by sortOrder"""
-    bundles = await db.bundles.find({"isActive": True}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
-    # Add background image URL if available
-    for b in bundles:
-        if b.get('backgroundImageFileId'):
-            b['backgroundImageUrl'] = f"/api/bundles/{b['id']}/background-image"
-        if b.get('pdfFileId'):
-            b['pdfUrl'] = f"/api/bundles/{b['id']}/download"
-    return bundles
+    return await bundle_service.list_public_bundles()
 
 @api_router.get("/reviews", response_model=List[dict])
 async def get_reviews():
@@ -858,62 +833,11 @@ async def get_brand_kit():
 async def recalculate_bundle_counts():
     """
     Ricalcola automaticamente i conteggi dei bundle basandosi sui dati reali.
-    CONTA TUTTE le illustrazioni (non solo quelle con file).
-    Chiamato ogni volta che un'illustrazione viene creata, modificata o eliminata.
+    Delegates to ``bundle_service`` (Fase 4B Batch 3). Wrapper kept for
+    backward compatibility with the existing call sites in this module
+    (admin attach-pdf, attach-image, AI generation flows).
     """
-    try:
-        # Conta TUTTE le illustrazioni
-        total_count = await db.illustrations.count_documents({})
-        
-        # Gratuite
-        free_count = await db.illustrations.count_documents({"isFree": True})
-        
-        # Mestieri
-        mestieri_count = await db.illustrations.count_documents({"themeId": "mestieri"})
-        
-        # Stagioni
-        stagioni_count = await db.illustrations.count_documents({"themeId": "stagioni"})
-        
-        # Aggiorna Starter Pack (max 10 gratuite)
-        starter_count = min(free_count, 10)
-        await db.bundles.update_one(
-            {"name": "Starter Pack Poppiconni"},
-            {"$set": {
-                "illustrationCount": starter_count,
-                "description": f"{starter_count} tavole gratuite per iniziare a colorare!"
-            }}
-        )
-        
-        # Aggiorna Album Mestieri
-        await db.bundles.update_one(
-            {"name": "Album Mestieri Completo"},
-            {"$set": {
-                "illustrationCount": mestieri_count,
-                "description": f"Tutte le {mestieri_count} tavole dei mestieri in PDF"
-            }}
-        )
-        
-        # Aggiorna Mega Pack Stagioni
-        await db.bundles.update_one(
-            {"name": "Mega Pack Stagioni"},
-            {"$set": {
-                "illustrationCount": stagioni_count,
-                "description": f"{stagioni_count} tavole per tutte le stagioni"
-            }}
-        )
-        
-        # Aggiorna Collezione Completa
-        await db.bundles.update_one(
-            {"name": "Collezione Completa"},
-            {"$set": {
-                "illustrationCount": total_count,
-                "description": f"Tutti i {total_count} disegni + bonus esclusivi"
-            }}
-        )
-        
-        logger.info(f"Bundle counts updated: total={total_count}, free={free_count}, mestieri={mestieri_count}, stagioni={stagioni_count}")
-    except Exception as e:
-        logger.error(f"Error updating bundle counts: {e}")
+    await bundle_service.recalculate_named_bundle_counts()
 
 async def recalculate_theme_count(theme_id: str):
     """
@@ -950,19 +874,18 @@ async def admin_dashboard(email: str = Depends(verify_token)):
     popular_ids = await db.download_events.aggregate(pipeline).to_list(5)
     
     # Fetch illustration details for popular ones
+    # R1 fix (Fase 4B Batch 3): _id is no longer leaked.
     popular = []
     for item in popular_ids:
-        illust = await db.illustrations.find_one({"id": item["_id"]})
+        illust = await db.illustrations.find_one({"id": item["_id"]}, {"_id": 0})
         if illust:
-            illust['_id'] = str(illust.get('_id', ''))
             illust['downloadCount'] = item['count']  # Real count from events
             popular.append(illust)
     
     # If no downloads yet, return top 5 illustrations with 0 downloads
     if not popular:
-        popular = await db.illustrations.find().limit(5).to_list(5)
+        popular = await db.illustrations.find({}, {"_id": 0}).limit(5).to_list(5)
         for p in popular:
-            p['_id'] = str(p.get('_id', ''))
             p['downloadCount'] = 0
     
     # Get download stats for last 7 days
@@ -1047,200 +970,56 @@ async def upload_theme_background(
 
 @admin_router.post("/illustrations")
 async def create_illustration(illustration: IllustrationCreate, email: str = Depends(verify_token)):
-    illust_dict = illustration.dict()
-    illust_dict['id'] = str(uuid.uuid4())
-    illust_dict['downloadCount'] = 0
-    illust_dict['pdfFileId'] = None
-    illust_dict['imageFileId'] = None
-    illust_dict['isPublished'] = False  # New illustrations start as draft
-    illust_dict['publishedAt'] = None
-    illust_dict['createdAt'] = datetime.now(timezone.utc)
-    illust_dict['updatedAt'] = datetime.now(timezone.utc)
-    await db.illustrations.insert_one(illust_dict)
-    
-    # Ricalcola conteggi (solo se l'illustrazione è scaricabile)
-    # Nota: alla creazione non ha ancora file, quindi non incrementa i conteggi
-    # I conteggi si aggiorneranno quando verrà caricato un file
-    await recalculate_theme_count(illustration.themeId)
-    await recalculate_bundle_counts()
-    
-    # Remove MongoDB _id field to avoid serialization issues
-    illust_dict.pop('_id', None)
-    return illust_dict
+    # R1 fix (Fase 4B Batch 3): _id is no longer included in the response.
+    return await illustration_service.create_illustration(illustration)
 
 @admin_router.get("/illustrations")
 async def get_admin_illustrations(themeId: Optional[str] = None, isPublished: Optional[bool] = None, email: str = Depends(verify_token)):
-    """Admin endpoint: get all illustrations including drafts, with optional filters"""
-    query = {}
-    if themeId:
-        query["themeId"] = themeId
-    if isPublished is not None:
-        query["isPublished"] = isPublished
-    
-    illustrations = await db.illustrations.find(query).to_list(1000)
-    
-    # Get real download counts from download_events
-    download_counts = {}
-    pipeline = [{"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}}]
-    events = await db.download_events.aggregate(pipeline).to_list(1000)
-    for e in events:
-        download_counts[e["_id"]] = e["count"]
-    
-    for i in illustrations:
-        i['_id'] = str(i.get('_id', ''))
-        i['downloadCount'] = download_counts.get(i['id'], 0)
-    
-    return illustrations
+    """Admin endpoint: get all illustrations including drafts, with optional filters.
+    R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
+    """
+    return await illustration_service.list_admin_illustrations(
+        themeId=themeId, isPublished=isPublished
+    )
 
 @admin_router.put("/illustrations/{illustration_id}/publish")
 async def toggle_illustration_publish(illustration_id: str, email: str = Depends(verify_token)):
     """Toggle the published status of an illustration"""
-    illust = await db.illustrations.find_one({"id": illustration_id})
-    if not illust:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    
-    current_status = illust.get('isPublished', False)
-    new_status = not current_status
-    
-    update_data = {
-        "isPublished": new_status,
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    # Set publishedAt only when publishing for the first time
-    if new_status and not illust.get('publishedAt'):
-        update_data["publishedAt"] = datetime.now(timezone.utc)
-    
-    await db.illustrations.update_one({"id": illustration_id}, {"$set": update_data})
-    
-    return {
-        "success": True,
-        "isPublished": new_status,
-        "publishedAt": update_data.get("publishedAt", illust.get('publishedAt'))
-    }
+    return await illustration_service.toggle_publish(illustration_id)
 
 @admin_router.put("/illustrations/{illustration_id}/download-enabled")
 async def toggle_illustration_download(illustration_id: str, email: str = Depends(verify_token)):
     """Toggle the downloadEnabled status of an illustration"""
-    illust = await db.illustrations.find_one({"id": illustration_id})
-    if not illust:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    
-    current_status = illust.get('downloadEnabled', True)
-    new_status = not current_status
-    
-    await db.illustrations.update_one(
-        {"id": illustration_id}, 
-        {"$set": {"downloadEnabled": new_status, "updatedAt": datetime.now(timezone.utc)}}
-    )
-    
-    return {
-        "success": True,
-        "downloadEnabled": new_status
-    }
+    return await illustration_service.toggle_download_enabled(illustration_id)
 
 @admin_router.put("/illustrations/{illustration_id}")
 async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
-    # Get current illustration to check if theme changed
-    current = await db.illustrations.find_one({"id": illustration_id})
-    if not current:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    
-    old_theme_id = current.get('themeId')
-    new_theme_id = illustration.themeId
-    
-    illust_dict = illustration.dict()
-    illust_dict['updatedAt'] = datetime.now(timezone.utc)
-    result = await db.illustrations.update_one({"id": illustration_id}, {"$set": illust_dict})
-    
-    # Ricalcola conteggi per entrambi i temi (vecchio e nuovo)
-    if old_theme_id:
-        await recalculate_theme_count(old_theme_id)
-    if new_theme_id and new_theme_id != old_theme_id:
-        await recalculate_theme_count(new_theme_id)
-    
-    # Ricalcola bundle counts
-    await recalculate_bundle_counts()
-    
-    return {"success": True}
+    return await illustration_service.update_illustration(illustration_id, illustration)
 
 @admin_router.delete("/illustrations/{illustration_id}")
 async def delete_illustration(illustration_id: str, email: str = Depends(verify_token)):
-    # Get illustration to find theme
-    illust = await db.illustrations.find_one({"id": illustration_id})
-    if not illust:
-        raise HTTPException(status_code=404, detail="Illustrazione non trovata")
-    
-    # Delete illustration
-    await db.illustrations.delete_one({"id": illustration_id})
-    
-    # Ricalcola conteggi (solo scaricabili)
-    await recalculate_theme_count(illust.get('themeId'))
-    await recalculate_bundle_counts()
-    
-    return {"success": True}
+    return await illustration_service.delete_illustration(illustration_id)
 
 @admin_router.get("/bundles")
 async def admin_get_bundles(email: str = Depends(verify_token)):
     """Get all bundles for admin (including inactive), sorted by sortOrder"""
-    bundles = await db.bundles.find({}, {"_id": 0}).sort("sortOrder", 1).to_list(100)
-    for b in bundles:
-        if b.get('backgroundImageFileId'):
-            b['backgroundImageUrl'] = f"/api/bundles/{b['id']}/background-image"
-        if b.get('pdfFileId'):
-            b['pdfUrl'] = f"/api/bundles/{b['id']}/download"
-    return bundles
+    return await bundle_service.list_admin_bundles()
 
 @admin_router.post("/bundles")
 async def create_bundle(bundle: BundleCreate, email: str = Depends(verify_token)):
-    bundle_dict = bundle.dict()
-    bundle_dict['id'] = str(uuid.uuid4())
-    bundle_dict['illustrationCount'] = len(bundle.illustrationIds)
-    bundle_dict['pdfFileId'] = None
-    bundle_dict['pdfUrl'] = None
-    bundle_dict['backgroundImageFileId'] = None
-    bundle_dict['backgroundImageUrl'] = None
-    bundle_dict['createdAt'] = datetime.now(timezone.utc)
-    bundle_dict['updatedAt'] = datetime.now(timezone.utc)
-    await db.bundles.insert_one(bundle_dict)
-    bundle_dict.pop('_id', None)
-    return bundle_dict
+    return await bundle_service.create_bundle(bundle)
 
 @admin_router.put("/bundles/{bundle_id}")
 async def update_bundle(bundle_id: str, bundle: BundleUpdate, email: str = Depends(verify_token)):
-    existing = await db.bundles.find_one({"id": bundle_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Bundle non trovato")
-    
-    update_data = {"updatedAt": datetime.now(timezone.utc)}
-    bundle_data = bundle.dict(exclude_unset=True)
-    
-    for key, value in bundle_data.items():
-        if value is not None:
-            update_data[key] = value
-    
-    # Recalculate illustrationCount if illustrationIds changed
-    if 'illustrationIds' in update_data:
-        update_data['illustrationCount'] = len(update_data['illustrationIds'])
-    
-    await db.bundles.update_one({"id": bundle_id}, {"$set": update_data})
-    
-    updated = await db.bundles.find_one({"id": bundle_id}, {"_id": 0})
-    if updated.get('backgroundImageFileId'):
-        updated['backgroundImageUrl'] = f"/api/bundles/{bundle_id}/background-image"
-    if updated.get('pdfFileId'):
-        updated['pdfUrl'] = f"/api/bundles/{bundle_id}/download"
-    return updated
+    return await bundle_service.update_bundle(bundle_id, bundle)
 
 @admin_router.delete("/bundles/{bundle_id}")
 async def delete_bundle(bundle_id: str, email: str = Depends(verify_token)):
     from bson import ObjectId
-    
-    bundle = await db.bundles.find_one({"id": bundle_id})
-    if not bundle:
-        raise HTTPException(status_code=404, detail="Bundle non trovato")
-    
-    # Delete associated files from GridFS
+
+    bundle = await bundle_service.prepare_admin_delete(bundle_id)
+
+    # GridFS cleanup stays inline (heavy-media policy for this batch).
     if bundle.get('pdfFileId'):
         try:
             await gridfs_bucket.delete(ObjectId(bundle['pdfFileId']))
@@ -1251,8 +1030,8 @@ async def delete_bundle(bundle_id: str, email: str = Depends(verify_token)):
             await gridfs_bucket.delete(ObjectId(bundle['backgroundImageFileId']))
         except Exception:
             pass
-    
-    await db.bundles.delete_one({"id": bundle_id})
+
+    await bundle_service.finalize_admin_delete(bundle_id)
     return {"success": True}
 
 @admin_router.post("/bundles/{bundle_id}/upload-background")
