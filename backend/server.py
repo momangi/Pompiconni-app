@@ -547,64 +547,9 @@ async def recalculate_theme_count(theme_id: str):
 # `api/public/media/bundles.py` (background-image, download,
 # download-pdf with hash/cache/rate-limit) in Fase 5/M1.
 
-@admin_router.post("/upload")
-async def upload_file(
-    file: UploadFile = File(...),
-    file_type: str = Form("image"),
-    email: str = Depends(verify_token)
-):
-    """Upload file to GridFS for persistent storage"""
-    from bson import ObjectId
-    
-    # Validate file type
-    allowed_extensions = {
-        "image": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
-        "pdf": [".pdf"]
-    }
-    
-    ext = Path(file.filename).suffix.lower()
-    if ext not in allowed_extensions.get(file_type, []):
-        raise HTTPException(status_code=400, detail=f"Tipo file non permesso: {ext}")
-    
-    try:
-        # Read file content
-        content = await file.read()
-        
-        # Generate unique filename
-        unique_filename = f"{uuid.uuid4()}{ext}"
-        
-        # Upload to GridFS
-        file_id = await gridfs_bucket.upload_from_stream(
-            unique_filename,
-            io.BytesIO(content),
-            metadata={
-                "original_filename": file.filename,
-                "file_type": file_type,
-                "content_type": file.content_type,
-                "uploaded_by": email,
-                "uploaded_at": datetime.now(timezone.utc).isoformat()
-            }
-        )
-        
-        # Also save to local uploads folder for image preview (images only)
-        if file_type == "image":
-            file_path = UPLOAD_DIR / unique_filename
-            async with aiofiles.open(file_path, 'wb') as out_file:
-                await out_file.write(content)
-        
-        # Return GridFS file ID and URL
-        file_url = f"/uploads/{unique_filename}" if file_type == "image" else None
-        
-        return {
-            "url": file_url,
-            "filename": unique_filename,
-            "fileId": str(file_id),
-            "fileType": file_type
-        }
-        
-    except Exception as e:
-        logger.error(f"Error uploading file: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore durante il caricamento del file")
+# ============== ADMIN GENERIC UPLOAD (Fase 5/M3) ==============
+# `POST /api/admin/upload` moved to `api/admin/uploads.py`. The local
+# uploads directory mount (`/uploads`) remains registered below.
 
 # Admin illustrations media routes (attach-pdf, attach-image,
 # generate-illustration AI, PUT theme) moved to
@@ -620,251 +565,12 @@ async def upload_file(
 
 # Admin /settings GET+PUT moved to `api/admin/site_settings.py` (Fase 4C).
 
-# ============== HERO IMAGE & SITE SETTINGS ==============
-
-@api_router.get("/site/hero-image")
-async def get_hero_image(
-    request: Request,
-    w: Optional[int] = None,
-    format: Optional[str] = None,
-):
-    """Serve hero image (streaming + ETag + responsive variants)."""
-    settings = await db.site_settings.find_one({"id": "global"})
-    if not settings or not settings.get('heroImageFileId'):
-        raise HTTPException(status_code=404, detail="Hero image non configurata")
-    return await stream_gridfs_response_with_variants(
-        db=db,
-        gridfs_bucket=gridfs_bucket,
-        original_file_id=settings['heroImageFileId'],
-        request=request,
-        size_param=w,
-        format_param=format,
-        fallback_content_type=settings.get('heroImageContentType', 'image/png'),
-        cache_control="public, max-age=3600",
-        not_found_detail="Hero image non trovata",
-    )
-
-@api_router.get("/site/hero-status")
-async def get_hero_status():
-    """Check if hero image is configured"""
-    settings = await db.site_settings.find_one({"id": "global"})
-    has_hero = bool(settings and settings.get('heroImageFileId'))
-    return {
-        "hasHeroImage": has_hero,
-        "heroImageUrl": "/api/site/hero-image" if has_hero else None,
-        "updatedAt": settings.get('heroImageUpdatedAt') if settings else None
-    }
-
-@admin_router.post("/site/hero-image")
-async def upload_hero_image(
-    file: UploadFile = File(...),
-    email: str = Depends(verify_token)
-):
-    """Upload or replace hero image"""
-    from bson import ObjectId
-    
-    # Validate file type
-    ext = Path(file.filename).suffix.lower()
-    allowed_extensions = [".jpg", ".jpeg", ".png"]
-    if ext not in allowed_extensions:
-        raise HTTPException(status_code=400, detail=f"Solo file immagine sono permessi: {', '.join(allowed_extensions)}")
-    
-    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
-    content_type = content_types.get(ext, "image/png")
-    
-    try:
-        content = await file.read()
-        unique_filename = f"hero_pompiconni_{uuid.uuid4()}{ext}"
-        
-        # Delete old hero image if exists
-        settings = await db.site_settings.find_one({"id": "global"})
-        if settings and settings.get('heroImageFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(settings['heroImageFileId']))
-            except Exception:
-                pass
-        
-        # Upload to GridFS
-        file_id = await gridfs_bucket.upload_from_stream(
-            unique_filename,
-            io.BytesIO(content),
-            metadata={
-                "type": "hero_image",
-                "original_filename": file.filename,
-                "content_type": content_type,
-                "uploaded_by": email,
-                "uploaded_at": datetime.now(timezone.utc).isoformat()
-            }
-        )
-        
-        # Update site settings
-        await db.site_settings.update_one(
-            {"id": "global"},
-            {
-                "$set": {
-                    "heroImageFileId": str(file_id),
-                    "heroImageContentType": content_type,
-                    "heroImageFileName": file.filename,
-                    "heroImageUpdatedAt": datetime.now(timezone.utc).isoformat()
-                }
-            },
-            upsert=True
-        )
-
-        # Fire-and-forget: generate responsive variants for hero
-        fire_variants(file_id)
-
-        return {
-            "success": True,
-            "heroImageUrl": "/api/site/hero-image",
-            "message": "Hero image aggiornata con successo"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error uploading hero image: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore durante il caricamento dell'immagine")
-
-@admin_router.delete("/site/hero-image")
-async def delete_hero_image(email: str = Depends(verify_token)):
-    """Delete hero image (restore to default)"""
-    from bson import ObjectId
-    
-    settings = await db.site_settings.find_one({"id": "global"})
-    if settings and settings.get('heroImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(settings['heroImageFileId']))
-        except Exception:
-            pass
-        
-        await db.site_settings.update_one(
-            {"id": "global"},
-            {
-                "$unset": {
-                    "heroImageFileId": "",
-                    "heroImageContentType": "",
-                    "heroImageFileName": "",
-                    "heroImageUpdatedAt": ""
-                }
-            }
-        )
-    
-    return {"success": True, "message": "Hero image rimossa, ripristinato default"}
-
-# ============== BRAND LOGO ==============
-
-@api_router.get("/site/brand-logo")
-async def get_brand_logo(
-    request: Request,
-    w: Optional[int] = None,
-    format: Optional[str] = None,
-):
-    """Serve brand logo image (streaming + ETag + responsive variants)."""
-    settings = await db.site_settings.find_one({"id": "global"})
-    if not settings or not settings.get('brandLogoFileId'):
-        raise HTTPException(status_code=404, detail="Brand logo non configurato")
-    return await stream_gridfs_response_with_variants(
-        db=db,
-        gridfs_bucket=gridfs_bucket,
-        original_file_id=settings['brandLogoFileId'],
-        request=request,
-        size_param=w,
-        format_param=format,
-        fallback_content_type=settings.get('brandLogoContentType', 'image/png'),
-        cache_control="public, max-age=3600",
-        not_found_detail="Brand logo non trovato",
-    )
-
-@admin_router.get("/brand-logo-status")
-async def get_brand_logo_status(email: str = Depends(verify_token)):
-    """Get brand logo status"""
-    settings = await db.site_settings.find_one({"id": "global"})
-    has_logo = bool(settings and settings.get('brandLogoFileId'))
-    return {
-        "hasBrandLogo": has_logo,
-        "brandLogoUrl": "/api/site/brand-logo" if has_logo else None
-    }
-
-@admin_router.post("/upload-brand-logo")
-async def upload_brand_logo(
-    file: UploadFile = File(...),
-    email: str = Depends(verify_token)
-):
-    """Upload brand logo image"""
-    ext = Path(file.filename).suffix.lower()
-    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
-        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
-    
-    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
-    content_type = content_types.get(ext, "image/png")
-    
-    try:
-        content = await file.read()
-        filename = f"brand_logo{ext}"
-        
-        settings = await db.site_settings.find_one({"id": "global"})
-        
-        # Delete old logo if exists
-        if settings and settings.get('brandLogoFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(settings['brandLogoFileId']))
-            except Exception:
-                pass
-        
-        # Upload new logo
-        file_id = await gridfs_bucket.upload_from_stream(
-            filename,
-            io.BytesIO(content),
-            metadata={"type": "brand_logo", "content_type": content_type}
-        )
-        
-        await db.site_settings.update_one(
-            {"id": "global"},
-            {
-                "$set": {
-                    "brandLogoFileId": str(file_id),
-                    "brandLogoContentType": content_type,
-                    "brandLogoUpdatedAt": datetime.now(timezone.utc).isoformat()
-                }
-            },
-            upsert=True
-        )
-
-        # Fire-and-forget: generate responsive variants for the brand logo
-        fire_variants(file_id)
-
-        return {"success": True, "brandLogoUrl": f"/api/site/brand-logo?v={datetime.now(timezone.utc).timestamp()}"}
-    except Exception as e:
-        logger.error(f"Error uploading brand logo: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
-
-@admin_router.delete("/brand-logo")
-async def delete_brand_logo(email: str = Depends(verify_token)):
-    """Delete brand logo"""
-    settings = await db.site_settings.find_one({"id": "global"})
-    
-    if settings and settings.get('brandLogoFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(settings['brandLogoFileId']))
-        except Exception:
-            pass
-        
-        await db.site_settings.update_one(
-            {"id": "global"},
-            {"$set": {"brandLogoFileId": "", "brandLogoContentType": "", "brandLogoUpdatedAt": ""}}
-        )
-    
-    return {"success": True}
-
-# ============== SOCIAL LINKS ==============
-
-@admin_router.put("/social-links")
-async def update_social_links(
-    instagramUrl: str = "",
-    tiktokUrl: str = "",
-    email: str = Depends(verify_token)
-):
-    """Update social media links"""
-    return await settings_service.update_social_links(instagramUrl, tiktokUrl)
+# ============== SITE ASSETS (Fase 5/M3) ==============
+# Hero image (public stream/status, admin upload/delete) and brand logo
+# (public stream, admin status/upload/delete) moved to
+# `api/public/media/site_assets.py` and `api/admin/media/site_assets.py`.
+# `PUT /api/admin/social-links` moved to `api/admin/site_settings.py`
+# (still settings, not media).
 
 # `/theme-colors` (already moved to `api/public/themes.py` in Fase 4C)
 # and `PUT /admin/illustrations/{id}/theme` (moved to
@@ -877,342 +583,12 @@ async def update_social_links(
 # The `get_gridfs_image` helper used by both PDF endpoints moved to
 # `utils/gridfs_helpers.py`.
 
-# ============== POPPICONNI MULTI-AI PIPELINE ==============
-
-from image_pipeline import (
-    run_pipeline, run_async_retry, PipelineStatus, QCResult,
-    MAX_REFERENCE_IMAGES_PER_USER
-)
-
-@admin_router.get("/styles")
-async def get_generation_styles(email: str = Depends(verify_token)):
-    """Get all generation styles for the current user"""
-    styles = await db.generation_styles.find(
-        {"userId": email},
-        {"_id": 0}
-    ).to_list(MAX_REFERENCE_IMAGES_PER_USER + 10)
-    return {
-        "styles": styles,
-        "count": len(styles),
-        "limit": MAX_REFERENCE_IMAGES_PER_USER
-    }
-
-@admin_router.post("/styles")
-async def create_generation_style(
-    style: GenerationStyleCreate,
-    email: str = Depends(verify_token)
-):
-    """Create a new generation style (reference image library)"""
-    # Check limit
-    count = await db.generation_styles.count_documents({"userId": email})
-    if count >= MAX_REFERENCE_IMAGES_PER_USER:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Limite raggiunto: massimo {MAX_REFERENCE_IMAGES_PER_USER} stili per utente"
-        )
-    
-    style_dict = {
-        "id": str(uuid.uuid4()),
-        "userId": email,
-        "styleName": style.styleName,
-        "description": style.description,
-        "isActive": style.isActive,
-        "referenceImageFileId": None,
-        "referenceImageUrl": None,
-        "createdAt": datetime.now(timezone.utc),
-        "updatedAt": datetime.now(timezone.utc)
-    }
-    
-    await db.generation_styles.insert_one(style_dict)
-    style_dict.pop('_id', None)
-    
-    return {"success": True, "style": style_dict}
-
-@admin_router.delete("/styles/{style_id}")
-async def delete_generation_style(style_id: str, email: str = Depends(verify_token)):
-    """Delete a generation style and its reference image"""
-    from bson import ObjectId
-    
-    style = await db.generation_styles.find_one({"id": style_id, "userId": email})
-    if not style:
-        raise HTTPException(status_code=404, detail="Stile non trovato")
-    
-    # Delete reference image from GridFS if exists
-    if style.get('referenceImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(style['referenceImageFileId']))
-        except Exception:
-            pass
-    
-    await db.generation_styles.delete_one({"id": style_id})
-    return {"success": True}
-
-@admin_router.post("/styles/{style_id}/upload-reference")
-async def upload_style_reference(
-    style_id: str,
-    file: UploadFile = File(...),
-    email: str = Depends(verify_token)
-):
-    """Upload reference image for a generation style"""
-    from bson import ObjectId
-    
-    style = await db.generation_styles.find_one({"id": style_id, "userId": email})
-    if not style:
-        raise HTTPException(status_code=404, detail="Stile non trovato")
-    
-    ext = Path(file.filename).suffix.lower()
-    if ext not in [".jpg", ".jpeg", ".png"]:
-        raise HTTPException(status_code=400, detail="Solo JPG, JPEG, PNG permessi")
-    
-    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
-    content_type = content_types.get(ext, "image/png")
-    
-    try:
-        content = await file.read()
-        filename = f"style_reference_{style_id}{ext}"
-        
-        # Delete old reference if exists
-        if style.get('referenceImageFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(style['referenceImageFileId']))
-            except Exception:
-                pass
-        
-        file_id = await gridfs_bucket.upload_from_stream(
-            filename,
-            io.BytesIO(content),
-            metadata={
-                "style_id": style_id,
-                "type": "style_reference",
-                "content_type": content_type,
-                "uploaded_by": email
-            }
-        )
-        
-        await db.generation_styles.update_one(
-            {"id": style_id},
-            {
-                "$set": {
-                    "referenceImageFileId": str(file_id),
-                    "referenceImageUrl": f"/api/admin/styles/{style_id}/reference-image",
-                    "updatedAt": datetime.now(timezone.utc)
-                }
-            }
-        )
-        
-        return {
-            "success": True,
-            "imageUrl": f"/api/admin/styles/{style_id}/reference-image"
-        }
-    except Exception as e:
-        logger.error(f"Error uploading style reference: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
-
-@admin_router.get("/styles/{style_id}/reference-image")
-async def get_style_reference_image(style_id: str, request: Request, email: str = Depends(verify_token)):
-    """Serve reference image for a style (true streaming + ETag)."""
-    style = await db.generation_styles.find_one({"id": style_id, "userId": email})
-    if not style or not style.get('referenceImageFileId'):
-        raise HTTPException(status_code=404, detail="Immagine di riferimento non trovata")
-    return await stream_gridfs_response(
-        gridfs_bucket=gridfs_bucket,
-        file_id=style['referenceImageFileId'],
-        request=request,
-        fallback_content_type="image/png",
-        cache_control="private, max-age=3600",
-        not_found_detail="Immagine di riferimento non trovata",
-    )
-
-@admin_router.post("/generate-poppiconni", response_model=PoppiconniGenerateResponse)
-async def generate_poppiconni_illustration(
-    request: PoppiconniGenerateRequest,
-    background_tasks: BackgroundTasks,
-    email: str = Depends(verify_token)
-):
-    """
-    Avvia la pipeline Multi-AI per generare un'illustrazione Poppiconni on-brand.
-    
-    Pipeline a 4 fasi:
-    1. LLM (GPT-4o): Interpreta richiesta → genera prompt ottimizzato
-    2. Image Gen (gpt-image-1): Genera immagine candidata
-    3. Vision/OCR (GPT-4o): Quality Check automatico
-    4. Post-Produzione (Pillow): Export finale (PNG 300DPI, PDF, thumbnail)
-    
-    Retry automatico: max 5 tentativi sincroni.
-    Se fallisce, salva come LOW_CONFIDENCE e avvia retry asincrono.
-    """
-    from bson import ObjectId
-    
-    # Get reference image - prioritize direct upload, then style library
-    reference_image_base64 = None
-    
-    # 1. First check if direct reference image was uploaded
-    if request.reference_image_base64:
-        reference_image_base64 = request.reference_image_base64
-        logger.info("Using directly uploaded reference image for style analysis")
-    # 2. Otherwise, check style library
-    elif request.style_id:
-        style = await db.generation_styles.find_one({"id": request.style_id, "userId": email})
-        if style and style.get('referenceImageFileId'):
-            try:
-                grid_out = await gridfs_bucket.open_download_stream(
-                    ObjectId(style['referenceImageFileId'])
-                )
-                content = await grid_out.read()
-                reference_image_base64 = base64.b64encode(content).decode('utf-8')
-                logger.info(f"Using reference image from style library: {style.get('styleName')}")
-            except Exception as e:
-                logger.warning(f"Could not load reference image from style: {e}")
-    
-    # Run the pipeline with reference image for style analysis
-    try:
-        result = await run_pipeline(
-            user_request=request.user_request,
-            reference_image_base64=reference_image_base64,
-            style_lock=request.style_lock or bool(reference_image_base64),  # Auto-enable style lock if image provided
-            user_id=email
-        )
-        
-        illustration_id = None
-        
-        # Save to gallery if requested and pipeline succeeded
-        if request.save_to_gallery and result.final_png_bytes:
-            illustration_id = str(uuid.uuid4())
-            safe_prompt = request.user_request[:30].replace(' ', '_').replace('"', '').replace("'", "")
-            
-            # Save final PNG to GridFS
-            png_file_id = await gridfs_bucket.upload_from_stream(
-                f"poppiconni_{illustration_id}.png",
-                io.BytesIO(result.final_png_bytes),
-                metadata={
-                    "illustration_id": illustration_id,
-                    "type": "final_png",
-                    "content_type": "image/png",
-                    "dpi": 300,
-                    "generated_by": "multi_ai_pipeline",
-                    "generation_id": result.generation_id
-                }
-            )
-            
-            # Save PDF to GridFS
-            pdf_file_id = None
-            if result.final_pdf_bytes:
-                pdf_file_id = await gridfs_bucket.upload_from_stream(
-                    f"poppiconni_{illustration_id}.pdf",
-                    io.BytesIO(result.final_pdf_bytes),
-                    metadata={
-                        "illustration_id": illustration_id,
-                        "type": "final_pdf",
-                        "content_type": "application/pdf"
-                    }
-                )
-            
-            # Create illustration record
-            illust_dict = {
-                'id': illustration_id,
-                'themeId': request.theme_id,
-                'title': f"Poppiconni - {request.user_request[:50]}",
-                'description': request.user_request,
-                'imageUrl': f"/api/illustrations/{illustration_id}/image",
-                'imageFileId': str(png_file_id),
-                'imageContentType': "image/png",
-                'pdfUrl': f"/api/illustrations/{illustration_id}/download" if pdf_file_id else None,
-                'pdfFileId': str(pdf_file_id) if pdf_file_id else None,
-                'isFree': True,
-                'price': 0,
-                'downloadCount': 0,
-                'generatedByAI': True,
-                'aiPrompt': result.optimized_prompt,
-                'aiStyle': "multi_ai_pipeline",
-                'pipelineGenerationId': result.generation_id,
-                'pipelineStatus': result.status.value,
-                'qcPassed': result.qc_report.result == QCResult.PASS if result.qc_report else False,
-                'qcConfidenceScore': result.qc_report.confidence_score if result.qc_report else 0,
-                'createdAt': datetime.now(timezone.utc),
-                'updatedAt': datetime.now(timezone.utc)
-            }
-            await db.illustrations.insert_one(illust_dict)
-            
-            # Update theme count if theme provided
-            if request.theme_id:
-                await db.themes.update_one(
-                    {"id": request.theme_id},
-                    {"$inc": {"illustrationCount": 1}}
-                )
-            
-            # Update bundle counts automatically
-            await recalculate_bundle_counts()
-        
-        # If LOW_CONFIDENCE, schedule async retry
-        if result.status == PipelineStatus.LOW_CONFIDENCE:
-            background_tasks.add_task(
-                run_async_retry,
-                generation_id=result.generation_id,
-                user_request=request.user_request,
-                original_prompt=result.optimized_prompt or request.user_request,
-                reference_image_base64=reference_image_base64,
-                style_lock=request.style_lock,
-                db=db,
-                gridfs_bucket=gridfs_bucket
-            )
-        
-        # Prepare response
-        thumbnail_b64 = None
-        if result.thumbnail_bytes:
-            thumbnail_b64 = base64.b64encode(result.thumbnail_bytes).decode('utf-8')
-        
-        qc_passed = result.qc_report.result == QCResult.PASS if result.qc_report else False
-        confidence = result.qc_report.confidence_score if result.qc_report else 0.0
-        issues = result.qc_report.issues if result.qc_report else []
-        
-        status_messages = {
-            PipelineStatus.COMPLETED: "Illustrazione generata con successo! QC superato.",
-            PipelineStatus.LOW_CONFIDENCE: "Illustrazione generata ma QC non completamente superato. Retry asincrono avviato.",
-            PipelineStatus.FAILED: f"Generazione fallita: {result.error_message}"
-        }
-        
-        return PoppiconniGenerateResponse(
-            success=result.status in [PipelineStatus.COMPLETED, PipelineStatus.LOW_CONFIDENCE],
-            generation_id=result.generation_id,
-            status=result.status.value,
-            optimized_prompt=result.optimized_prompt,
-            qc_passed=qc_passed,
-            confidence_score=confidence,
-            qc_issues=issues,
-            has_final_image=result.final_png_bytes is not None,
-            thumbnail_base64=thumbnail_b64,
-            illustration_id=illustration_id,
-            message=status_messages.get(result.status, "Pipeline completata"),
-            retry_count=result.retry_count
-        )
-        
-    except Exception as e:
-        logger.error(f"Pipeline error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Errore pipeline: {str(e)}")
-
-@admin_router.get("/pipeline-status/{generation_id}")
-async def get_pipeline_status(generation_id: str, email: str = Depends(verify_token)):
-    """Check status of a pipeline generation (for async retries)"""
-    # Check if there's an illustration with this generation_id
-    illust = await db.illustrations.find_one(
-        {"pipelineGenerationId": generation_id},
-        {"_id": 0}
-    )
-    
-    if illust:
-        return {
-            "found": True,
-            "status": illust.get('pipelineStatus', 'unknown'),
-            "qc_passed": illust.get('qcPassed', False),
-            "confidence_score": illust.get('qcConfidenceScore', 0),
-            "illustration_id": illust.get('id')
-        }
-    
-    return {
-        "found": False,
-        "status": "pending_or_not_found",
-        "message": "Generazione in corso o non trovata"
-    }
+# ============== POPPICONNI MULTI-AI PIPELINE (Fase 5/M3) ==============
+# `/admin/styles` CRUD + upload-reference + reference-image stream moved
+# to `api/admin/media/styles.py`. `/admin/generate-poppiconni` and
+# `/admin/pipeline-status/{generation_id}` moved to
+# `api/admin/media/ai_generation.py`. Pipeline internals (image_pipeline)
+# are unchanged.
 
 # ============== GAMES MEDIA ENDPOINTS (Fase 5/M2) ==============
 # Public thumbnail/card-image/page-image streams moved to
@@ -1229,168 +605,12 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
 
 # Admin posters stats moved to `api/admin/posters.py` (Fase 4C).
 
-# ============== POPPICONNI CHARACTER IMAGES ==============
-
-# Character traits with their images (for "Chi è Poppiconni?" section)
-CHARACTER_TRAITS = ["dolce", "simpatico", "impacciato"]
-
-@api_router.get("/character-images")
-async def get_character_images():
-    """Get all character trait images for public display"""
-    images = await db.character_images.find({}, {"_id": 0}).to_list(10)
-    # Return as dict for easy access
-    result = {}
-    for img in images:
-        result[img['trait']] = img
-    return result
-
-@admin_router.get("/character-images")
-async def admin_get_character_images(email: str = Depends(verify_token)):
-    """Get all character trait images for admin"""
-    images = await db.character_images.find({}, {"_id": 0}).to_list(10)
-    # Ensure all traits exist
-    existing_traits = {img['trait'] for img in images}
-    for trait in CHARACTER_TRAITS:
-        if trait not in existing_traits:
-            images.append({
-                "trait": trait,
-                "imageFileId": None,
-                "imageUrl": None
-            })
-    return images
-
-@admin_router.post("/character-images/{trait}/upload")
-async def admin_upload_character_image(
-    trait: str,
-    file: UploadFile = File(...),
-    email: str = Depends(verify_token)
-):
-    """Upload image for a character trait (dolce, simpatico, impacciato)"""
-    from bson import ObjectId
-    
-    if trait not in CHARACTER_TRAITS:
-        raise HTTPException(status_code=400, detail=f"Trait must be one of: {CHARACTER_TRAITS}")
-    
-    ext = Path(file.filename).suffix.lower()
-    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
-        raise HTTPException(status_code=400, detail="Solo JPG, PNG, WEBP permessi")
-    
-    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
-    content_type = content_types.get(ext, "image/png")
-    
-    try:
-        content = await file.read()
-        filename = f"character_{trait}{ext}"
-        
-        # Check if image already exists for this trait
-        existing = await db.character_images.find_one({"trait": trait})
-        if existing and existing.get('imageFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(existing['imageFileId']))
-            except Exception:
-                pass
-        
-        # Upload new image
-        file_id = await gridfs_bucket.upload_from_stream(
-            filename,
-            io.BytesIO(content),
-            metadata={
-                "trait": trait,
-                "type": "character_image",
-                "content_type": content_type
-            }
-        )
-        
-        # Upsert character image record
-        await db.character_images.update_one(
-            {"trait": trait},
-            {
-                "$set": {
-                    "trait": trait,
-                    "imageFileId": str(file_id),
-                    "imageUrl": f"/api/character-images/{trait}/image",
-                    "updatedAt": datetime.now(timezone.utc)
-                }
-            },
-            upsert=True
-        )
-
-        fire_variants(file_id)
-        
-        return {
-            "success": True,
-            "trait": trait,
-            "imageUrl": f"/api/character-images/{trait}/image"
-        }
-    except Exception as e:
-        logger.error(f"Error uploading character image: {str(e)}")
-        raise HTTPException(status_code=500, detail="Errore durante il caricamento")
-
-@api_router.get("/character-images/{trait}/image")
-async def get_character_image(trait: str, request: Request):
-    """Serve character trait image (true streaming + ETag)."""
-    if trait not in CHARACTER_TRAITS:
-        raise HTTPException(status_code=400, detail="Invalid trait")
-    record = await db.character_images.find_one({"trait": trait})
-    if not record or not record.get('imageFileId'):
-        raise HTTPException(status_code=404, detail="Immagine non trovata")
-    return await stream_gridfs_response(
-        gridfs_bucket=gridfs_bucket,
-        file_id=record['imageFileId'],
-        request=request,
-        fallback_content_type="image/png",
-        cache_control="public, max-age=3600",
-        not_found_detail="Immagine non trovata",
-    )
-
-@admin_router.delete("/character-images/{trait}")
-async def admin_delete_character_image(trait: str, email: str = Depends(verify_token)):
-    """Delete character trait image"""
-    from bson import ObjectId
-    
-    if trait not in CHARACTER_TRAITS:
-        raise HTTPException(status_code=400, detail="Invalid trait")
-    
-    record = await db.character_images.find_one({"trait": trait})
-    if record and record.get('imageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(record['imageFileId']))
-        except Exception:
-            pass
-    
-    await db.character_images.delete_one({"trait": trait})
-    return {"success": True}
-
-# CharacterTextUpdate model moved to /app/backend/models/character.py (Fase 4A)
-
-@admin_router.put("/character-images/{trait}/text")
-async def admin_update_character_text(
-    trait: str,
-    data: CharacterTextUpdate,
-    email: str = Depends(verify_token)
-):
-    """Update text content for a character trait"""
-    if trait not in CHARACTER_TRAITS:
-        raise HTTPException(status_code=400, detail=f"Trait must be one of: {CHARACTER_TRAITS}")
-    
-    update_data = {"trait": trait, "updatedAt": datetime.now(timezone.utc)}
-    
-    if data.title is not None:
-        update_data["title"] = data.title
-    if data.shortDescription is not None:
-        update_data["shortDescription"] = data.shortDescription
-    if data.longDescription is not None:
-        update_data["longDescription"] = data.longDescription
-    
-    await db.character_images.update_one(
-        {"trait": trait},
-        {"$set": update_data},
-        upsert=True
-    )
-    
-    # Return updated record
-    record = await db.character_images.find_one({"trait": trait}, {"_id": 0})
-    return {"success": True, "data": record}
+# ============== POPPICONNI CHARACTER IMAGES (Fase 5/M3) ==============
+# Public list + image stream moved to
+# `api/public/media/character_images.py`. Admin list + upload + delete +
+# text PUT moved to `api/admin/media/character_images.py`. The
+# `CHARACTER_TRAITS` constant moved to
+# `constants/character_traits.py`.
 
 # ============== STATIC FILES ==============
 
@@ -1424,6 +644,8 @@ from api.public.media import (
     posters as public_media_posters,
     games as public_media_games,
     level_backgrounds as public_media_level_backgrounds,
+    site_assets as public_media_site_assets,
+    character_images as public_media_character_images,
 )
 from api.admin import (
     auth as admin_auth,
@@ -1446,7 +668,12 @@ from api.admin.media import (
     posters as admin_media_posters,
     games as admin_media_games,
     level_backgrounds as admin_media_level_backgrounds,
+    site_assets as admin_media_site_assets,
+    character_images as admin_media_character_images,
+    styles as admin_media_styles,
+    ai_generation as admin_media_ai_generation,
 )
+from api.admin import uploads as admin_uploads
 
 api_router.include_router(public_themes.router)
 api_router.include_router(public_reviews.router)
@@ -1465,6 +692,8 @@ api_router.include_router(public_media_books.router)
 api_router.include_router(public_media_posters.router)
 api_router.include_router(public_media_games.router)
 api_router.include_router(public_media_level_backgrounds.router)
+api_router.include_router(public_media_site_assets.router)
+api_router.include_router(public_media_character_images.router)
 
 admin_router.include_router(admin_auth.router)
 admin_router.include_router(admin_maintenance.router)
@@ -1480,6 +709,11 @@ admin_router.include_router(admin_media_illustrations.router)
 admin_router.include_router(admin_media_bundles.router)
 admin_router.include_router(admin_media_books.router)
 admin_router.include_router(admin_media_posters.router)
+admin_router.include_router(admin_media_site_assets.router)
+admin_router.include_router(admin_media_character_images.router)
+admin_router.include_router(admin_media_styles.router)
+admin_router.include_router(admin_media_ai_generation.router)
+admin_router.include_router(admin_uploads.router)
 
 # `admin/games` and `admin/games/bolle-magiche/level-backgrounds` were
 # originally registered on ``api_router`` (with explicit ``/admin/...``
