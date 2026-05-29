@@ -11,6 +11,7 @@ from api.dependencies import verify_admin
 from core.database import gridfs_bucket
 from models import BookCreate, BookSceneCreate, BookSceneText
 from services import book_service
+from utils.html_sanitizer import sanitize_scene_html
 
 
 router = APIRouter()
@@ -80,8 +81,6 @@ async def admin_get_book_scenes(book_id: str, email: str = Depends(verify_admin)
 @router.post("/books/{book_id}/scenes")
 async def admin_create_scene(book_id: str, scene: BookSceneCreate, email: str = Depends(verify_admin)):
     """Create a new scene for a book"""
-    # Lazy import keeps this router decoupled from server.py at import time.
-    from server import sanitize_scene_html
     sanitized_html = sanitize_scene_html(scene.text.html)
     return await book_service.create_scene(book_id, scene.sceneNumber, sanitized_html)
 
@@ -94,7 +93,6 @@ async def admin_update_scene(
     email: str = Depends(verify_admin),
 ):
     """Update scene text with HTML sanitization"""
-    from server import sanitize_scene_html
     sanitized_html = sanitize_scene_html(text.html)
     return await book_service.update_scene_text(book_id, scene_id, sanitized_html)
 

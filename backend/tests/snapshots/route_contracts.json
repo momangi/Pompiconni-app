@@ -1,0 +1,1269 @@
+{
+  "DELETE /api/admin/books/{book_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/books/{book_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/books/{book_id}/scenes/{scene_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/books/{book_id}/scenes/{scene_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/brand-logo": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/brand-logo",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "DELETE /api/admin/bundles/{bundle_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/bundles/{bundle_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/character-images/{trait}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/character-images/{trait}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/games/bolle-magiche/level-backgrounds/{bg_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/games/bolle-magiche/level-backgrounds/{bg_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/games/{game_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/games/{game_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/games/{game_id}/card-image": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/games/{game_id}/card-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/games/{game_id}/page-image": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/games/{game_id}/page-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/illustrations/{illustration_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/illustrations/{illustration_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/posters/{poster_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/posters/{poster_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/reviews/{review_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/reviews/{review_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/site/hero-image": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/site/hero-image",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "DELETE /api/admin/styles/{style_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/styles/{style_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "DELETE /api/admin/themes/{theme_id}": {
+    "has_request_body": false,
+    "method": "DELETE",
+    "path": "/api/admin/themes/{theme_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/books": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/books",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/books/{book_id}/pdf": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/books/{book_id}/pdf",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/books/{book_id}/scenes": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/books/{book_id}/scenes",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/brand-logo-status": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/brand-logo-status",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/bundles": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/bundles",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/character-images": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/character-images",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/dashboard": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/dashboard",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/download-stats": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/download-stats",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/games": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/games",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/games/bolle-magiche/level-backgrounds": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/games/bolle-magiche/level-backgrounds",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/illustrations": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/illustrations",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/pipeline-status/{generation_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/pipeline-status/{generation_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/posters": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/posters",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/posters/stats/summary": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/posters/stats/summary",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/posters/{poster_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/posters/{poster_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/reviews": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/reviews",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/settings": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/settings",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/styles": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/styles",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/admin/styles/{style_id}/reference-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/styles/{style_id}/reference-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/admin/themes/check-delete/{theme_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/admin/themes/check-delete/{theme_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/books/{book_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books/{book_id}/cover": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}/cover",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books/{book_id}/pdf": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}/pdf",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books/{book_id}/progress/{visitor_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}/progress/{visitor_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books/{book_id}/scene/{scene_number}/colored-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}/scene/{scene_number}/colored-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/books/{book_id}/scene/{scene_number}/lineart-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/books/{book_id}/scene/{scene_number}/lineart-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/brand-kit": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/brand-kit",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/bundles": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/bundles",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/bundles/{bundle_id}/background-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/bundles/{bundle_id}/background-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/bundles/{bundle_id}/download": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/bundles/{bundle_id}/download",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/bundles/{bundle_id}/download-pdf": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/bundles/{bundle_id}/download-pdf",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/character-images": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/character-images",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/character-images/{trait}/image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/character-images/{trait}/image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/games": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/games/bolle-magiche/level-backgrounds": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/bolle-magiche/level-backgrounds",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/games/bolle-magiche/level-backgrounds/{bg_id}/image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/bolle-magiche/level-backgrounds/{bg_id}/image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/games/{slug}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/{slug}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/games/{slug}/card-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/{slug}/card-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/games/{slug}/page-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/{slug}/page-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/games/{slug}/thumbnail": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/games/{slug}/thumbnail",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/health": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/health",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/illustrations": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/illustrations",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/illustrations/{illustration_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/illustrations/{illustration_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/illustrations/{illustration_id}/download-status": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/illustrations/{illustration_id}/download-status",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/illustrations/{illustration_id}/image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/illustrations/{illustration_id}/image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/illustrations/{illustration_id}/image-status": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/illustrations/{illustration_id}/image-status",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/posters": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/posters",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/posters/{poster_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/posters/{poster_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/posters/{poster_id}/download": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/posters/{poster_id}/download",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/posters/{poster_id}/image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/posters/{poster_id}/image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/reviews": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/reviews",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/search/illustrations": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/search/illustrations",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/site-settings": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/site-settings",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/site/brand-logo": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/site/brand-logo",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/site/hero-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/site/hero-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/site/hero-status": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/site/hero-status",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/theme-colors": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/theme-colors",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/themes": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/themes",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "GET /api/themes/{theme_id}": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/themes/{theme_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /api/themes/{theme_id}/background-image": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/api/themes/{theme_id}/background-image",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "GET /health": {
+    "has_request_body": false,
+    "method": "GET",
+    "path": "/health",
+    "requires_auth": false,
+    "responses": [
+      "200"
+    ]
+  },
+  "POST /api/admin/books": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/books",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/books/{book_id}/cover": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/books/{book_id}/cover",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/books/{book_id}/scenes": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/books/{book_id}/scenes",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/books/{book_id}/scenes/{scene_id}/colored-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/books/{book_id}/scenes/{scene_id}/colored-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/books/{book_id}/scenes/{scene_id}/lineart-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/books/{book_id}/scenes/{scene_id}/lineart-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/bundles": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/bundles",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/bundles/{bundle_id}/upload-background": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/bundles/{bundle_id}/upload-background",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/bundles/{bundle_id}/upload-pdf": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/bundles/{bundle_id}/upload-pdf",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/character-images/{trait}/upload": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/character-images/{trait}/upload",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games/bolle-magiche/level-backgrounds": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games/bolle-magiche/level-backgrounds",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games/bolle-magiche/level-backgrounds/{bg_id}/image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games/bolle-magiche/level-backgrounds/{bg_id}/image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games/{game_id}/card-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games/{game_id}/card-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games/{game_id}/page-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games/{game_id}/page-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/games/{game_id}/thumbnail": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/games/{game_id}/thumbnail",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/generate-illustration": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/generate-illustration",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/generate-poppiconni": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/generate-poppiconni",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/illustrations": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/illustrations",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/illustrations/{illustration_id}/attach-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/illustrations/{illustration_id}/attach-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/illustrations/{illustration_id}/attach-pdf": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/illustrations/{illustration_id}/attach-pdf",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/login": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/login",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/maintenance/fix-brand-name": {
+    "has_request_body": false,
+    "method": "POST",
+    "path": "/api/admin/maintenance/fix-brand-name",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "POST /api/admin/posters": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/posters",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/posters/{poster_id}/upload-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/posters/{poster_id}/upload-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/posters/{poster_id}/upload-pdf": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/posters/{poster_id}/upload-pdf",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/reset-fake-counters": {
+    "has_request_body": false,
+    "method": "POST",
+    "path": "/api/admin/reset-fake-counters",
+    "requires_auth": true,
+    "responses": [
+      "200"
+    ]
+  },
+  "POST /api/admin/site/hero-image": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/site/hero-image",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/styles": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/styles",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/styles/{style_id}/upload-reference": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/styles/{style_id}/upload-reference",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/themes": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/themes",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/themes/{theme_id}/upload-background": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/themes/{theme_id}/upload-background",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/upload": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/upload",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/admin/upload-brand-logo": {
+    "has_request_body": true,
+    "method": "POST",
+    "path": "/api/admin/upload-brand-logo",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/books/{book_id}/progress/{visitor_id}": {
+    "has_request_body": false,
+    "method": "POST",
+    "path": "/api/books/{book_id}/progress/{visitor_id}",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "POST /api/illustrations/{illustration_id}/download": {
+    "has_request_body": false,
+    "method": "POST",
+    "path": "/api/illustrations/{illustration_id}/download",
+    "requires_auth": false,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/books/{book_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/books/{book_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/books/{book_id}/scenes/{scene_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/books/{book_id}/scenes/{scene_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/bundles/{bundle_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/bundles/{bundle_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/character-images/{trait}/text": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/character-images/{trait}/text",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/games/bolle-magiche/level-backgrounds/{bg_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/games/bolle-magiche/level-backgrounds/{bg_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/games/{game_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/games/{game_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/illustrations/{illustration_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/illustrations/{illustration_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/illustrations/{illustration_id}/download-enabled": {
+    "has_request_body": false,
+    "method": "PUT",
+    "path": "/api/admin/illustrations/{illustration_id}/download-enabled",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/illustrations/{illustration_id}/publish": {
+    "has_request_body": false,
+    "method": "PUT",
+    "path": "/api/admin/illustrations/{illustration_id}/publish",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/illustrations/{illustration_id}/theme": {
+    "has_request_body": false,
+    "method": "PUT",
+    "path": "/api/admin/illustrations/{illustration_id}/theme",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/posters/{poster_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/posters/{poster_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/posters/{poster_id}/download-enabled": {
+    "has_request_body": false,
+    "method": "PUT",
+    "path": "/api/admin/posters/{poster_id}/download-enabled",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/reviews/{review_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/reviews/{review_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/settings": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/settings",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/social-links": {
+    "has_request_body": false,
+    "method": "PUT",
+    "path": "/api/admin/social-links",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
+  "PUT /api/admin/themes/{theme_id}": {
+    "has_request_body": true,
+    "method": "PUT",
+    "path": "/api/admin/themes/{theme_id}",
+    "requires_auth": true,
+    "responses": [
+      "200",
+      "422"
+    ]
+  }
+}
