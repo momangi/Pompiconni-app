@@ -783,64 +783,8 @@ async def recalculate_theme_count(theme_id: str):
 
 # ============== ADMIN ENDPOINTS ==============
 
-@admin_router.post("/login", response_model=LoginResponse)
-async def admin_login(request: LoginRequest):
-    if request.email == ADMIN_EMAIL and request.password == ADMIN_PASSWORD:
-        token = create_token(request.email)
-        return LoginResponse(token=token, email=request.email)
-    raise HTTPException(status_code=401, detail="Credenziali non valide")
-
-@admin_router.get("/dashboard")
-async def admin_dashboard(email: str = Depends(verify_token)):
-    total_illustrations = await db.illustrations.count_documents({})
-    total_themes = await db.themes.count_documents({})
-    free_count = await db.illustrations.count_documents({"isFree": True})
-    
-    # Calculate total downloads ONLY from real download_events (source of truth)
-    total_downloads = await db.download_events.count_documents({})
-    
-    # Get popular illustrations by REAL download events count
-    pipeline = [
-        {"$group": {"_id": "$illustrationId", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 5}
-    ]
-    popular_ids = await db.download_events.aggregate(pipeline).to_list(5)
-    
-    # Fetch illustration details for popular ones
-    # R1 fix (Fase 4B Batch 3): _id is no longer leaked.
-    popular = []
-    for item in popular_ids:
-        illust = await db.illustrations.find_one({"id": item["_id"]}, {"_id": 0})
-        if illust:
-            illust['downloadCount'] = item['count']  # Real count from events
-            popular.append(illust)
-    
-    # If no downloads yet, return top 5 illustrations with 0 downloads
-    if not popular:
-        popular = await db.illustrations.find({}, {"_id": 0}).limit(5).to_list(5)
-        for p in popular:
-            p['downloadCount'] = 0
-    
-    # Get download stats for last 7 days
-    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-    recent_downloads = await db.download_events.count_documents({
-        "downloadedAt": {"$gte": seven_days_ago}
-    })
-    
-    # Get site settings
-    settings = await db.site_settings.find_one({"id": "global"})
-    
-    return {
-        "totalIllustrations": total_illustrations,
-        "totalThemes": total_themes,
-        "totalDownloads": total_downloads,
-        "freeCount": free_count,
-        "popularIllustrations": popular,
-        "recentDownloads": recent_downloads,
-        "stripeEnabled": bool(STRIPE_SECRET_KEY),
-        "showReviews": settings.get("show_reviews", True) if settings else True
-    }
+# Admin /login + /dashboard moved to `api/admin/auth.py` and
+# `api/admin/maintenance.py` (Auth & Maintenance mini-batch).
 
 # Admin themes CRUD moved to `api/admin/themes.py` (Fase 4C). The
 # GridFS `/themes/{id}/upload-background` route stays below.
@@ -1651,158 +1595,11 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
 
 # Admin reviews CRUD moved to `api/admin/reviews.py` (Fase 4C).
 
-@admin_router.post("/maintenance/fix-brand-name")
-async def admin_fix_brand_name(email: str = Depends(verify_token)):
-    """
-    One-off maintenance endpoint to fix brand name from 'Poppiconni' to 'Poppiconni'
-    in all collections (illustrations, themes, reviews, bundles, books).
-    Does NOT change technical fields (endpoints, variables, credentials).
-    """
-    results = {
-        "illustrations_fixed": 0,
-        "themes_fixed": 0,
-        "reviews_fixed": 0,
-        "bundles_fixed": 0,
-        "books_fixed": 0,
-        "book_scenes_fixed": 0
-    }
-    
-    old_brand = "Pompiconni"
-    new_brand = "Poppiconni"
-    
-    # Fix illustrations (title, description)
-    illustrations = await db.illustrations.find({}).to_list(1000)
-    for illust in illustrations:
-        updates = {}
-        if old_brand in illust.get('title', ''):
-            updates['title'] = illust['title'].replace(old_brand, new_brand)
-        if old_brand in illust.get('description', ''):
-            updates['description'] = illust['description'].replace(old_brand, new_brand)
-        if updates:
-            await db.illustrations.update_one({"id": illust['id']}, {"$set": updates})
-            results["illustrations_fixed"] += 1
-    
-    # Fix themes (name, description)
-    themes = await db.themes.find({}).to_list(100)
-    for theme in themes:
-        updates = {}
-        if old_brand in theme.get('name', ''):
-            updates['name'] = theme['name'].replace(old_brand, new_brand)
-        if old_brand in theme.get('description', ''):
-            updates['description'] = theme['description'].replace(old_brand, new_brand)
-        if updates:
-            await db.themes.update_one({"id": theme['id']}, {"$set": updates})
-            results["themes_fixed"] += 1
-    
-    # Fix reviews (text)
-    reviews = await db.reviews.find({}).to_list(100)
-    for review in reviews:
-        if old_brand in review.get('text', ''):
-            await db.reviews.update_one(
-                {"id": review['id']}, 
-                {"$set": {"text": review['text'].replace(old_brand, new_brand)}}
-            )
-            results["reviews_fixed"] += 1
-    
-    # Fix bundles (name, description)
-    bundles = await db.bundles.find({}).to_list(100)
-    for bundle in bundles:
-        updates = {}
-        if old_brand in bundle.get('name', ''):
-            updates['name'] = bundle['name'].replace(old_brand, new_brand)
-        if old_brand in bundle.get('description', ''):
-            updates['description'] = bundle['description'].replace(old_brand, new_brand)
-        if updates:
-            await db.bundles.update_one({"id": bundle['id']}, {"$set": updates})
-            results["bundles_fixed"] += 1
-    
-    # Fix books (title, description)
-    books = await db.books.find({}).to_list(100)
-    for book in books:
-        updates = {}
-        if old_brand in book.get('title', ''):
-            updates['title'] = book['title'].replace(old_brand, new_brand)
-        if old_brand in book.get('description', ''):
-            updates['description'] = book['description'].replace(old_brand, new_brand)
-        if updates:
-            await db.books.update_one({"id": book['id']}, {"$set": updates})
-            results["books_fixed"] += 1
-    
-    # Fix book scenes (text.html)
-    scenes = await db.book_scenes.find({}).to_list(1000)
-    for scene in scenes:
-        html = scene.get('text', {}).get('html', '')
-        if old_brand in html:
-            await db.book_scenes.update_one(
-                {"id": scene['id']}, 
-                {"$set": {"text.html": html.replace(old_brand, new_brand)}}
-            )
-            results["book_scenes_fixed"] += 1
-    
-    return {
-        "success": True,
-        "message": f"Brand name fixed from '{old_brand}' to '{new_brand}'",
-        "results": results
-    }
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Recensione non trovata")
-    return {"success": True}
+# Admin maintenance endpoints (`/maintenance/fix-brand-name`,
+# `/download-stats`, `/reset-fake-counters`) moved to
+# `api/admin/maintenance.py` (Auth & Maintenance mini-batch).
 
 # Admin /settings GET+PUT moved to `api/admin/site_settings.py` (Fase 4C).
-
-@admin_router.get("/download-stats")
-async def admin_get_download_stats(email: str = Depends(verify_token)):
-    """Get detailed download statistics"""
-    # Total downloads
-    total = await db.download_events.count_documents({})
-    
-    # Downloads by day (last 30 days)
-    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-    pipeline = [
-        {"$match": {"downloadedAt": {"$gte": thirty_days_ago}}},
-        {
-            "$group": {
-                "_id": {
-                    "$dateToString": {"format": "%Y-%m-%d", "date": "$downloadedAt"}
-                },
-                "count": {"$sum": 1}
-            }
-        },
-        {"$sort": {"_id": 1}}
-    ]
-    daily_stats = await db.download_events.aggregate(pipeline).to_list(30)
-    
-    # Downloads by illustration
-    illustration_pipeline = [
-        {
-            "$group": {
-                "_id": "$illustrationId",
-                "count": {"$sum": 1}
-            }
-        },
-        {"$sort": {"count": -1}},
-        {"$limit": 10}
-    ]
-    top_illustrations = await db.download_events.aggregate(illustration_pipeline).to_list(10)
-    
-    return {
-        "total": total,
-        "dailyStats": daily_stats,
-        "topIllustrations": top_illustrations
-    }
-
-@admin_router.post("/reset-fake-counters")
-async def admin_reset_fake_counters(email: str = Depends(verify_token)):
-    """Reset all download counters to 0 (removes fake demo data)"""
-    result = await db.illustrations.update_many(
-        {},
-        {"$set": {"downloadCount": 0}}
-    )
-    return {
-        "success": True,
-        "message": f"Reset contatori per {result.modified_count} illustrazioni",
-        "modified_count": result.modified_count
-    }
 
 # ============== HERO IMAGE & SITE SETTINGS ==============
 
@@ -3568,6 +3365,8 @@ from api.public import (
     books as public_books,
 )
 from api.admin import (
+    auth as admin_auth,
+    maintenance as admin_maintenance,
     themes as admin_themes,
     reviews as admin_reviews,
     site_settings as admin_site_settings,
@@ -3589,6 +3388,8 @@ api_router.include_router(public_games.router)
 api_router.include_router(public_level_backgrounds.router)
 api_router.include_router(public_books.router)
 
+admin_router.include_router(admin_auth.router)
+admin_router.include_router(admin_maintenance.router)
 admin_router.include_router(admin_themes.router)
 admin_router.include_router(admin_reviews.router)
 admin_router.include_router(admin_site_settings.router)
