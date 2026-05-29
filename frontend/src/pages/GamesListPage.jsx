@@ -128,7 +128,7 @@ const GamesListPage = () => {
                       <div 
                         className="absolute inset-0 bg-cover bg-center"
                         style={{ 
-                          backgroundImage: `url(${BACKEND_URL}${game.cardImageUrl})`,
+                          backgroundImage: `url(${buildGameCardImageUrl(game.slug)})`,
                           opacity: (game.cardImageOpacity || 35) / 100
                         }}
                       />
@@ -137,7 +137,7 @@ const GamesListPage = () => {
                     {/* Thumbnail overlay (if exists and no card image) */}
                     {game.thumbnailUrl && !game.cardImageUrl ? (
                       <img 
-                        src={`${BACKEND_URL}${game.thumbnailUrl}`}
+                        src={buildGameThumbnailUrl(game.slug)}
                         alt={game.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
