@@ -404,3 +404,101 @@ def _read_env(path, key):
     except Exception:
         return None
     return None
+
+
+
+# ============================================================================
+# R1 regression — `_id` MUST NOT leak from refactored endpoints
+# (Fase 4B Batch 3 & 4, approved cleanup; verified by Fase 4C router split)
+# ============================================================================
+
+def _has_id(items):
+    """True if any element in the iterable contains the BSON `_id` key."""
+    return any("_id" in i for i in items)
+
+
+def test_r1_public_illustrations_no_id_leak(api):
+    """`GET /api/illustrations` MUST NOT leak `_id` (R1 cleanup)."""
+    r = api.get(f"{BASE_URL}/api/illustrations", timeout=15)
+    assert r.status_code == 200
+    arr = r.json()
+    assert isinstance(arr, list)
+    assert not _has_id(arr), "Found '_id' leaked from /api/illustrations"
+
+
+def test_r1_public_illustration_detail_no_id_leak(api):
+    """`GET /api/illustrations/{id}` MUST NOT leak `_id` (R1 cleanup)."""
+    r_list = api.get(f"{BASE_URL}/api/illustrations", timeout=15)
+    assert r_list.status_code == 200
+    arr = r_list.json()
+    if not arr:
+        pytest.skip("No published illustrations available in DEV cluster")
+    illust_id = arr[0]["id"]
+    r = api.get(f"{BASE_URL}/api/illustrations/{illust_id}", timeout=15)
+    assert r.status_code == 200
+    assert "_id" not in r.json(), "Found '_id' leaked from illustration detail"
+
+
+def test_r1_admin_illustrations_no_id_leak(api, auth_headers):
+    """`GET /api/admin/illustrations` MUST NOT leak `_id` (R1 cleanup)."""
+    r = api.get(f"{BASE_URL}/api/admin/illustrations", headers=auth_headers, timeout=15)
+    assert r.status_code == 200
+    arr = r.json()
+    assert isinstance(arr, list)
+    assert not _has_id(arr), "Found '_id' leaked from /api/admin/illustrations"
+
+
+def test_r1_public_books_no_id_leak(api):
+    """`GET /api/books` MUST NOT leak `_id` (R1 cleanup)."""
+    r = api.get(f"{BASE_URL}/api/books", timeout=15)
+    assert r.status_code == 200
+    arr = r.json()
+    assert isinstance(arr, list)
+    assert not _has_id(arr), "Found '_id' leaked from /api/books"
+
+
+def test_r1_admin_books_no_id_leak(api, auth_headers):
+    """`GET /api/admin/books` MUST NOT leak `_id` (R1 cleanup)."""
+    r = api.get(f"{BASE_URL}/api/admin/books", headers=auth_headers, timeout=15)
+    assert r.status_code == 200
+    arr = r.json()
+    assert isinstance(arr, list)
+    assert not _has_id(arr), "Found '_id' leaked from /api/admin/books"
+
+
+def test_r1_book_detail_book_and_scenes_no_id_leak(api, auth_headers):
+    """`GET /api/books/{id}` payload (`book` + `scenes`) MUST NOT leak `_id`."""
+    r_admin = api.get(f"{BASE_URL}/api/admin/books", headers=auth_headers, timeout=15)
+    assert r_admin.status_code == 200
+    admin_books = r_admin.json()
+    if not admin_books:
+        pytest.skip("No books available in DEV cluster")
+    # Find a visible book first (public route returns 404 for hidden ones).
+    visible = [b for b in admin_books if b.get("isVisible", True)]
+    if not visible:
+        pytest.skip("No visible books available in DEV cluster")
+    book_id = visible[0]["id"]
+    r = api.get(f"{BASE_URL}/api/books/{book_id}", timeout=15)
+    assert r.status_code == 200
+    payload = r.json()
+    assert "_id" not in payload["book"], "Found '_id' leaked in book payload"
+    assert not _has_id(payload.get("scenes", [])), "Found '_id' leaked in scenes"
+
+
+def test_r1_admin_book_scenes_no_id_leak(api, auth_headers):
+    """`GET /api/admin/books/{id}/scenes` MUST NOT leak `_id`."""
+    r_admin = api.get(f"{BASE_URL}/api/admin/books", headers=auth_headers, timeout=15)
+    assert r_admin.status_code == 200
+    admin_books = r_admin.json()
+    if not admin_books:
+        pytest.skip("No books available in DEV cluster")
+    book_id = admin_books[0]["id"]
+    r = api.get(
+        f"{BASE_URL}/api/admin/books/{book_id}/scenes",
+        headers=auth_headers,
+        timeout=15,
+    )
+    assert r.status_code == 200
+    arr = r.json()
+    assert isinstance(arr, list)
+    assert not _has_id(arr), "Found '_id' leaked from admin scenes list"

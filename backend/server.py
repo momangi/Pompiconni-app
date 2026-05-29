@@ -538,13 +538,9 @@ async def startup_event():
 async def root():
     return {"message": "Poppiconni API v1.0", "status": "online"}
 
-@api_router.get("/themes", response_model=List[dict])
-async def get_themes():
-    return await theme_service.list_public()
-
-@api_router.get("/themes/{theme_id}")
-async def get_theme(theme_id: str):
-    return await theme_service.get_public(theme_id)
+# Public themes/illustrations/bundles/reviews/site-settings/brand-kit
+# routes moved to `api/public/*` in Fase 4C. The GridFS
+# `/themes/{id}/background-image` stream stays here below.
 
 @api_router.get("/themes/{theme_id}/background-image")
 async def get_theme_background_image(
@@ -567,14 +563,6 @@ async def get_theme_background_image(
         fallback_content_type="image/png",
         cache_control="public, max-age=3600",
         not_found_detail="Immagine non trovata",
-    )
-
-@api_router.get("/illustrations", response_model=List[dict])
-async def get_illustrations(themeId: Optional[str] = None, isFree: Optional[bool] = None):
-    # Public endpoint: only return published illustrations.
-    # R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
-    return await illustration_service.list_public_illustrations(
-        themeId=themeId, isFree=isFree
     )
 
 @api_router.get("/search/illustrations")
@@ -657,12 +645,6 @@ async def search_illustrations(q: str = "", limit: int = 48):
         "q": q,
         "results": results
     }
-
-@api_router.get("/illustrations/{illustration_id}")
-async def get_illustration(illustration_id: str):
-    # Only return published illustrations to public.
-    # R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
-    return await illustration_service.get_public_illustration(illustration_id)
 
 @api_router.post("/illustrations/{illustration_id}/download")
 async def download_illustration(illustration_id: str, request: Request):
@@ -777,63 +759,8 @@ async def get_image_status(illustration_id: str):
         "message": "Immagine disponibile" if has_image else "Immagine non ancora disponibile"
     }
 
-@api_router.get("/bundles", response_model=List[dict])
-async def get_bundles():
-    """Get public bundles - only active ones, sorted by sortOrder"""
-    return await bundle_service.list_public_bundles()
-
-@api_router.get("/reviews", response_model=List[dict])
-async def get_reviews():
-    """Get public reviews - only approved ones if show_reviews is enabled"""
-    return await review_service.get_public_reviews()
-
-@api_router.get("/site-settings")
-async def get_public_site_settings():
-    """Get public site settings (stripe status, hero image, social links, legal info, etc)"""
-    return await settings_service.get_public_payload()
-
-@api_router.get("/brand-kit")
-async def get_brand_kit():
-    return {
-        "character": {
-            "name": "Poppiconni",
-            "personality": "Dolce, simpatico, leggermente impacciato",
-            "features": [
-                "Occhi grandi e espressivi con ciglia lunghe",
-                "Corno arcobaleno con sfumature pastello",
-                "Criniera morbida e fluente",
-                "Zampette tozze e adorabili",
-                "Codina con ciuffo colorato",
-                "Guanciotte rosate"
-            ],
-            "proportions": {
-                "head": "30% del corpo",
-                "body": "Tozzo e morbido",
-                "legs": "Corte e rotonde",
-                "horn": "Piccolo e delicato"
-            }
-        },
-        "colors": [
-            {"name": "Rosa Poppiconni", "hex": "#FFB6C1", "usage": "Colore primario, guance, dettagli"},
-            {"name": "Azzurro Cielo", "hex": "#B4D4FF", "usage": "Sfondi, elementi secondari"},
-            {"name": "Verde Menta", "hex": "#98D8AA", "usage": "Accenti natura, prati"},
-            {"name": "Giallo Sole", "hex": "#FFE5B4", "usage": "Elementi luminosi, stelle"},
-            {"name": "Lavanda Sogno", "hex": "#E6E6FA", "usage": "Magia, elementi fantasy"},
-            {"name": "Pesca Dolce", "hex": "#FFDAB9", "usage": "Calore, accoglienza"}
-        ],
-        "typography": {
-            "primary": "Quicksand",
-            "secondary": "Nunito",
-            "style": "Arrotondato, amichevole, facile da leggere"
-        },
-        "styleGuidelines": [
-            "Linee morbide e spesse per facilità di colorazione",
-            "Nessun dettaglio eccessivo",
-            "Espressioni sempre positive e tenere",
-            "Stile bambinesco, non realistico",
-            "Proporzioni cartoon con testa grande"
-        ]
-    }
+# Public `/bundles`, `/reviews`, `/site-settings`, `/brand-kit` moved to
+# `api/public/*` in Fase 4C router split.
 
 # ============== HELPER FUNCTIONS ==============
 
@@ -915,13 +842,8 @@ async def admin_dashboard(email: str = Depends(verify_token)):
         "showReviews": settings.get("show_reviews", True) if settings else True
     }
 
-@admin_router.post("/themes")
-async def create_theme(theme: ThemeCreate, email: str = Depends(verify_token)):
-    return await theme_service.create_theme(theme)
-
-@admin_router.put("/themes/{theme_id}")
-async def update_theme(theme_id: str, theme: ThemeUpdate, email: str = Depends(verify_token)):
-    return await theme_service.update_theme(theme_id, theme)
+# Admin themes CRUD moved to `api/admin/themes.py` (Fase 4C). The
+# GridFS `/themes/{id}/upload-background` route stays below.
 
 @admin_router.post("/themes/{theme_id}/upload-background")
 async def upload_theme_background(
@@ -974,72 +896,6 @@ async def upload_theme_background(
     except Exception as e:
         logger.error(f"Error uploading theme background: {str(e)}")
         raise HTTPException(status_code=500, detail="Errore durante il caricamento")
-
-@admin_router.post("/illustrations")
-async def create_illustration(illustration: IllustrationCreate, email: str = Depends(verify_token)):
-    # R1 fix (Fase 4B Batch 3): _id is no longer included in the response.
-    return await illustration_service.create_illustration(illustration)
-
-@admin_router.get("/illustrations")
-async def get_admin_illustrations(themeId: Optional[str] = None, isPublished: Optional[bool] = None, email: str = Depends(verify_token)):
-    """Admin endpoint: get all illustrations including drafts, with optional filters.
-    R1 fix (Fase 4B Batch 3, approved cleanup): _id is no longer leaked.
-    """
-    return await illustration_service.list_admin_illustrations(
-        themeId=themeId, isPublished=isPublished
-    )
-
-@admin_router.put("/illustrations/{illustration_id}/publish")
-async def toggle_illustration_publish(illustration_id: str, email: str = Depends(verify_token)):
-    """Toggle the published status of an illustration"""
-    return await illustration_service.toggle_publish(illustration_id)
-
-@admin_router.put("/illustrations/{illustration_id}/download-enabled")
-async def toggle_illustration_download(illustration_id: str, email: str = Depends(verify_token)):
-    """Toggle the downloadEnabled status of an illustration"""
-    return await illustration_service.toggle_download_enabled(illustration_id)
-
-@admin_router.put("/illustrations/{illustration_id}")
-async def update_illustration(illustration_id: str, illustration: IllustrationCreate, email: str = Depends(verify_token)):
-    return await illustration_service.update_illustration(illustration_id, illustration)
-
-@admin_router.delete("/illustrations/{illustration_id}")
-async def delete_illustration(illustration_id: str, email: str = Depends(verify_token)):
-    return await illustration_service.delete_illustration(illustration_id)
-
-@admin_router.get("/bundles")
-async def admin_get_bundles(email: str = Depends(verify_token)):
-    """Get all bundles for admin (including inactive), sorted by sortOrder"""
-    return await bundle_service.list_admin_bundles()
-
-@admin_router.post("/bundles")
-async def create_bundle(bundle: BundleCreate, email: str = Depends(verify_token)):
-    return await bundle_service.create_bundle(bundle)
-
-@admin_router.put("/bundles/{bundle_id}")
-async def update_bundle(bundle_id: str, bundle: BundleUpdate, email: str = Depends(verify_token)):
-    return await bundle_service.update_bundle(bundle_id, bundle)
-
-@admin_router.delete("/bundles/{bundle_id}")
-async def delete_bundle(bundle_id: str, email: str = Depends(verify_token)):
-    from bson import ObjectId
-
-    bundle = await bundle_service.prepare_admin_delete(bundle_id)
-
-    # GridFS cleanup stays inline (heavy-media policy for this batch).
-    if bundle.get('pdfFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(bundle['pdfFileId']))
-        except Exception:
-            pass
-    if bundle.get('backgroundImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(bundle['backgroundImageFileId']))
-        except Exception:
-            pass
-
-    await bundle_service.finalize_admin_delete(bundle_id)
-    return {"success": True}
 
 @admin_router.post("/bundles/{bundle_id}/upload-background")
 async def upload_bundle_background(
@@ -1793,24 +1649,7 @@ async def generate_illustration(request: GenerateRequest, email: str = Depends(v
 
 # ============== ADMIN REVIEWS & SETTINGS ==============
 
-@admin_router.get("/reviews")
-async def admin_get_reviews(email: str = Depends(verify_token)):
-    """Get all reviews for admin (including non-approved)"""
-    return await review_service.get_admin_reviews()
-
-@admin_router.put("/reviews/{review_id}")
-async def admin_update_review(review_id: str, update: ReviewUpdate, email: str = Depends(verify_token)):
-    """Approve or disapprove a review"""
-    if not await review_service.set_review_approval(review_id, update.is_approved):
-        raise HTTPException(status_code=404, detail="Recensione non trovata")
-    return {"success": True}
-
-@admin_router.delete("/reviews/{review_id}")
-async def admin_delete_review(review_id: str, email: str = Depends(verify_token)):
-    """Delete a review"""
-    if not await review_service.delete_review(review_id):
-        raise HTTPException(status_code=404, detail="Recensione non trovata")
-    return {"success": True}
+# Admin reviews CRUD moved to `api/admin/reviews.py` (Fase 4C).
 
 @admin_router.post("/maintenance/fix-brand-name")
 async def admin_fix_brand_name(email: str = Depends(verify_token)):
@@ -1909,16 +1748,7 @@ async def admin_fix_brand_name(email: str = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="Recensione non trovata")
     return {"success": True}
 
-@admin_router.get("/settings")
-async def admin_get_settings(email: str = Depends(verify_token)):
-    """Get site settings"""
-    return await settings_service.get_admin_payload()
-
-@admin_router.put("/settings")
-async def admin_update_settings(settings: SiteSettingsUpdate, email: str = Depends(verify_token)):
-    """Update site settings"""
-    await settings_service.update_admin_settings(settings)
-    return {"success": True}
+# Admin /settings GET+PUT moved to `api/admin/site_settings.py` (Fase 4C).
 
 @admin_router.get("/download-stats")
 async def admin_get_download_stats(email: str = Depends(verify_token)):
@@ -2227,15 +2057,7 @@ async def get_theme_color_palette():
 
 # ============== ENHANCED THEME CRUD ==============
 
-@admin_router.get("/themes/check-delete/{theme_id}")
-async def check_theme_delete(theme_id: str, email: str = Depends(verify_token)):
-    """Check if theme can be deleted and how many illustrations it has"""
-    return await theme_service.check_delete(theme_id)
-
-@admin_router.delete("/themes/{theme_id}")
-async def delete_theme(theme_id: str, force: bool = False, email: str = Depends(verify_token)):
-    """Delete theme. If force=true, unassign illustrations first."""
-    return await theme_service.delete_theme(theme_id, force=force)
+# Admin themes check-delete + DELETE moved to `api/admin/themes.py` (Fase 4C).
 
 @admin_router.put("/illustrations/{illustration_id}/theme")
 async def change_illustration_theme(
@@ -2272,20 +2094,9 @@ async def change_illustration_theme(
 
 # ============== BOOKS PUBLIC ENDPOINTS ==============
 
-@api_router.get("/books", response_model=List[dict])
-async def get_books():
-    """Get all visible books for public display.
-    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
-    """
-    return await book_service.list_public_books()
-
-@api_router.get("/books/{book_id}")
-async def get_book(book_id: str):
-    """Get a single book with its scenes.
-    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked
-    in either ``book`` or ``scenes`` payloads.
-    """
-    return await book_service.get_public_book_with_scenes(book_id)
+# Public `/books`, `/books/{id}` and reading-progress endpoints moved to
+# `api/public/books.py` (Fase 4C). The GridFS scene/cover image streams
+# and PDF generation stay below.
 
 @api_router.get("/books/{book_id}/scene/{scene_number}/colored-image")
 async def get_scene_colored_image(book_id: str, scene_number: int, request: Request):
@@ -2340,16 +2151,7 @@ async def get_book_cover(
         not_found_detail="Copertina non trovata",
     )
 
-# Reading Progress
-@api_router.get("/books/{book_id}/progress/{visitor_id}")
-async def get_reading_progress(book_id: str, visitor_id: str):
-    """Get reading progress for a visitor"""
-    return await book_service.get_reading_progress(book_id, visitor_id)
-
-@api_router.post("/books/{book_id}/progress/{visitor_id}")
-async def save_reading_progress(book_id: str, visitor_id: str, scene: int):
-    """Save reading progress for a visitor"""
-    return await book_service.save_reading_progress(book_id, visitor_id, scene)
+# Reading Progress endpoints moved to `api/public/books.py` (Fase 4C).
 
 # ============== BOOK PDF DOWNLOAD ==============
 
@@ -2415,50 +2217,9 @@ async def download_book_pdf_public(book_id: str):
 
 # ============== BOOKS ADMIN ENDPOINTS ==============
 
-@admin_router.get("/books")
-async def admin_get_books(email: str = Depends(verify_token)):
-    """Get all books for admin.
-    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
-    """
-    return await book_service.list_admin_books()
-
-@admin_router.post("/books")
-async def admin_create_book(book: BookCreate, email: str = Depends(verify_token)):
-    """Create a new book"""
-    return await book_service.create_book(book)
-
-@admin_router.put("/books/{book_id}")
-async def admin_update_book(book_id: str, book: BookCreate, email: str = Depends(verify_token)):
-    """Update book details"""
-    return await book_service.update_book(book_id, book)
-
-@admin_router.delete("/books/{book_id}")
-async def admin_delete_book(book_id: str, email: str = Depends(verify_token)):
-    """Delete a book and all its scenes"""
-    from bson import ObjectId
-
-    book, scenes = await book_service.prepare_admin_delete_book(book_id)
-
-    # GridFS cleanup stays inline (heavy-media policy for this batch).
-    if book.get('coverImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(book['coverImageFileId']))
-        except Exception:
-            pass
-
-    for scene in scenes:
-        if scene.get('coloredImageFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
-            except Exception:
-                pass
-        if scene.get('lineArtImageFileId'):
-            try:
-                await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
-            except Exception:
-                pass
-
-    return await book_service.finalize_admin_delete_book(book_id)
+# Admin books CRUD + scenes CRUD moved to `api/admin/books.py` (Fase 4C).
+# Heavy GridFS routes (cover upload, scene image upload, PDF generation)
+# stay below.
 
 @admin_router.get("/books/{book_id}/pdf")
 async def admin_download_book_pdf(book_id: str, email: str = Depends(verify_token)):
@@ -2554,52 +2315,8 @@ async def admin_upload_book_cover(
 
 # ============== BOOK SCENES ADMIN ==============
 
-@admin_router.get("/books/{book_id}/scenes")
-async def admin_get_book_scenes(book_id: str, email: str = Depends(verify_token)):
-    """Get all scenes for a book.
-    R1 fix (Fase 4B Batch 4, approved cleanup): _id is no longer leaked.
-    """
-    return await book_service.list_admin_book_scenes(book_id)
-
-@admin_router.post("/books/{book_id}/scenes")
-async def admin_create_scene(book_id: str, scene: BookSceneCreate, email: str = Depends(verify_token)):
-    """Create a new scene for a book"""
-    sanitized_html = sanitize_scene_html(scene.text.html)
-    return await book_service.create_scene(
-        book_id, scene.sceneNumber, sanitized_html
-    )
-
-@admin_router.put("/books/{book_id}/scenes/{scene_id}")
-async def admin_update_scene(
-    book_id: str,
-    scene_id: str,
-    text: BookSceneText,
-    email: str = Depends(verify_token)
-):
-    """Update scene text with HTML sanitization"""
-    sanitized_html = sanitize_scene_html(text.html)
-    return await book_service.update_scene_text(book_id, scene_id, sanitized_html)
-
-@admin_router.delete("/books/{book_id}/scenes/{scene_id}")
-async def admin_delete_scene(book_id: str, scene_id: str, email: str = Depends(verify_token)):
-    """Delete a scene"""
-    from bson import ObjectId
-
-    scene = await book_service.prepare_admin_delete_scene(book_id, scene_id)
-
-    # GridFS cleanup stays inline (heavy-media policy for this batch).
-    if scene.get('coloredImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(scene['coloredImageFileId']))
-        except Exception:
-            pass
-    if scene.get('lineArtImageFileId'):
-        try:
-            await gridfs_bucket.delete(ObjectId(scene['lineArtImageFileId']))
-        except Exception:
-            pass
-
-    return await book_service.finalize_admin_delete_scene(book_id, scene_id)
+# Admin scenes CRUD (list/create/update/delete metadata) moved to
+# `api/admin/books.py` (Fase 4C). Scene image upload routes stay below.
 
 @admin_router.post("/books/{book_id}/scenes/{scene_id}/colored-image")
 async def admin_upload_scene_colored_image(
@@ -3050,17 +2767,8 @@ async def get_pipeline_status(generation_id: str, email: str = Depends(verify_to
 
 # --- PUBLIC GAMES ENDPOINTS ---
 
-@api_router.get("/games")
-async def get_public_games():
-    """Get all games for public display"""
-    return await game_service.list_public_games()
-
-
-@api_router.get("/games/{slug}")
-async def get_public_game(slug: str):
-    """Get a single game by slug"""
-    return await game_service.get_public_game(slug)
-
+# Public `/games` list+detail moved to `api/public/games.py` (Fase 4C).
+# GridFS thumbnail / card-image / page-image streams stay below.
 
 @api_router.get("/games/{slug}/thumbnail")
 async def get_game_thumbnail(
@@ -3088,43 +2796,8 @@ async def get_game_thumbnail(
 
 # --- ADMIN GAMES ENDPOINTS ---
 
-@api_router.get("/admin/games")
-async def get_admin_games(email: str = Depends(verify_token)):
-    """Get all games for admin"""
-    return await game_service.list_admin_games()
-
-
-@api_router.post("/admin/games")
-async def create_game(game_data: dict, email: str = Depends(verify_token)):
-    """Create a new game"""
-    return await game_service.create_game(game_data)
-
-
-@api_router.put("/admin/games/{game_id}")
-async def update_game(game_id: str, game_data: dict, email: str = Depends(verify_token)):
-    """Update a game"""
-    return await game_service.update_game(game_id, game_data)
-
-
-@api_router.delete("/admin/games/{game_id}")
-async def delete_game(game_id: str, email: str = Depends(verify_token)):
-    """Delete a game and all associated images"""
-    from bson import ObjectId
-
-    game = await game_service.prepare_admin_delete(game_id)
-
-    # GridFS cleanup stays here in server.py (Fase 4B Batch 2 scope).
-    for file_id_key in ("thumbnailFileId", "cardImageFileId", "pageImageFileId"):
-        file_id = game.get(file_id_key)
-        if file_id:
-            try:
-                await gridfs_bucket.delete(ObjectId(file_id))
-            except Exception:
-                pass
-
-    await game_service.finalize_admin_delete(game_id)
-    return {"message": "Gioco eliminato"}
-
+# Admin games CRUD (list/create/update/delete) moved to
+# `api/admin/games.py` (Fase 4C). GridFS upload routes stay below.
 
 @api_router.post("/admin/games/{game_id}/thumbnail")
 async def upload_game_thumbnail(game_id: str, file: UploadFile = File(...), email: str = Depends(verify_token)):
@@ -3370,10 +3043,9 @@ async def delete_game_page_image(
 
 # ============== GAME LEVEL BACKGROUNDS (SFONDI LIVELLI) ==============
 
-@api_router.get("/games/bolle-magiche/level-backgrounds")
-async def get_level_backgrounds():
-    """Get all level backgrounds for Bolle Magiche (public)"""
-    return await level_background_service.list_public_backgrounds()
+# Public `/games/bolle-magiche/level-backgrounds` list moved to
+# `api/public/level_backgrounds.py` (Fase 4C). GridFS image stream stays
+# below.
 
 @api_router.get("/games/bolle-magiche/level-backgrounds/{bg_id}/image")
 async def get_level_background_image(bg_id: str, request: Request):
@@ -3392,10 +3064,9 @@ async def get_level_background_image(bg_id: str, request: Request):
 
 # --- ADMIN LEVEL BACKGROUNDS ---
 
-@api_router.get("/admin/games/bolle-magiche/level-backgrounds")
-async def admin_get_level_backgrounds(user_id: str = Depends(verify_token)):
-    """Admin: Get all level backgrounds"""
-    return await level_background_service.list_admin_backgrounds()
+# Admin list + update for level-backgrounds moved to
+# `api/admin/level_backgrounds.py` (Fase 4C). Create / image-upload /
+# delete keep GridFS calls inline and stay below.
 
 @api_router.post("/admin/games/bolle-magiche/level-backgrounds")
 async def admin_create_level_background(
@@ -3454,18 +3125,9 @@ async def admin_create_level_background(
     
     return result
 
-@api_router.put("/admin/games/bolle-magiche/level-backgrounds/{bg_id}")
-async def admin_update_level_background(
-    bg_id: str,
-    levelRangeStart: int = Form(None),
-    levelRangeEnd: int = Form(None),
-    backgroundOpacity: int = Form(None),
-    user_id: str = Depends(verify_token)
-):
-    """Admin: Update level background settings"""
-    return await level_background_service.update_background(
-        bg_id, levelRangeStart, levelRangeEnd, backgroundOpacity
-    )
+# Admin level-background PUT moved to `api/admin/level_backgrounds.py`
+# (Fase 4C). Image upload + delete (with GridFS cleanup inline) stay
+# below.
 
 @api_router.post("/admin/games/bolle-magiche/level-backgrounds/{bg_id}/image")
 async def admin_upload_level_background_image(
@@ -3530,15 +3192,8 @@ async def admin_delete_level_background(
 
 # --- PUBLIC POSTER ENDPOINTS ---
 
-@api_router.get("/posters")
-async def get_public_posters():
-    """Get all published posters for public display"""
-    return await poster_service.list_public_posters()
-
-@api_router.get("/posters/{poster_id}")
-async def get_public_poster(poster_id: str):
-    """Get a single published poster by ID"""
-    return await poster_service.get_public_poster(poster_id)
+# Public `/posters` list+detail moved to `api/public/posters.py` (Fase 4C).
+# GridFS image stream + PDF download stay below.
 
 @api_router.get("/posters/{poster_id}/image")
 async def get_poster_image(
@@ -3601,49 +3256,9 @@ async def download_poster_pdf(poster_id: str, request: Request):
 
 # --- ADMIN POSTER ENDPOINTS ---
 
-@admin_router.get("/posters")
-async def admin_get_posters(email: str = Depends(verify_token)):
-    """Get all posters for admin panel"""
-    return await poster_service.list_admin_posters()
-
-@admin_router.post("/posters")
-async def admin_create_poster(poster: PosterCreate, email: str = Depends(verify_token)):
-    """Create a new poster"""
-    return await poster_service.create_poster(poster)
-
-@admin_router.get("/posters/{poster_id}")
-async def admin_get_poster(poster_id: str, email: str = Depends(verify_token)):
-    """Get a single poster for editing"""
-    return await poster_service.get_admin_poster(poster_id)
-
-@admin_router.put("/posters/{poster_id}")
-async def admin_update_poster(poster_id: str, poster: PosterUpdate, email: str = Depends(verify_token)):
-    """Update a poster"""
-    return await poster_service.update_poster(poster_id, poster)
-
-@admin_router.put("/posters/{poster_id}/download-enabled")
-async def toggle_poster_download(poster_id: str, email: str = Depends(verify_token)):
-    """Toggle the downloadEnabled status of a poster"""
-    return await poster_service.toggle_download_enabled(poster_id)
-
-@admin_router.delete("/posters/{poster_id}")
-async def admin_delete_poster(poster_id: str, email: str = Depends(verify_token)):
-    """Delete a poster and its files"""
-    from bson import ObjectId
-
-    poster = await poster_service.prepare_admin_delete(poster_id)
-
-    # GridFS cleanup remains in server.py (Fase 4B Batch 2 scope).
-    for file_id_key in ("imageFileId", "pdfFileId"):
-        file_id = poster.get(file_id_key)
-        if file_id:
-            try:
-                await gridfs_bucket.delete(ObjectId(file_id))
-            except Exception:
-                pass
-
-    await poster_service.finalize_admin_delete(poster_id)
-    return {"success": True}
+# Admin posters CRUD + toggle-download + stats moved to
+# `api/admin/posters.py` (Fase 4C). GridFS upload-image / upload-pdf
+# routes stay below.
 
 @admin_router.post("/posters/{poster_id}/upload-image")
 async def admin_upload_poster_image(
@@ -3764,10 +3379,7 @@ async def admin_upload_poster_pdf(
         logger.error(f"Error uploading poster PDF: {str(e)}")
         raise HTTPException(status_code=500, detail="Errore durante il caricamento")
 
-@admin_router.get("/posters/stats/summary")
-async def admin_poster_stats(email: str = Depends(verify_token)):
-    """Get poster statistics"""
-    return await poster_service.stats_summary()
+# Admin posters stats moved to `api/admin/posters.py` (Fase 4C).
 
 # ============== POPPICONNI CHARACTER IMAGES ==============
 
@@ -3938,6 +3550,59 @@ from fastapi.staticfiles import StaticFiles
 
 # Mount uploads directory
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+
+# Fase 4C router split: include domain-specific routers BEFORE mounting the
+# top-level api/admin routers. The new routers re-implement the public/admin
+# routes that have already been migrated to the service layer; legacy route
+# bodies are removed from this file in the same commit. Paths, status codes,
+# auth requirements and response shapes are preserved verbatim.
+from api.public import (
+    themes as public_themes,
+    reviews as public_reviews,
+    site_settings as public_site_settings,
+    bundles as public_bundles,
+    illustrations as public_illustrations,
+    posters as public_posters,
+    games as public_games,
+    level_backgrounds as public_level_backgrounds,
+    books as public_books,
+)
+from api.admin import (
+    themes as admin_themes,
+    reviews as admin_reviews,
+    site_settings as admin_site_settings,
+    illustrations as admin_illustrations,
+    bundles as admin_bundles,
+    posters as admin_posters,
+    games as admin_games,
+    level_backgrounds as admin_level_backgrounds,
+    books as admin_books,
+)
+
+api_router.include_router(public_themes.router)
+api_router.include_router(public_reviews.router)
+api_router.include_router(public_site_settings.router)
+api_router.include_router(public_bundles.router)
+api_router.include_router(public_illustrations.router)
+api_router.include_router(public_posters.router)
+api_router.include_router(public_games.router)
+api_router.include_router(public_level_backgrounds.router)
+api_router.include_router(public_books.router)
+
+admin_router.include_router(admin_themes.router)
+admin_router.include_router(admin_reviews.router)
+admin_router.include_router(admin_site_settings.router)
+admin_router.include_router(admin_illustrations.router)
+admin_router.include_router(admin_bundles.router)
+admin_router.include_router(admin_posters.router)
+admin_router.include_router(admin_books.router)
+
+# `admin/games` and `admin/games/bolle-magiche/level-backgrounds` were
+# originally registered on ``api_router`` (with explicit ``/admin/...``
+# path); we keep them functionally identical by mounting them on
+# ``admin_router`` (which already has the ``/api/admin`` prefix).
+admin_router.include_router(admin_games.router)
+admin_router.include_router(admin_level_backgrounds.router)
 
 # Include routers
 app.include_router(api_router)
