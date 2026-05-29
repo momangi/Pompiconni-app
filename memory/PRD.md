@@ -85,7 +85,22 @@ backend/
 └── tests/
 ```
 
-### ⏳ Fase 5 — Refactor frontend modulare
+### ✅ Fase 5 — Backend Server.py Monolith Refactor (COMPLETATA 2026-05-29)
+Estrazione del monolite `backend/server.py` (4 937 → 108 righe, **−97.8 %**) verso un'architettura a strati. 4 sub-batch atomici, tutti committati e pushati:
+- **M1** (`149d0eb`): media routes themes/illustrations/bundles → `api/{public,admin}/media/`
+- **M2** (`759649e`): media routes books/posters/games/level_backgrounds → `api/{public,admin}/media/` + `utils/gridfs_helpers.py`
+- **M3** (`c0b2607`): site assets + character-images + styles + AI pipeline + generic upload → `api/{public,admin}/media/` + `api/admin/uploads.py` + `constants/character_traits.py`
+- **M4** (`0946b58`): bootstrap cleanup → `api/registry.py` + `lifecycle/{seed_data,seeder,startup}.py`
+
+Risultati:
+- **130 route preservate**, **0 drift** route-contract OpenAPI
+- `pytest tests/test_refactor_phase1.py tests/test_route_contract.py` → 37 passed, 2 skipped
+- Startup/seed/indexes/migrations/shutdown identici al pre-refactor
+- 0 modifiche a frontend, Stripe, media pipeline, AI pipeline, auth, schema DB
+
+Documento canonico di chiusura: `docs/refactor/phase5-server-monolith-closure.md`.
+
+### ⏳ Fase 5A — Refactor frontend modulare
 ```
 frontend/src/
 ├── features/ (illustrations, posters, books, bundles, games, admin)
@@ -140,3 +155,4 @@ frontend/src/
 - **2026-05-11** — **Fase 4B Batch 4 completata**: estratti `repositories/book_repo.py`, `repositories/book_scene_repo.py`, `repositories/reading_progress_repo.py`, `services/book_service.py`. Cablati 13 endpoint pubblici/admin di `books`/`book_scenes`/`reading_progress` su service layer. **Fix R1 applicato:** `_id` rimosso da `GET /api/books`, `GET /api/books/{id}` (book+scenes), `GET /api/admin/books`, `POST /api/admin/books`, `GET /api/admin/books/{id}/scenes`, `POST /api/admin/books/{id}/scenes`. Aggiornato test data stale (`TARGET_ILLUST_ID`/`EXPECTED_CONTENT_LENGTH`/`EXPECTED_MD5_PREFIX`) in `tests/test_refactor_phase1.py` per puntare a record valido. `server.py`: 4099 → 3988 righe (−111, −2.7%). Riduzione totale rispetto baseline: **−949 / −19.2%**. Test: tutti i curl lifecycle (CRUD books/scenes + sanitize HTML + 400/404 semantics + reading progress) ✅, regression themes/posters/games/illustrations/bundles ✅, `pytest tests/test_refactor_phase1.py` ora **29 passed / 1 skipped (0 fail)**. GridFS (cover, scene images, generated PDF, uploads) **non toccato**.
 - **2026-05-11** — **Fase 4C Router Split completata**: creata struttura `backend/api/` con `dependencies.py` (`verify_admin` alias di `verify_token`), 9 router pubblici (`api/public/*`) e 9 router admin (`api/admin/*`). **57 endpoint** CRUD/metadati spostati da `server.py` ai router modulari (themes, reviews, site_settings, bundles, illustrations metadata, posters, games, level_backgrounds, books, book_scenes, reading_progress). GridFS/streaming/PDF/upload/variants/AI routes **lasciate in `server.py`** (~50 endpoint). `server.py`: 3988 → 3653 righe (−335, −8.4%). **Totale riduzione rispetto baseline: −1284 / −26.0%**. Aggiunti 7 test anti-`_id` (R1 regression) in `tests/test_refactor_phase1.py`. `pytest tests/test_refactor_phase1.py` ora **35 passed / 2 skipped / 0 fail**. Frontend split e media-heavy refactor NON iniziati.
 - **2026-05-11** — **Mini-batch Auth & Maintenance completato**: creati `api/admin/auth.py` (POST /login) e `api/admin/maintenance.py` (GET /dashboard, GET /download-stats, POST /reset-fake-counters, POST /maintenance/fix-brand-name). 5 endpoint spostati. Rimosso un blocco di dead code in `server.py` rimasto dopo Fase 4C. `server.py`: 3653 → 3454 righe (−199, −5.4%). **Totale riduzione rispetto baseline: −1483 / −30.0%**. Tutti i 5 endpoint testati con auth 403 senza token, status code preservati (401 su login fallito), shape identica al legacy (R1 mantenuto su `popularIllustrations`). `pytest` invariato: 35 passed / 2 skipped. Tutti gli endpoint admin **non-media** sono ora fuori dal monolite. Bug parallelo risolto in questa sessione: crash `/giochi` (`ReferenceError: BACKEND_URL is not defined` in `GamesListPage.jsx`), sostituito con builder helper `buildGameThumbnailUrl`/`buildGameCardImageUrl`. **Frontend split e media-heavy refactor NON iniziati.**
+- **2026-05-29** — **Fase 5 — Backend Server.py Monolith Refactor completata e chiusa**. 4 sub-batch atomici (M1 `149d0eb`, M2 `759649e`, M3 `c0b2607`, M4 `0946b58`) tutti committati e pushati. `server.py`: 4 937 → **108 righe** (**−97.8 %** cumulativo dal monolite originale). 130 route preservate, **0 drift** route-contract OpenAPI in ogni batch. Nuova architettura: `api/public`, `api/admin`, `api/*/media`, `api/registry.py`, `lifecycle/`, `utils/`, `constants/`. Pytest finale: 37 passed / 2 skipped / 0 failed. Frontend, Stripe, media/AI pipeline, auth, schema DB **non toccati**. Tech debt residui preservati verbatim e tracciati. Documento canonico: `docs/refactor/phase5-server-monolith-closure.md`.
